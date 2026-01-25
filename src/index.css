@@ -447,6 +447,51 @@ input[type='range'] {
   /* Tweakpane injects its own styles */
 }
 
+/* Tweakpane theme overrides for visibility */
+.tp-dfwv {
+  /* Main container - ensure light background */
+  background-color: var(--color-bg) !important;
+}
+
+.tp-lblv_l {
+  /* Labels - ensure bright text on dark background */
+  color: #ffffff !important;
+}
+
+.tp-txtv_i,
+.tp-sglv_i {
+  /* Text inputs - ensure dark text on white background */
+  color: var(--color-text) !important;
+  background-color: #ffffff !important;
+}
+
+.tp-brkv > .tp-lblv_l,
+.tp-fldv > .tp-lblv_l {
+  /* Folder labels - bright text */
+  color: #ffffff !important;
+}
+
+.tp-lstv_s {
+  /* Select dropdown text */
+  color: var(--color-text) !important;
+  background-color: #ffffff !important;
+}
+
+.tp-btnv_b {
+  /* Button text - bright text */
+  color: #ffffff !important;
+}
+
+.tp-lblv_v {
+  /* Label values - bright text */
+  color: #ffffff !important;
+}
+
+.tp-fldv_b {
+  /* Folder background */
+  background-color: rgba(0, 0, 0, 0.2) !important;
+}
+
 /* Touch-friendly adjustments */
 @media (pointer: coarse) {
   .btn {
