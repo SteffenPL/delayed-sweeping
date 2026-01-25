@@ -62,11 +62,16 @@ body {
   display: flex;
   gap: 1.5rem;
   flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
 }
 
 .simulation-section {
   flex: 1;
   min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .canvas-container {
@@ -75,6 +80,7 @@ body {
   border-radius: var(--radius);
   overflow: hidden;
   box-shadow: var(--shadow);
+  width: fit-content;
 }
 
 .simulation-canvas {
@@ -247,6 +253,8 @@ input[type='range'] {
 /* Playback controls */
 .playback-controls {
   margin-top: 1rem;
+  width: 100%;
+  max-width: 500px;
 }
 
 .speed-control {

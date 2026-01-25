@@ -38,6 +38,10 @@ root
 └── vite.config.ts               # Vite build config
 ```
 
+## Development 
+
+This project uses **bd** (beads) for issue tracking. 
+
 ## Running the App
 
 ```bash

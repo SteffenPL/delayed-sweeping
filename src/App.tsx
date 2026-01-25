@@ -26,7 +26,7 @@ export function App() {
       <main className="app-main">
         <div className="simulation-section">
           <div className="canvas-container">
-            <SimulationCanvas width={600} height={400} />
+            <SimulationCanvas width={500} height={500} />
           </div>
           <PlaybackControls />
         </div>
