@@ -88,7 +88,7 @@ body {
 }
 
 .controls-sidebar {
-  width: 280px;
+  width: 360px;
   display: flex;
   flex-direction: column;
   gap: 1rem;
