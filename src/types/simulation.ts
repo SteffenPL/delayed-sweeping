@@ -90,6 +90,8 @@ export interface SimulationStatistics {
   lagrangeMultiplier: number[];
   lagrangeDotProduct: number[];
   totalEnergy: number[];
+  gradientNorm: number[];
+  lagrangeMultiplierValue: number[];
   classicalProjectionDistance: number[];
   classicalPositionX: number[];
   classicalPositionY: number[];
@@ -98,6 +100,8 @@ export interface SimulationStatistics {
   classicalLagrangeMultiplier: number[];
   classicalLagrangeDotProduct: number[];
   classicalTotalEnergy: number[];
+  classicalGradientNorm: number[];
+  classicalLagrangeMultiplierValue: number[];
 }
 
 // Preset configuration

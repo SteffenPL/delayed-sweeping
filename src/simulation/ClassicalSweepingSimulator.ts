@@ -1,7 +1,7 @@
 import type { Vec2, SimulationParameters } from '@/types';
 
 export type CenterFunction = (t: number) => Vec2;
-export type ProjectionFunction = (point: Vec2, center: Vec2) => { projected: Vec2; distance: number };
+export type ProjectionFunction = (point: Vec2, center: Vec2) => { projected: Vec2; distance: number; gradientNorm: number };
 
 export interface ClassicalSweepingConfig {
   params: SimulationParameters;
@@ -26,6 +26,7 @@ export class ClassicalSweepingSimulator {
   private X: Vec2[] = [];
   private constraintCenters: Vec2[] = [];
   private projectionDistances: number[] = [];
+  private gradientNorms: number[] = [];
 
   public readonly totalSteps: number;
 
@@ -60,10 +61,11 @@ export class ClassicalSweepingSimulator {
     }
 
     // Project onto current constraint: X_n = P_{C(t_n)}(X_{n-1})
-    const { projected, distance } = this.projectFunc(x_prev, center);
+    const { projected, distance, gradientNorm } = this.projectFunc(x_prev, center);
 
     this.X[n] = projected;
     this.projectionDistances[n] = distance;
+    this.gradientNorms[n] = gradientNorm;
 
     return projected;
   }
@@ -90,12 +92,20 @@ export class ClassicalSweepingSimulator {
   }
 
   /**
+   * Get gradient norms
+   */
+  getGradientNorms(): number[] {
+    return this.gradientNorms;
+  }
+
+  /**
    * Reset simulation
    */
   reset(): void {
     this.X = [];
     this.constraintCenters = [];
     this.projectionDistances = [];
+    this.gradientNorms = [];
   }
 
   /**

@@ -6,7 +6,7 @@ export interface SimulatorConfig {
   params: SimulationParameters;
   centerFunc: (t: number) => Vec2;
   pastFunc: (t: number) => Vec2;
-  projectFunc: (point: Vec2, center: Vec2) => Vec2;
+  projectFunc: (point: Vec2, center: Vec2) => { projected: Vec2; gradientNorm: number };
 }
 
 /**
@@ -20,7 +20,7 @@ export class DelayedSweepingSimulator {
   private params: SimulationParameters;
   private centerFunc: (t: number) => Vec2;
   private pastFunc: (t: number) => Vec2;
-  private projectFunc: (point: Vec2, center: Vec2) => Vec2;
+  private projectFunc: (point: Vec2, center: Vec2) => { projected: Vec2; gradientNorm: number };
 
   private N: number; // Total number of steps
   private rTilde: number[]; // Normalized kernel weights
@@ -30,6 +30,7 @@ export class DelayedSweepingSimulator {
   private XBar: Vec2[] = [];
   private centers: Vec2[] = [];
   private projDist: number[] = [];
+  private gradientNorms: number[] = [];
 
   constructor(config: SimulatorConfig) {
     this.params = config.params;
@@ -49,6 +50,7 @@ export class DelayedSweepingSimulator {
     this.XBar = [];
     this.centers = [];
     this.projDist = [];
+    this.gradientNorms = [];
   }
 
   /**
@@ -85,11 +87,12 @@ export class DelayedSweepingSimulator {
     this.centers[n] = center;
 
     // Project onto constraint set
-    const xNew = this.projectFunc(xBar, center);
+    const { projected: xNew, gradientNorm } = this.projectFunc(xBar, center);
     this.X[n] = xNew;
 
-    // Record projection distance
+    // Record projection distance and gradient norm
     this.projDist[n] = vec2.distance(xNew, xBar);
+    this.gradientNorms[n] = gradientNorm;
 
     return xNew;
   }
@@ -133,6 +136,13 @@ export class DelayedSweepingSimulator {
   }
 
   /**
+   * Get gradient norms
+   */
+  getGradientNorms(): number[] {
+    return [...this.gradientNorms];
+  }
+
+  /**
    * Get current step count
    */
   getCurrentStep(): number {
@@ -163,7 +173,7 @@ export class DelayedSweepingSimulator {
   /**
    * Update projection function (for shape changes)
    */
-  setProjectFunc(projectFunc: (point: Vec2, center: Vec2) => Vec2): void {
+  setProjectFunc(projectFunc: (point: Vec2, center: Vec2) => { projected: Vec2; gradientNorm: number }): void {
     this.projectFunc = projectFunc;
   }
 

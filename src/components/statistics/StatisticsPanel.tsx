@@ -13,6 +13,8 @@ export function StatisticsPanel() {
     preProjection,
     classicalTrajectory,
     projectionDistances,
+    gradientNorms,
+    classicalGradientNorms,
     params,
     selectedMetrics,
     setSelectedMetrics,
@@ -141,6 +143,17 @@ export function StatisticsPanel() {
       classicalVelocity.push(Math.sqrt(dx * dx + dy * dy) / params.h);
     }
 
+    // Compute lagrange multiplier value: λ_n = ||X_n - X̄_n|| / ||∇g(X_n)||
+    const lagrangeMultiplierValue = delayedStats.lagrangeMultiplier.map((lm, i) => {
+      const gn = gradientNorms[i] ?? 1;
+      return gn > 1e-10 ? lm / gn : 0;
+    });
+
+    const classicalLagrangeMultiplierValue = classicalStats.lagrangeMultiplier.map((lm, i) => {
+      const gn = classicalGradientNorms[i] ?? 1;
+      return gn > 1e-10 ? lm / gn : 0;
+    });
+
     return {
       time,
       projectionDistance: projectionDistances,
@@ -151,6 +164,8 @@ export function StatisticsPanel() {
       lagrangeMultiplier: delayedStats.lagrangeMultiplier,
       lagrangeDotProduct: delayedStats.lagrangeDotProduct,
       totalEnergy: delayedStats.totalEnergy,
+      gradientNorm: gradientNorms,
+      lagrangeMultiplierValue,
       classicalProjectionDistance,
       classicalPositionX,
       classicalPositionY,
@@ -159,8 +174,10 @@ export function StatisticsPanel() {
       classicalLagrangeMultiplier: classicalStats.lagrangeMultiplier,
       classicalLagrangeDotProduct: classicalStats.lagrangeDotProduct,
       classicalTotalEnergy: classicalStats.totalEnergy,
+      classicalGradientNorm: classicalGradientNorms,
+      classicalLagrangeMultiplierValue,
     };
-  }, [trajectory, preProjection, classicalTrajectory, projectionDistances, params.h, params.lambda]);
+  }, [trajectory, preProjection, classicalTrajectory, projectionDistances, gradientNorms, classicalGradientNorms, params.h, params.lambda]);
 
   const chartData = useMemo(() => {
     return statistics.time.map((t, i) => ({
@@ -173,6 +190,8 @@ export function StatisticsPanel() {
       lagrangeMultiplier: statistics.lagrangeMultiplier[i] ?? 0,
       lagrangeDotProduct: statistics.lagrangeDotProduct[i] ?? 0,
       totalEnergy: statistics.totalEnergy[i] ?? 0,
+      gradientNorm: statistics.gradientNorm[i] ?? 0,
+      lagrangeMultiplierValue: statistics.lagrangeMultiplierValue[i] ?? 0,
       classicalProjectionDistance: statistics.classicalProjectionDistance[i] ?? 0,
       classicalPositionX: statistics.classicalPositionX[i] ?? 0,
       classicalPositionY: statistics.classicalPositionY[i] ?? 0,
@@ -181,6 +200,8 @@ export function StatisticsPanel() {
       classicalLagrangeMultiplier: statistics.classicalLagrangeMultiplier[i] ?? 0,
       classicalLagrangeDotProduct: statistics.classicalLagrangeDotProduct[i] ?? 0,
       classicalTotalEnergy: statistics.classicalTotalEnergy[i] ?? 0,
+      classicalGradientNorm: statistics.classicalGradientNorm[i] ?? 0,
+      classicalLagrangeMultiplierValue: statistics.classicalLagrangeMultiplierValue[i] ?? 0,
     }));
   }, [statistics]);
 

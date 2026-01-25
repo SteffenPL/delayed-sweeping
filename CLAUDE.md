@@ -37,6 +37,14 @@ root
 ├── tsconfig.json                # TypeScript config
 └── vite.config.ts               # Vite build config
 ```
+## Documentation
+
+```
+src/docs/*    # contains .md files of numerics and statistics details
+```
+
+ALWAYS update the numerics and statistics documentation
+after changes to numerical or statistics details.
 
 ## Development 
 

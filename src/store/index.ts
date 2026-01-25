@@ -49,9 +49,11 @@ interface SimulationStore {
   preProjection: Vec2[];
   constraintCenters: Vec2[];
   projectionDistances: number[];
+  gradientNorms: number[];
 
   // Classical sweeping state
   classicalTrajectory: Vec2[];
+  classicalGradientNorms: number[];
 
   setRunning: (running: boolean) => void;
   setCurrentStep: (step: number) => void;
@@ -59,9 +61,10 @@ interface SimulationStore {
     point: Vec2,
     xBar: Vec2,
     center: Vec2,
-    projDist: number
+    projDist: number,
+    gradNorm: number
   ) => void;
-  appendClassicalPoint: (point: Vec2) => void;
+  appendClassicalPoint: (point: Vec2, gradNorm: number) => void;
   resetTrajectory: () => void;
 
   // UI state
@@ -142,7 +145,9 @@ export const useSimulationStore = create<SimulationStore>()(
     preProjection: [],
     constraintCenters: [],
     projectionDistances: [],
+    gradientNorms: [],
     classicalTrajectory: [],
+    classicalGradientNorms: [],
 
     showStatistics: true,
     selectedMetrics: ['projectionDistance'],
@@ -177,18 +182,20 @@ export const useSimulationStore = create<SimulationStore>()(
 
     setCurrentStep: (step) => set({ currentStep: step }),
 
-    appendTrajectoryPoint: (point, xBar, center, projDist) =>
+    appendTrajectoryPoint: (point, xBar, center, projDist, gradNorm) =>
       set((state) => ({
         trajectory: [...state.trajectory, point],
         preProjection: [...state.preProjection, xBar],
         constraintCenters: [...state.constraintCenters, center],
         projectionDistances: [...state.projectionDistances, projDist],
+        gradientNorms: [...state.gradientNorms, gradNorm],
         currentStep: state.currentStep + 1,
       })),
 
-    appendClassicalPoint: (point) =>
+    appendClassicalPoint: (point, gradNorm) =>
       set((state) => ({
         classicalTrajectory: [...state.classicalTrajectory, point],
+        classicalGradientNorms: [...state.classicalGradientNorms, gradNorm],
       })),
 
     resetTrajectory: () =>
@@ -197,7 +204,9 @@ export const useSimulationStore = create<SimulationStore>()(
         preProjection: [],
         constraintCenters: [],
         projectionDistances: [],
+        gradientNorms: [],
         classicalTrajectory: [],
+        classicalGradientNorms: [],
         currentStep: 0,
         isRunning: false,
       }),

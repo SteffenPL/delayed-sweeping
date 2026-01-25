@@ -15,6 +15,8 @@ export function exportToTSV(statistics: SimulationStatistics): string {
     'lagrangeMultiplier',
     'lagrangeDotProduct',
     'totalEnergy',
+    'gradientNorm',
+    'lagrangeMultiplierValue',
     // Classical sweeping process
     'classicalProjectionDistance',
     'classicalPositionX',
@@ -24,6 +26,8 @@ export function exportToTSV(statistics: SimulationStatistics): string {
     'classicalLagrangeMultiplier',
     'classicalLagrangeDotProduct',
     'classicalTotalEnergy',
+    'classicalGradientNorm',
+    'classicalLagrangeMultiplierValue',
   ];
   const lines: string[] = [headers.join('\t')];
 
@@ -39,6 +43,8 @@ export function exportToTSV(statistics: SimulationStatistics): string {
       statistics.lagrangeMultiplier[i]?.toFixed(6) ?? '',
       statistics.lagrangeDotProduct[i]?.toFixed(6) ?? '',
       statistics.totalEnergy[i]?.toFixed(6) ?? '',
+      statistics.gradientNorm[i]?.toFixed(6) ?? '',
+      statistics.lagrangeMultiplierValue[i]?.toFixed(6) ?? '',
       // Classical sweeping process
       statistics.classicalProjectionDistance[i]?.toFixed(6) ?? '',
       statistics.classicalPositionX[i]?.toFixed(6) ?? '',
@@ -48,6 +54,8 @@ export function exportToTSV(statistics: SimulationStatistics): string {
       statistics.classicalLagrangeMultiplier[i]?.toFixed(6) ?? '',
       statistics.classicalLagrangeDotProduct[i]?.toFixed(6) ?? '',
       statistics.classicalTotalEnergy[i]?.toFixed(6) ?? '',
+      statistics.classicalGradientNorm[i]?.toFixed(6) ?? '',
+      statistics.classicalLagrangeMultiplierValue[i]?.toFixed(6) ?? '',
     ];
     lines.push(row.join('\t'));
   }

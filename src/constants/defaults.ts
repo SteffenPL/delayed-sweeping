@@ -38,22 +38,26 @@ export const TRAJECTORY_LINE_WIDTH = 2;
 // Statistics metrics
 export const AVAILABLE_METRICS = [
   // First row: Delayed sweeping process
-  { id: 'projectionDistance', label: '||X - X\u0304||', color: '#3b82f6' },
+  { id: 'projectionDistance', label: '||X - X̄||', color: '#3b82f6' },
   { id: 'positionX', label: 'X position', color: '#22c55e' },
   { id: 'positionY', label: 'Y position', color: '#ef4444' },
   { id: 'velocity', label: 'Velocity', color: '#f59e0b' },
   { id: 'distanceFromOrigin', label: 'Distance from origin', color: '#8b5cf6' },
-  { id: 'lagrangeMultiplier', label: 'Lagrange multiplier ||\u03BB G||', color: '#ec4899' },
-  { id: 'lagrangeDotProduct', label: '\u27E8\u03BB\u2099G\u2099 - \u03BB\u2099\u208B\u2081G\u2099\u208B\u2081, X\u2099 - X\u2099\u208B\u2081\u27E9', color: '#06b6d4' },
-  { id: 'totalEnergy', label: 'Total energy E\u2099', color: '#f97316' },
+  { id: 'lagrangeMultiplier', label: 'Lagrange multiplier ||λ G||', color: '#ec4899' },
+  { id: 'lagrangeDotProduct', label: '⟨λₙGₙ - λₙ₋₁Gₙ₋₁, Xₙ - Xₙ₋₁⟩', color: '#06b6d4' },
+  { id: 'totalEnergy', label: 'Total energy Eₙ', color: '#f97316' },
+  { id: 'gradientNorm', label: 'Gradient norm ||∇g(Xₙ)||', color: '#14b8a6' },
+  { id: 'lagrangeMultiplierValue', label: 'Lagrange multiplier λₙ', color: '#f472b6' },
 
   // Second row: Classical sweeping process
-  { id: 'classicalProjectionDistance', label: 'Classical ||X - X\u0304||', color: '#7c3aed' },
+  { id: 'classicalProjectionDistance', label: 'Classical ||X - X̄||', color: '#7c3aed' },
   { id: 'classicalPositionX', label: 'Classical X position', color: '#10b981' },
   { id: 'classicalPositionY', label: 'Classical Y position', color: '#f43f5e' },
   { id: 'classicalVelocity', label: 'Classical velocity', color: '#f59e0b' },
   { id: 'classicalDistanceFromOrigin', label: 'Classical distance from origin', color: '#a855f7' },
-  { id: 'classicalLagrangeMultiplier', label: 'Classical ||\u03BB G||', color: '#db2777' },
-  { id: 'classicalLagrangeDotProduct', label: 'Classical \u27E8\u03BB\u2099G\u2099 - \u03BB\u2099\u208B\u2081G\u2099\u208B\u2081, X\u2099 - X\u2099\u208B\u2081\u27E9', color: '#0891b2' },
+  { id: 'classicalLagrangeMultiplier', label: 'Classical ||λ G||', color: '#db2777' },
+  { id: 'classicalLagrangeDotProduct', label: 'Classical ⟨λₙGₙ - λₙ₋₁Gₙ₋₁, Xₙ - Xₙ₋₁⟩', color: '#0891b2' },
   { id: 'classicalTotalEnergy', label: 'Classical kinetic energy', color: '#ea580c' },
+  { id: 'classicalGradientNorm', label: 'Classical gradient norm ||∇g(Xₙ)||', color: '#2dd4bf' },
+  { id: 'classicalLagrangeMultiplierValue', label: 'Classical Lagrange multiplier λₙ', color: '#f9a8d4' },
 ];

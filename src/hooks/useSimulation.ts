@@ -63,13 +63,14 @@ export function useSimulation() {
     runnerRef.current = new SimulationRunner(simulatorRef.current);
 
     runnerRef.current.setCallbacks(
-      (step, position, center, xBar, projDist) => {
-        appendTrajectoryPoint(position, xBar, center, projDist);
+      (step, position, center, xBar, projDist, gradNorm) => {
+        appendTrajectoryPoint(position, xBar, center, projDist, gradNorm);
 
         // Also run classical sweeping step
         if (classicalSimulatorRef.current) {
           const classicalPos = classicalSimulatorRef.current.step(step);
-          appendClassicalPoint(classicalPos);
+          const classicalGradNorms = classicalSimulatorRef.current.getGradientNorms();
+          appendClassicalPoint(classicalPos, classicalGradNorms[step]);
         }
       },
       () => {

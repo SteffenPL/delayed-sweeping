@@ -6,7 +6,8 @@ export type StepCallback = (
   position: Vec2,
   center: Vec2,
   xBar: Vec2,
-  projectionDistance: number
+  projectionDistance: number,
+  gradientNorm: number
 ) => void;
 
 export type CompleteCallback = () => void;
@@ -119,13 +120,15 @@ export class SimulationRunner {
       const centers = this.simulator.getConstraintCenters();
       const xBars = this.simulator.getPreProjection();
       const projDists = this.simulator.getProjectionDistances();
+      const gradNorms = this.simulator.getGradientNorms();
 
       this.onStep?.(
         this.currentStep,
         position,
         centers[this.currentStep],
         xBars[this.currentStep],
-        projDists[this.currentStep]
+        projDists[this.currentStep],
+        gradNorms[this.currentStep]
       );
 
       this.currentStep++;

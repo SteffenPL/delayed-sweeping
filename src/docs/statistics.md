@@ -234,6 +234,82 @@ if (i > 0 && i < xBars.length) {
 
 ---
 
+### Gradient Norm
+
+**Definition**:
+```
+||∇g(X^n)||
+```
+
+where `∇g` is the gradient of the constraint function `g(x,y)` evaluated at the projected point `X^n`.
+
+**Implementation**: Computed during projection in `src/shapes/constraint.ts:77-82` using numerical finite differences:
+```typescript
+const grad = constraint.gradient(projected);
+const gradientNorm = Math.sqrt(grad.x * grad.x + grad.y * grad.y);
+```
+
+**Units**: Dimensionless (gradient of dimensionless constraint function)
+
+**Physical meaning**:
+- Measures the **steepness** of the constraint boundary at the projected point
+- For well-behaved constraints (like circles), this is approximately constant (≈ 1 for normalized constraints)
+- For star-shaped or irregular constraints, this varies around the boundary
+- Related to the curvature and local geometry of the constraint set
+
+**Expected behavior**:
+- Nearly constant for circular constraints (gradient has unit norm)
+- Varies for non-circular shapes (star, polygon, etc.)
+- Should never be zero on the constraint boundary
+- Larger values indicate steeper boundaries
+
+**Note**: This is used to compute the Lagrange multiplier value (next section)
+
+---
+
+### Lagrange Multiplier Value
+
+**Definition**:
+```
+λ_n = ||X^n - X̄^n|| / ||∇g(X^n)||
+```
+
+where:
+- `||X^n - X̄^n||` is the projection distance (Lagrange multiplier magnitude)
+- `||∇g(X^n)||` is the gradient norm at the projected point
+
+**Implementation** (in `StatisticsPanel.tsx`):
+```typescript
+const lagrangeMultiplierValue = delayedStats.lagrangeMultiplier.map((lm, i) => {
+  const gn = gradientNorms[i] ?? 1;
+  return gn > 1e-10 ? lm / gn : 0;
+});
+```
+
+**Units**: Spatial units (same as projection distance)
+
+**Physical meaning**:
+- Represents the **magnitude** of the Lagrange multiplier in the KKT conditions
+- In the projection formulation: `X^n = X̄^n - λ_n · ∇g(X^n)`
+- Measures the constraint force normalized by the gradient steepness
+- For circular constraints (where `||∇g|| ≈ 1`), this equals the projection distance
+- For irregular constraints, this accounts for varying boundary steepness
+
+**Expected behavior**:
+- Similar to projection distance for circular constraints
+- Different from projection distance for non-circular constraints
+- Zero when no projection is needed (point already inside constraint)
+- Larger values indicate stronger constraint forces
+
+**Relationship**:
+```
+||λ_n G_n|| = ||X^n - X̄^n|| = λ_n · ||∇g(X^n)||
+```
+
+where `G_n = ∇g(X^n)` is the constraint gradient.
+
+---
+
 ### Total Energy
 
 **Definition**:
@@ -372,6 +448,42 @@ These are **mathematically identical** because `X̄^n = X^{n-1}` in classical sw
 ```
 
 **Physical meaning**: Work done by changing constraint force in classical sweeping
+
+---
+
+### Classical Gradient Norm
+
+**Definition**:
+```
+||∇g(X^n)||
+```
+
+Same as delayed sweeping - computed at the classical trajectory's projected points.
+
+**Implementation**: Identical to delayed sweeping, but evaluated at classical trajectory points.
+
+**Physical meaning**: Same as delayed sweeping gradient norm.
+
+---
+
+### Classical Lagrange Multiplier Value
+
+**Definition**:
+```
+λ_n = ||X^n - X^{n-1}|| / ||∇g(X^n)||
+```
+
+For classical sweeping, `X̄^n = X^{n-1}`, so this is the projection distance from the previous point normalized by the gradient.
+
+**Implementation**: Same formula as delayed sweeping:
+```typescript
+const classicalLagrangeMultiplierValue = classicalStats.lagrangeMultiplier.map((lm, i) => {
+  const gn = classicalGradientNorms[i] ?? 1;
+  return gn > 1e-10 ? lm / gn : 0;
+});
+```
+
+**Physical meaning**: Magnitude of the constraint force in the classical sweeping process, normalized by gradient steepness.
 
 ---
 
@@ -565,14 +677,18 @@ All statistics can be exported to TSV (Tab-Separated Values) format via the Expo
 7. lagrangeMultiplier
 8. lagrangeDotProduct
 9. totalEnergy
-10. classicalProjectionDistance
-11. classicalPositionX
-12. classicalPositionY
-13. classicalVelocity
-14. classicalDistanceFromOrigin
-15. classicalLagrangeMultiplier
-16. classicalLagrangeDotProduct
-17. classicalTotalEnergy
+10. gradientNorm
+11. lagrangeMultiplierValue
+12. classicalProjectionDistance
+13. classicalPositionX
+14. classicalPositionY
+15. classicalVelocity
+16. classicalDistanceFromOrigin
+17. classicalLagrangeMultiplier
+18. classicalLagrangeDotProduct
+19. classicalTotalEnergy
+20. classicalGradientNorm
+21. classicalLagrangeMultiplierValue
 
 **Precision**: All values formatted to 6 decimal places
 
