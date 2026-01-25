@@ -55,5 +55,5 @@ export const AVAILABLE_METRICS = [
   { id: 'classicalDistanceFromOrigin', label: 'Classical distance from origin', color: '#a855f7' },
   { id: 'classicalLagrangeMultiplier', label: 'Classical ||\u03BB G||', color: '#db2777' },
   { id: 'classicalLagrangeDotProduct', label: 'Classical \u27E8\u03BB\u2099G\u2099 - \u03BB\u2099\u208B\u2081G\u2099\u208B\u2081, X\u2099 - X\u2099\u208B\u2081\u27E9', color: '#0891b2' },
-  { id: 'classicalTotalEnergy', label: 'Classical energy E\u2099', color: '#ea580c' },
+  { id: 'classicalTotalEnergy', label: 'Classical kinetic energy', color: '#ea580c' },
 ];

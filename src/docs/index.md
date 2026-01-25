@@ -14,6 +14,14 @@ Welcome to the Delayed Sweeping Process Simulator documentation.
   - Numerical parameters and stability analysis
   - Implementation architecture and performance
 
+- **[Statistics](./statistics.md)** - Statistical quantities and metrics
+  - Detailed definitions of all computed statistics
+  - Implementation details and formulas
+  - Physical interpretation of metrics
+  - Comparison between delayed and classical sweeping
+  - Inconsistencies and known issues
+  - Data export format
+
 ### Code Documentation
 
 - **[Project README](../../README.md)** - Project overview and setup instructions

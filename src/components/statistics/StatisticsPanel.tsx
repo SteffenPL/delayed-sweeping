@@ -38,11 +38,11 @@ export function StatisticsPanel() {
       velocity.push(Math.sqrt(dx * dx + dy * dy) / params.h);
     }
 
-    // Compute kernel weights for energy calculation
+    // Compute kernel weights for delayed energy calculation
     const rTilde = computeDiscreteWeights(params.lambda, params.h);
 
     // Helper function to compute statistics for a given trajectory
-    const computeTrajectoryStats = (traj: Vec2[], xBars: Vec2[]) => {
+    const computeTrajectoryStats = (traj: Vec2[], xBars: Vec2[], isClassical: boolean = false) => {
       const lagrangeMultiplier: number[] = [];
       const lagrangeDotProduct: number[] = [];
       const totalEnergy: number[] = [];
@@ -81,13 +81,26 @@ export function StatisticsPanel() {
           lagrangeDotProduct.push(0);
         }
 
-        // Total energy: E_n = h Σ_{j≥1} r̃_j ||X^n - X^{n-j}||^2
+        // Total energy computation
         let energy = 0;
-        for (let j = 1; j < rTilde.length && i - j >= 0; j++) {
-          const dx = traj[i].x - traj[i - j].x;
-          const dy = traj[i].y - traj[i - j].y;
-          energy += params.h * rTilde[j] * (dx * dx + dy * dy);
+
+        if (isClassical) {
+          // Classical energy: kinetic energy = (1/2) ||X^n - X^{n-1}||^2 / h^2
+          // Simplified: ||X^n - X^{n-1}||^2 / (2 * h^2)
+          if (i > 0) {
+            const dx = traj[i].x - traj[i - 1].x;
+            const dy = traj[i].y - traj[i - 1].y;
+            energy = (dx * dx + dy * dy) / (2 * params.h * params.h);
+          }
+        } else {
+          // Delayed energy: E_n = h Σ_{j≥1} r̃_j ||X^n - X^{n-j}||^2
+          for (let j = 1; j < rTilde.length && i - j >= 0; j++) {
+            const dx = traj[i].x - traj[i - j].x;
+            const dy = traj[i].y - traj[i - j].y;
+            energy += params.h * rTilde[j] * (dx * dx + dy * dy);
+          }
         }
+
         totalEnergy.push(energy);
       }
 
@@ -95,7 +108,7 @@ export function StatisticsPanel() {
     };
 
     // Compute delayed sweeping statistics
-    const delayedStats = computeTrajectoryStats(trajectory, preProjection);
+    const delayedStats = computeTrajectoryStats(trajectory, preProjection, false);
 
     // Compute classical sweeping statistics
     // For classical sweeping, X̄_n = X_{n-1}, so we need to construct this
@@ -103,7 +116,7 @@ export function StatisticsPanel() {
     for (let i = 1; i < classicalTrajectory.length; i++) {
       classicalXBars.push(classicalTrajectory[i - 1]);
     }
-    const classicalStats = computeTrajectoryStats(classicalTrajectory, classicalXBars);
+    const classicalStats = computeTrajectoryStats(classicalTrajectory, classicalXBars, true);
 
     // Basic classical metrics
     const classicalPositionX = classicalTrajectory.map((p) => p.x);
