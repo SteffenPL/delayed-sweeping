@@ -2,7 +2,7 @@ import type { SimulationConfig } from '@/types/config';
 import type { Vec2 } from '@/types';
 import { DelayedSweepingSimulator } from './DelayedSweepingSimulator';
 import { ClassicalSweepingSimulator } from './ClassicalSweepingSimulator';
-import { createTrajectoryFunction, createPastFunction, createAlphaFunction } from '@/utils/trajectoryFunctions';
+import { createTrajectoryFunction, createPastFunction } from '@/utils/trajectoryFunctions';
 import {
   createExpressionEvaluator,
   projectToConstraint,
@@ -26,9 +26,6 @@ export class SimulationFactory {
 
     // Create past function from simulation parameters
     const pastFunc = createPastFunction(simulation);
-
-    // Create alpha function for rotation
-    const alphaFunc = createAlphaFunction(trajectory);
 
     // Create constraint evaluator with parameters
     const evaluator = createExpressionEvaluator(constraint.expression, {
