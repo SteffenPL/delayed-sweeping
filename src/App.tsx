@@ -5,7 +5,7 @@ import {
   TweakpanePanel,
 } from '@/components/controls';
 import { ConfigControls } from '@/components/controls/ConfigControls';
-import { StatisticsPanel } from '@/components/statistics';
+import { StatisticsPanel, ConvergencePanel } from '@/components/statistics';
 import { useSimulationStore } from '@/store';
 import './index.css';
 
@@ -44,6 +44,7 @@ export function App() {
 
       <section className="statistics-section">
         <StatisticsPanel />
+        <ConvergencePanel />
       </section>
 
       <footer className="app-footer">

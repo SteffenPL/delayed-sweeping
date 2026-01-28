@@ -57,3 +57,29 @@ export const AVAILABLE_METRICS = [
   { id: 'classicalGradientNorm', label: 'Classical gradient norm ||∇g(Xₙ)||', color: '#2dd4bf' },
   { id: 'classicalLagrangeMultiplierValue', label: 'Classical Lagrange multiplier λₙ', color: '#f9a8d4' },
 ];
+
+// Convergence-specific metrics (computed over entire trajectory, not just terminal)
+export const CONVERGENCE_METRICS = [
+  // Delayed sweeping min/max
+  { id: 'maxProjDistance', label: 'max ||X - X̄||', color: '#2563eb' },
+  { id: 'minProjDistance', label: 'min ||X - X̄||', color: '#60a5fa' },
+  { id: 'maxLagrangeDotProduct', label: 'max ⟨λG⟩', color: '#0891b2' },
+  { id: 'minLagrangeDotProduct', label: 'min ⟨λG⟩', color: '#67e8f9' },
+  { id: 'maxLagrangeMultiplier', label: 'max λₙ', color: '#be185d' },
+  { id: 'minLagrangeMultiplier', label: 'min λₙ', color: '#f9a8d4' },
+
+  // Classical sweeping min/max
+  { id: 'classicalMaxProjDistance', label: 'Classical max ||X - X̄||', color: '#5b21b6' },
+  { id: 'classicalMinProjDistance', label: 'Classical min ||X - X̄||', color: '#a78bfa' },
+  { id: 'classicalMaxLagrangeDotProduct', label: 'Classical max ⟨λG⟩', color: '#0e7490' },
+  { id: 'classicalMinLagrangeDotProduct', label: 'Classical min ⟨λG⟩', color: '#22d3ee' },
+  { id: 'classicalMaxLagrangeMultiplier', label: 'Classical max λₙ', color: '#9d174d' },
+  { id: 'classicalMinLagrangeMultiplier', label: 'Classical min λₙ', color: '#fda4af' },
+
+  // Convergence rate metrics (computed relative to dt_min)
+  { id: 'logPositionError', label: 'log₂ ||X(T) - X_ref||', color: '#dc2626' },
+  { id: 'logLambdaError', label: 'log₂ |λ(T) - λ_ref|', color: '#ea580c' },
+  { id: 'classicalLogPositionError', label: 'Classical log₂ ||X(T) - X_ref||', color: '#9333ea' },
+  { id: 'classicalLogLambdaError', label: 'Classical log₂ |λ(T) - λ_ref|', color: '#c026d3' },
+];
+

@@ -509,3 +509,228 @@ input[type='range'] {
     padding: 0.25rem;
   }
 }
+
+/* Convergence Panel Styles */
+.convergence-panel {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  margin-top: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.convergence-header {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid transparent;
+  transition: background 0.15s ease;
+}
+
+.convergence-header:hover {
+  background: var(--color-bg-alt);
+}
+
+.convergence-header h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.convergence-header .collapse-icon {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.convergence-subtitle {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.convergence-content {
+  padding: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.convergence-params {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.convergence-params .param-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0;
+}
+
+.convergence-params .param-group label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.convergence-params .param-group input[type='number'] {
+  width: 80px;
+}
+
+.convergence-params .param-value {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-family: monospace;
+}
+
+.dt-values {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: var(--color-bg-alt);
+  border-radius: 4px;
+}
+
+.dt-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-secondary);
+  margin-right: 0.5rem;
+}
+
+.dt-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.dt-chip {
+  padding: 0.25rem 0.5rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: monospace;
+  color: var(--color-text);
+}
+
+.convergence-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.run-button {
+  padding: 0.5rem 1.5rem;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.run-button:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+}
+
+.run-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.progress-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--color-bg-alt);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--color-primary);
+  transition: width 0.2s ease;
+}
+
+.progress-text {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  min-width: 40px;
+}
+
+.convergence-metrics {
+  margin-bottom: 1rem;
+}
+
+.convergence-metrics h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-secondary);
+}
+
+.convergence-results {
+  margin-top: 1rem;
+}
+
+.convergence-results h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-secondary);
+}
+
+.convergence-chart {
+  background: var(--color-bg-alt);
+  border-radius: 4px;
+  padding: 0.5rem;
+}
+
+.convergence-chart-empty {
+  padding: 2rem;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.metric-category {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: var(--color-bg-alt);
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+}
+
+.metric-category:last-child {
+  margin-bottom: 0;
+}
+
+.metric-category-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
