@@ -66,12 +66,6 @@ export class SimulationFactory {
       };
     };
 
-    // For standalone execution, we need a wrapper that uses alpha(t)
-    const projectFuncWithTime = (point: Vec2, center: Vec2, t: number = 0) => {
-      const angle = alphaFunc(t);
-      return projectFunc(point, center, angle);
-    };
-
     return new DelayedSweepingSimulator({
       params: simulation,
       centerFunc,
@@ -91,7 +85,6 @@ export class SimulationFactory {
 
     const centerFunc = createTrajectoryFunction(trajectory);
     const pastFunc = createPastFunction(simulation);
-    const alphaFunc = createAlphaFunction(trajectory);
 
     const evaluator = createExpressionEvaluator(constraint.expression, {
       R: constraint.R,
