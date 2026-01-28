@@ -123,12 +123,18 @@ This gives the unnormalized weights `R_j` for `j = 0, 1, 2, ...`
 The weights are normalized to ensure the delayed average is a proper convex combination:
 
 ```
-μ₀ₕ = h · ∑_{j≥0} R_j
+μ₀ₕ = h · ∑_{j≥1} R_j
 
 r̃_j = R_j / μ₀ₕ
 ```
 
-This ensures `∑_{j≥0} h·r̃_j = 1`.
+**Important**: The normalization sums over j ≥ 1 (not j ≥ 0) because the discrete scheme uses:
+```
+X̄^n = h · ∑_{j≥1} r̃_j · X^{n-j}
+```
+where X̄^n depends on past values X^{n-1}, X^{n-2}, ... but not the current (unknown) value X^n.
+
+This ensures `∑_{j≥1} h·r̃_j = 1`, making X̄^n a proper weighted average of past states.
 
 ### Truncation
 
@@ -159,15 +165,16 @@ export function computeDiscreteWeights(
   // Compute truncation index
   const J_max = Math.ceil(-Math.log(tol) / (epsilon * h));
 
-  // Compute R_j values
+  // Compute R_j values for j = 0, 1, 2, ...
   const factor = (1 / h) * (1 - Math.exp(-epsilon * h));
   const R = [];
   for (let j = 0; j < J_max; j++) {
     R.push(factor * Math.exp(-epsilon * j * h));
   }
 
-  // Normalize
-  const mu_0h = h * R.reduce((sum, r) => sum + r, 0);
+  // Normalize over j >= 1 (excluding j=0)
+  // This matches the simulation loop which starts at j=1
+  const mu_0h = h * R.slice(1).reduce((sum, r) => sum + r, 0);
   return R.map(r => r / mu_0h);
 }
 ```

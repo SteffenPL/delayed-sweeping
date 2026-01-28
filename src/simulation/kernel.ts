@@ -26,7 +26,7 @@ export function computeDiscreteWeights(
     100000 // Safety cap to prevent memory issues
   );
 
-  // Compute R_j values
+  // Compute R_j values for j = 0, 1, 2, ..., J_max-1
   const R: number[] = [];
   const factor = (1 / h) * (1 - Math.exp(-epsilon * h));
 
@@ -34,8 +34,10 @@ export function computeDiscreteWeights(
     R.push(factor * Math.exp(-epsilon * j * h));
   }
 
-  // Compute normalization: mu_0h = h * sum(R_j)
-  const mu_0h = h * R.reduce((sum, r) => sum + r, 0);
+  // Compute normalization: mu_0h = h * sum_{j>=1} R_j
+  // NOTE: We skip j=0 because the simulation loop starts at j=1
+  // (the delayed state X_bar^n depends on X^{n-1}, X^{n-2}, ..., not X^n)
+  const mu_0h = h * R.slice(1).reduce((sum, r) => sum + r, 0);
 
   // Normalize: r_tilde_j = R_j / mu_0h
   return R.map((r) => r / mu_0h);
