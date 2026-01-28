@@ -50,6 +50,32 @@ export function ParameterPanel() {
           />
         </label>
       </div>
+
+      <div className="param-group">
+        <label htmlFor="param-xPast">
+          Initial past x<sub>p</sub>(t)
+          <input
+            id="param-xPast"
+            type="text"
+            value={params.xPastExpression}
+            onChange={(e) => setParams({ xPastExpression: e.target.value })}
+            placeholder="e.g. 2"
+          />
+        </label>
+      </div>
+
+      <div className="param-group">
+        <label htmlFor="param-yPast">
+          Initial past y<sub>p</sub>(t)
+          <input
+            id="param-yPast"
+            type="text"
+            value={params.yPastExpression}
+            onChange={(e) => setParams({ yPastExpression: e.target.value })}
+            placeholder="e.g. 0"
+          />
+        </label>
+      </div>
     </div>
   );
 }

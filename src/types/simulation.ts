@@ -10,6 +10,8 @@ export interface SimulationParameters {
   h: number;           // Time step size
   epsilon: number;     // Kernel decay rate
   infiniteMode: boolean; // Run indefinitely until manually stopped
+  xPastExpression: string;  // Initial past condition x_p(t) for t < 0
+  yPastExpression: string;  // Initial past condition y_p(t) for t < 0
 }
 
 // Constraint configuration - expression-based with standardized parameters

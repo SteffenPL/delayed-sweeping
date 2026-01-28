@@ -1,4 +1,4 @@
-import type { Vec2, ParametricTrajectory } from '@/types';
+import type { Vec2, ParametricTrajectory, SimulationParameters } from '@/types';
 import { compile } from 'mathjs';
 
 /**
@@ -56,14 +56,30 @@ export function createAlphaFunction(
 
 /**
  * Create a past condition function (for t < 0)
- * Default: constant at initial constraint center
+ * Uses x_p(t) and y_p(t) expressions from simulation parameters
  */
 export function createPastFunction(
-  trajectory: ParametricTrajectory
+  params: SimulationParameters
 ): (t: number) => Vec2 {
-  const centerFunc = createTrajectoryFunction(trajectory);
-  const initialCenter = centerFunc(0);
+  try {
+    const xPastFunc = compile(params.xPastExpression);
+    const yPastFunc = compile(params.yPastExpression);
 
-  // Return initial center for all t < 0
-  return () => initialCenter;
+    return (t: number) => {
+      try {
+        const x = xPastFunc.evaluate({ t });
+        const y = yPastFunc.evaluate({ t });
+        return {
+          x: typeof x === 'number' ? x : 0,
+          y: typeof y === 'number' ? y : 0
+        };
+      } catch (error) {
+        console.error('Error evaluating past function at t =', t, error);
+        return { x: 0, y: 0 };
+      }
+    };
+  } catch (error) {
+    console.error('Error compiling past expressions:', error);
+    return () => ({ x: 0, y: 0 });
+  }
 }

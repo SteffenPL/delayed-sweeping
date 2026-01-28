@@ -37,7 +37,7 @@ export function useSimulation() {
   // Initialize simulator
   const initializeSimulator = useCallback(() => {
     const centerFunc = createCenterFunc();
-    const pastFunc = createPastFunction(parametricTrajectory);
+    const pastFunc = createPastFunction(params);
     const alphaFunc = createAlphaFunction(parametricTrajectory);
 
     // Use getter functions to access current constraint state dynamically

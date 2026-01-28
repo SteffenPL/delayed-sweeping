@@ -20,14 +20,15 @@ The **delayed convex sweeping process** is a differential inclusion of the form:
 
 ```
 -dX(t) ∈ N_{C(t)}(X_ρ(t))    for t ∈ [0, T]
-X(t) = X_0(t)                 for t < 0
+X(t) = X_p(t)                 for t < 0
 ```
 
 where:
 - `X(t) ∈ ℝ²` is the trajectory
-- `C(t) ⊂ ℝ²` is a time-varying convex constraint set
+- `C(t) ⊂ ℝ²` is a time-varying convex constraint set (can translate and rotate)
 - `N_{C(t)}(·)` is the normal cone operator to the set `C(t)`
-- `X_ρ(t)` is the **delayed state**, defined as a weighted average of past states:
+- `X_ρ(t)` is the **delayed state**, defined as a weighted average of past states
+- `X_p(t) = (x_p(t), y_p(t))` is the **initial past condition** for `t < 0`
 
 ```
 X_ρ(t) = ∫_{-∞}^{t} ρ(t - s) X(s) ds / ∫_{-∞}^{t} ρ(t - s) ds
@@ -79,7 +80,7 @@ where:
 - `X̄^n` is the pre-projection (delayed) state
 - `r̃_j` are the normalized discrete kernel weights
 - `P_{C^n}(·)` is the projection operator onto `C(t_n)`
-- For `n - j < 0`, we use the initial condition: `X^{n-j} = X_0((n-j)·h)`
+- For `n - j < 0`, we use the initial past condition: `X^{n-j} = X_p((n-j)·h) = (x_p((n-j)·h), y_p((n-j)·h))`
 
 ### Implementation
 
@@ -213,6 +214,23 @@ The simulator uses `math.js` to parse and evaluate arbitrary constraint expressi
 - Ellipse: `1 - (x^2/R^2 + y^2/r^2)`
 - Rectangle: `min(R - abs(x), r - abs(y))`
 
+### Time-Varying Constraints
+
+Constraints can move and rotate over time:
+
+**Center trajectory**: `c(t) = (x(t), y(t))` specified as expressions using `math.js`
+- Example: `x(t) = 2*cos(t)`, `y(t) = 2*sin(t)` (circular motion)
+
+**Rotation angle**: `α(t)` specified as expression
+- Example: `α(t) = 0` (no rotation)
+- Example: `α(t) = t/2` (constant rotation rate)
+
+At time `t_n`, the constraint set is:
+```
+C(t_n) = R(α(t_n)) · C_0 + c(t_n)
+```
+where `R(α)` is a 2D rotation matrix and `C_0` is the base constraint shape.
+
 ### Projection Algorithm
 
 For a point `p` that violates the constraint (`g(p) < 0`), we compute the projection `P_C(p)` using **Newton's method** to find the closest point on the boundary.
@@ -337,6 +355,20 @@ export function projectToConstraint(
 - Larger `ε` → Less delay, behaves more like classical sweeping
 - Smaller `ε` → More inertia, smoother trajectories
 
+### Initial Past Condition (`x_p(t)`, `y_p(t)`)
+
+**Expressions**: User-defined functions for `t < 0`
+
+**Examples**:
+- Constant: `x_p(t) = 2`, `y_p(t) = 0` (stationary at `(2, 0)`)
+- Linear: `x_p(t) = t`, `y_p(t) = 0` (moving linearly)
+- Periodic: `x_p(t) = 2*cos(t)`, `y_p(t) = 2*sin(t)` (circular motion in the past)
+
+**Physical meaning**:
+- Specifies the trajectory history before time `t = 0`
+- Affects the initial transient behavior via the memory kernel
+- After time `T_memory ≈ 1/ε`, the influence of past conditions decays
+
 ### Total Time (`T`)
 
 **Range**: `1.0` to `100.0` (or infinite mode)
@@ -382,16 +414,18 @@ export function projectToConstraint(
 ### Data Flow
 
 ```
-Parameters (T, h, ε)
+Parameters (T, h, ε, x_p(t), y_p(t))
     ↓
 Kernel Weights (r̃_j)
     ↓
+Trajectory Expressions (x(t), y(t), α(t))
+    ↓
 Time Loop (n = 0 to N):
-    Past States (X^{n-j})
+    Past States (X^{n-j} or X_p((n-j)h) if n-j < 0)
         ↓
     Weighted Average (X̄^n)
         ↓
-    Constraint Center (c_n)
+    Constraint Center (c(t_n)) and Angle (α(t_n))
         ↓
     Projection (X^n = P_{C^n}(X̄^n))
         ↓

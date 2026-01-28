@@ -59,6 +59,8 @@ export function TweakpanePanel() {
       T: params.T,
       h: params.h,
       epsilon: params.epsilon,
+      xPastExpression: params.xPastExpression,
+      yPastExpression: params.yPastExpression,
       speed: speed,
 
       // Constraint
@@ -104,6 +106,14 @@ export function TweakpanePanel() {
       step: 0.1,
       label: 'ε'
     }).on('change', (ev: TweakpaneAny) => setParams({ epsilon: ev.value }));
+
+    simFolder.addBinding(PARAMS, 'xPastExpression', {
+      label: 'xₚ(t) (t<0)'
+    }).on('change', (ev: TweakpaneAny) => setParams({ xPastExpression: ev.value }));
+
+    simFolder.addBinding(PARAMS, 'yPastExpression', {
+      label: 'yₚ(t) (t<0)'
+    }).on('change', (ev: TweakpaneAny) => setParams({ yPastExpression: ev.value }));
 
     simFolder.addBinding(PARAMS, 'speed', {
       min: 1,
@@ -316,6 +326,8 @@ export function TweakpanePanel() {
     PARAMS.T = params.T;
     PARAMS.h = params.h;
     PARAMS.epsilon = params.epsilon;
+    PARAMS.xPastExpression = params.xPastExpression;
+    PARAMS.yPastExpression = params.yPastExpression;
     PARAMS.speed = speed;
 
     // Update trajectory params

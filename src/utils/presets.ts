@@ -10,6 +10,8 @@ export const PRESETS: Preset[] = [
       h: 0.01,
       epsilon: 2.0,
       infiniteMode: true,
+      xPastExpression: '2',
+      yPastExpression: '0',
     },
     constraint: {
       expression: 'R - sqrt(x^2 + y^2)',
@@ -33,6 +35,8 @@ export const PRESETS: Preset[] = [
       h: 0.005,
       epsilon: 2.5,
       infiniteMode: true,
+      xPastExpression: '0',
+      yPastExpression: '0',
     },
     constraint: {
       expression: 'R - sqrt(x^2 + y^2)',

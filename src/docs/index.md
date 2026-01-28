@@ -58,6 +58,21 @@ X̄^n = h · Σ r̃_j · X^{n-j}    (weighted average)
 X^n = P_{C^n}(X̄^n)            (projection)
 ```
 
+**Initial Past Condition** (for `t < 0`):
+```
+X_p(t) = (x_p(t), y_p(t))
+```
+- Specified as math expressions (e.g., `x_p(t) = 2`, `y_p(t) = 0`)
+- Affects initial transient behavior
+
+**Trajectory Expressions** (for constraint motion):
+```
+Center: c(t) = (x(t), y(t))
+Rotation: α(t)
+```
+- Example: `x(t) = 2*cos(t)`, `y(t) = 2*sin(t)`, `α(t) = 0` (circular motion, no rotation)
+- Example: `x(t) = 0`, `y(t) = 0`, `α(t) = t/2` (stationary, rotating)
+
 ### Mathematical Notation
 
 | Symbol | Meaning |
@@ -65,12 +80,15 @@ X^n = P_{C^n}(X̄^n)            (projection)
 | `X(t)` | Trajectory at time t |
 | `C(t)` | Time-varying constraint set |
 | `X_ρ(t)` | Delayed state (weighted average) |
+| `X_p(t)` | Initial past condition for t < 0 |
 | `ρ(a)` | Exponential kernel function |
 | `ε` | Kernel decay rate |
 | `h` | Time step size |
 | `r̃_j` | Normalized discrete kernel weights |
 | `P_C(·)` | Projection operator onto set C |
 | `N_C(·)` | Normal cone to set C |
+| `c(t)` | Constraint center trajectory |
+| `α(t)` | Constraint rotation angle |
 
 ## Documentation Sections
 
@@ -122,6 +140,11 @@ Key parameters:
 - **h**: Time step (smaller = more accurate)
 - **ε**: Decay rate (larger = shorter memory)
 - **T**: Total simulation time
+- **x_p(t), y_p(t)**: Initial past condition expressions
+
+Key trajectory settings:
+- **x(t), y(t)**: Constraint center motion
+- **α(t)**: Constraint rotation angle
 
 **Learn more**: [Numerics - Numerical Parameters](./numerics.md#numerical-parameters)
 
@@ -178,6 +201,17 @@ Any constraint definable as `g(x, y) ≥ 0` where:
 Examples: disks, ellipses, rectangles, star shapes, polygons.
 
 **Important**: Constraints must be **convex** for theoretical guarantees.
+
+### How do time-varying constraints work?
+
+Constraints can translate and rotate over time using expressions:
+- **Translation**: Center moves along `c(t) = (x(t), y(t))`
+- **Rotation**: Shape rotates by angle `α(t)`
+- All expressions use `math.js` syntax with variable `t`
+- Examples:
+  - Circular path: `x(t) = 2*cos(t)`, `y(t) = 2*sin(t)`
+  - Constant rotation: `α(t) = t/2`
+  - Stationary: `x(t) = 0`, `y(t) = 0`, `α(t) = 0`
 
 ### How accurate is the simulation?
 
