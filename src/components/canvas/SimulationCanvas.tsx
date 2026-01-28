@@ -4,7 +4,6 @@ import { useSimulationStore } from '@/store';
 import { DEFAULT_SCALE } from '@/constants/defaults';
 import { vec2 } from '@/simulation/vec2';
 import type { Vec2 } from '@/types';
-import { useViewport } from './useViewport';
 
 interface SimulationCanvasProps {
   width?: number;
@@ -31,15 +30,26 @@ export function SimulationCanvas({ width = 600, height = 400 }: SimulationCanvas
     trajectoryMode,
     dragPosition,
     setDragPosition,
-    zoom,
-    pan,
   } = useSimulationStore();
 
   const scale = DEFAULT_SCALE;
-  const { worldToScreen, screenToWorld, handleWheel: handleViewportWheel, handlePan } = useViewport(
-    width,
-    height,
-    scale
+
+  // World to screen coordinate transform
+  const worldToScreen = useCallback(
+    (p: Vec2): Vec2 => ({
+      x: p.x * scale + width / 2,
+      y: -p.y * scale + height / 2,
+    }),
+    [scale, width, height]
+  );
+
+  // Screen to world coordinate transform
+  const screenToWorld = useCallback(
+    (screen: Vec2): Vec2 => ({
+      x: (screen.x - width / 2) / scale,
+      y: -(screen.y - height / 2) / scale,
+    }),
+    [scale, width, height]
   );
 
   // Initialize PixiJS
@@ -48,9 +58,6 @@ export function SimulationCanvas({ width = 600, height = 400 }: SimulationCanvas
 
     let mounted = true;
     let app: Application | null = null;
-    let unsubscribe: (() => void) | undefined;
-    let handleKeyDown: ((e: KeyboardEvent) => void) | undefined;
-    let handleKeyUp: ((e: KeyboardEvent) => void) | undefined;
     const container = containerRef.current;
 
     (async () => {
@@ -92,15 +99,13 @@ export function SimulationCanvas({ width = 600, height = 400 }: SimulationCanvas
       trajectoryGraphics.current = trajectoryG;
       markerGraphics.current = markerG;
 
-      // Draw grid (needs to update with zoom/pan)
+      // Draw grid (static, only needs to be drawn once)
       const drawGrid = () => {
         gridG.clear();
 
-        const { zoom: currentZoom, pan: currentPan } = useSimulationStore.getState();
-        const effectiveScale = scale * currentZoom;
-        const centerX = width / 2 + currentPan.x * effectiveScale;
-        const centerY = height / 2 - currentPan.y * effectiveScale;
-        const gridSpacing = effectiveScale; // 1 unit in world coordinates
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const gridSpacing = scale; // 1 unit in world coordinates
         const lightGray = 0xe5e5e5;
         const darkGray = 0xcccccc;
 
@@ -123,52 +128,18 @@ export function SimulationCanvas({ width = 600, height = 400 }: SimulationCanvas
 
       drawGrid();
 
-      // Subscribe to zoom/pan changes to redraw grid
-      unsubscribe = useSimulationStore.subscribe(
-        (state) => [state.zoom, state.pan] as const,
-        () => {
-          if (gridG) drawGrid();
-        }
-      );
-
       // Set up interaction
       app.stage.eventMode = 'static';
       app.stage.hitArea = app.screen;
 
       let isDragging = false;
       let isDragLocked = false; // For shift+click lock
-      let isPanning = false;
-      let lastPanPos = { x: 0, y: 0 };
-      let isSpacePressed = false;
-
-      // Track space key for pan modifier
-      handleKeyDown = (e: KeyboardEvent) => {
-        if (e.code === 'Space') {
-          isSpacePressed = true;
-          e.preventDefault();
-        }
-      };
-      handleKeyUp = (e: KeyboardEvent) => {
-        if (e.code === 'Space') {
-          isSpacePressed = false;
-        }
-      };
-
-      window.addEventListener('keydown', handleKeyDown);
-      window.addEventListener('keyup', handleKeyUp);
 
       app.stage.on('pointerdown', (event) => {
         const { trajectoryMode: mode } = useSimulationStore.getState();
-        const originalEvent = event.nativeEvent as PointerEvent;
+        if (mode === 'free-drag') {
+          const originalEvent = event.nativeEvent as PointerEvent;
 
-        // Middle mouse button or space+drag for panning
-        if (originalEvent.button === 1 || (originalEvent.button === 0 && isSpacePressed)) {
-          isPanning = true;
-          lastPanPos = { x: event.global.x, y: event.global.y };
-          return;
-        }
-
-        if (mode === 'free-drag' && originalEvent.button === 0 && !isSpacePressed) {
           if (originalEvent.shiftKey) {
             // Shift+click: toggle drag lock
             isDragLocked = !isDragLocked;
@@ -187,14 +158,6 @@ export function SimulationCanvas({ width = 600, height = 400 }: SimulationCanvas
       });
 
       app.stage.on('pointermove', (event) => {
-        if (isPanning) {
-          const deltaX = event.global.x - lastPanPos.x;
-          const deltaY = event.global.y - lastPanPos.y;
-          handlePan(deltaX, deltaY);
-          lastPanPos = { x: event.global.x, y: event.global.y };
-          return;
-        }
-
         const { trajectoryMode: mode } = useSimulationStore.getState();
         if (mode === 'free-drag' && (isDragging || isDragLocked)) {
           const pos = screenToWorld({ x: event.global.x, y: event.global.y });
@@ -203,32 +166,22 @@ export function SimulationCanvas({ width = 600, height = 400 }: SimulationCanvas
       });
 
       app.stage.on('pointerup', () => {
-        // Stop panning and dragging
-        isPanning = false;
+        // Only stop normal dragging, keep locked drag active
         isDragging = false;
       });
 
       app.stage.on('pointerupoutside', () => {
-        // Stop panning and dragging
-        isPanning = false;
+        // Only stop normal dragging, keep locked drag active
         isDragging = false;
       });
 
-      // Mouse wheel handler - zoom with Ctrl/Cmd, rotate without
+      // Mouse wheel rotation handler
       const handleWheel = (event: WheelEvent) => {
-        const isCtrlOrCmd = event.ctrlKey || event.metaKey;
-
-        if (isCtrlOrCmd) {
-          // Zoom with Ctrl/Cmd
-          handleViewportWheel(event, true);
-        } else {
-          // Rotate constraint with plain wheel
-          event.preventDefault();
-          const { constraintAngle, setConstraintAngle } = useSimulationStore.getState();
-          // ~3 degrees per tick
-          const delta = event.deltaY > 0 ? 0.05 : -0.05;
-          setConstraintAngle(constraintAngle + delta);
-        }
+        event.preventDefault();
+        const { constraintAngle, setConstraintAngle } = useSimulationStore.getState();
+        // ~3 degrees per tick
+        const delta = event.deltaY > 0 ? 0.05 : -0.05;
+        setConstraintAngle(constraintAngle + delta);
       };
 
       container.addEventListener('wheel', handleWheel, { passive: false });
@@ -236,9 +189,6 @@ export function SimulationCanvas({ width = 600, height = 400 }: SimulationCanvas
 
     return () => {
       mounted = false;
-      if (handleKeyDown) window.removeEventListener('keydown', handleKeyDown);
-      if (handleKeyUp) window.removeEventListener('keyup', handleKeyUp);
-      if (unsubscribe) unsubscribe();
       // Only destroy if app was fully initialized
       if (app && appRef.current === app) {
         appRef.current = null;
@@ -250,7 +200,7 @@ export function SimulationCanvas({ width = 600, height = 400 }: SimulationCanvas
         app.destroy(true, { children: true });
       }
     };
-  }, [width, height, worldToScreen, screenToWorld, handleViewportWheel, handlePan]);
+  }, [width, height]);
 
   // Draw constraint using precomputed boundary polygon
   const drawConstraint = useCallback(
@@ -387,25 +337,25 @@ export function SimulationCanvas({ width = 600, height = 400 }: SimulationCanvas
     }
 
     drawConstraint(constraintGraphics.current, boundaryPolygon, center, constraintAngle);
-  }, [boundaryPolygon, constraintAngle, constraintCenters, currentStep, trajectoryMode, dragPosition, drawConstraint, zoom, pan]);
+  }, [boundaryPolygon, constraintAngle, constraintCenters, currentStep, trajectoryMode, dragPosition, drawConstraint]);
 
   // Update classical trajectory visualization
   useEffect(() => {
     if (!classicalTrajectoryGraphics.current) return;
     drawClassicalTrajectory(classicalTrajectoryGraphics.current, classicalTrajectory);
-  }, [classicalTrajectory, drawClassicalTrajectory, zoom, pan]);
+  }, [classicalTrajectory, drawClassicalTrajectory]);
 
   // Update delayed trajectory visualization
   useEffect(() => {
     if (!trajectoryGraphics.current) return;
     drawTrajectory(trajectoryGraphics.current, trajectory);
-  }, [trajectory, drawTrajectory, zoom, pan]);
+  }, [trajectory, drawTrajectory]);
 
   // Update markers
   useEffect(() => {
     if (!markerGraphics.current) return;
     drawMarkers(markerGraphics.current, trajectory, preProjection, classicalTrajectory);
-  }, [trajectory, preProjection, classicalTrajectory, drawMarkers, zoom, pan]);
+  }, [trajectory, preProjection, classicalTrajectory, drawMarkers]);
 
   return (
     <div

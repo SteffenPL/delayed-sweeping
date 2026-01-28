@@ -2,7 +2,7 @@ import type { SimulationConfig } from '@/types/config';
 import type { Vec2 } from '@/types';
 import { DelayedSweepingSimulator } from './DelayedSweepingSimulator';
 import { ClassicalSweepingSimulator } from './ClassicalSweepingSimulator';
-import { createTrajectoryFunction, createPastFunction } from '@/utils/trajectoryFunctions';
+import { createTrajectoryFunction, createPastFunction, createAlphaFunction } from '@/utils/trajectoryFunctions';
 import {
   createExpressionEvaluator,
   projectToConstraint,
@@ -26,6 +26,9 @@ export class SimulationFactory {
 
     // Create past function from simulation parameters
     const pastFunc = createPastFunction(simulation);
+
+    // Create alpha function for rotation
+    const alphaFunc = createAlphaFunction(trajectory);
 
     // Create constraint evaluator with parameters
     const evaluator = createExpressionEvaluator(constraint.expression, {
@@ -63,6 +66,12 @@ export class SimulationFactory {
       };
     };
 
+    // For standalone execution, we need a wrapper that uses alpha(t)
+    const projectFuncWithTime = (point: Vec2, center: Vec2, t: number = 0) => {
+      const angle = alphaFunc(t);
+      return projectFunc(point, center, angle);
+    };
+
     return new DelayedSweepingSimulator({
       params: simulation,
       centerFunc,
@@ -82,6 +91,7 @@ export class SimulationFactory {
 
     const centerFunc = createTrajectoryFunction(trajectory);
     const pastFunc = createPastFunction(simulation);
+    const alphaFunc = createAlphaFunction(trajectory);
 
     const evaluator = createExpressionEvaluator(constraint.expression, {
       R: constraint.R,

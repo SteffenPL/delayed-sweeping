@@ -1,7 +1,6 @@
-export { ControlPanel } from './ControlPanel';
+export { ParameterPanel } from './ParameterPanel';
 export { PlaybackControls } from './PlaybackControls';
 export { PresetSelector } from './PresetSelector';
-export { ConfigControls } from './ConfigControls';
-export { SimulationSection } from './SimulationSection';
-export { ConstraintSection } from './ConstraintSection';
-export { TrajectorySection } from './TrajectorySection';
+export { TrajectoryModeSelector } from './TrajectoryModeSelector';
+export { SaveLoadPanel } from './SaveLoadPanel';
+export { TweakpanePanel } from './TweakpanePanel';

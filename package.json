@@ -12,15 +12,13 @@
     "simulate": "tsx src/cli/index.ts"
   },
   "dependencies": {
-    "@headlessui/react": "^2.2.9",
-    "lucide-react": "^0.563.0",
     "mathjs": "^15.1.0",
     "pixi.js": "^8.3.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^2.12.0",
     "smol-toml": "^1.6.0",
-    "tailwindcss": "^4.0.0",
+    "tweakpane": "^4.0.5",
     "zustand": "^4.5.0"
   },
   "devDependencies": {

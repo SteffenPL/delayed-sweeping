@@ -41,7 +41,7 @@ export function StatisticsPanel() {
     }
 
     // Compute kernel weights for delayed energy calculation
-    const rTilde = computeDiscreteWeights(params.epsilon, params.h);
+    const rTilde = computeDiscreteWeights(params.lambda, params.h);
 
     // Helper function to compute statistics for a given trajectory
     const computeTrajectoryStats = (traj: Vec2[], xBars: Vec2[], isClassical: boolean = false) => {
@@ -177,7 +177,7 @@ export function StatisticsPanel() {
       classicalGradientNorm: classicalGradientNorms,
       classicalLagrangeMultiplierValue,
     };
-  }, [trajectory, preProjection, classicalTrajectory, projectionDistances, gradientNorms, classicalGradientNorms, params.h, params.epsilon]);
+  }, [trajectory, preProjection, classicalTrajectory, projectionDistances, gradientNorms, classicalGradientNorms, params.h, params.lambda]);
 
   const chartData = useMemo(() => {
     return statistics.time.map((t, i) => ({

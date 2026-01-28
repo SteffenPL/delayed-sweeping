@@ -28,7 +28,7 @@ export function tomlToConfig(toml: string): SimulationConfig {
     throw new Error('Invalid TOML: missing required sections (simulation, constraint, trajectory)');
   }
 
-  return parsed as unknown as SimulationConfig;
+  return parsed as SimulationConfig;
 }
 
 /**
