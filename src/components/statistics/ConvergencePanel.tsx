@@ -2,7 +2,6 @@ import { useState, useMemo, useCallback } from 'react';
 import { useSimulationStore } from '@/store';
 import { AVAILABLE_METRICS, CONVERGENCE_METRICS } from '@/constants/defaults';
 import { SimulationFactory } from '@/simulation/SimulationFactory';
-import { computeDiscreteWeights } from '@/simulation/kernel';
 import { ConvergenceChart } from './ConvergenceChart';
 import type { Vec2 } from '@/types';
 import type { SimulationConfig } from '@/types/config';
@@ -48,8 +47,7 @@ function computeTerminalStatistics(
   projectionDistances: number[],
   gradientNorms: number[],
   classicalGradientNorms: number[],
-  h: number,
-  epsilon: number
+  h: number
 ): { stats: Record<string, number>; terminalPosition: Vec2; terminalLambda: number; classicalTerminalPosition: Vec2; classicalTerminalLambda: number } {
   const n = trajectory.length;
   if (n === 0) {
@@ -86,9 +84,6 @@ function computeTerminalStatistics(
   const maxProjDistance = projectionDistances.length > 0 ? Math.max(...projectionDistances) : 0;
   const minProjDistance = projectionDistances.length > 0 ? Math.min(...projectionDistances.filter(d => d > 0)) : 0;
 
-  // Compute kernel weights for energy calculation
-  const rTilde = computeDiscreteWeights(epsilon, h);
-
   // Compute full Lagrange stats arrays for min/max
   const computeFullLagrangeStats = (traj: Vec2[], xBars: Vec2[], grads: number[]) => {
     const lagrangeMultipliers: number[] = [];
@@ -99,34 +94,39 @@ function computeTerminalStatistics(
     let terminalDotProduct = 0;
 
     for (let idx = 1; idx < traj.length; idx++) {
-      // Compute X_bar for this step
-      let xBarX = 0, xBarY = 0;
-      for (let j = 0; j < Math.min(rTilde.length, idx + 1); j++) {
-        if (idx - j >= 0) {
-          xBarX += h * rTilde[j] * traj[idx - j].x;
-          xBarY += h * rTilde[j] * traj[idx - j].y;
-        }
-      }
+      // Use the passed xBars (preProjection) for X̄ values
+      // This is consistent with StatisticsPanel
+      const xBarCurrent = xBars[idx] ?? { x: 0, y: 0 };
+      const xBarPrev = xBars[idx - 1] ?? { x: 0, y: 0 };
 
-      // Compute displacement and Lagrange multiplier
-      const deltaX = traj[idx].x - xBarX;
-      const deltaY = traj[idx].y - xBarY;
-      const lambdaG = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      // λₙGₙ = Xₙ - X̄ₙ (displacement from delayed average to current position)
+      const lambda_n_Gn_x = traj[idx].x - xBarCurrent.x;
+      const lambda_n_Gn_y = traj[idx].y - xBarCurrent.y;
+      const lambdaG = Math.sqrt(lambda_n_Gn_x * lambda_n_Gn_x + lambda_n_Gn_y * lambda_n_Gn_y);
       
-      // Compute lambda value (scalar)
+      // Compute lambda value (scalar): λₙ = ||Xₙ - X̄ₙ|| / ||∇g(Xₙ)||
       const gNorm = grads[idx] ?? 1;
       const lambdaValue = gNorm > 1e-10 ? lambdaG / gNorm : 0;
       lagrangeMultipliers.push(lambdaValue);
 
-      // Compute dot product term
+      // Compute dot product: ⟨λₙGₙ - λₙ₋₁Gₙ₋₁, Xₙ - Xₙ₋₁⟩
+      // where λₙGₙ = Xₙ - X̄ₙ
       let dotProduct = 0;
-      if (idx > 0) {
-        const prevDeltaX = traj[idx - 1].x - (xBars[idx - 1]?.x ?? 0);
-        const prevDeltaY = traj[idx - 1].y - (xBars[idx - 1]?.y ?? 0);
-        const stepX = traj[idx].x - traj[idx - 1].x;
-        const stepY = traj[idx].y - traj[idx - 1].y;
-        dotProduct = (deltaX - prevDeltaX) * stepX + (deltaY - prevDeltaY) * stepY;
-      }
+      
+      // λₙ₋₁Gₙ₋₁ = Xₙ₋₁ - X̄ₙ₋₁
+      const lambda_nm1_Gnm1_x = traj[idx - 1].x - xBarPrev.x;
+      const lambda_nm1_Gnm1_y = traj[idx - 1].y - xBarPrev.y;
+
+      // Difference: λₙGₙ - λₙ₋₁Gₙ₋₁
+      const diff_x = lambda_n_Gn_x - lambda_nm1_Gnm1_x;
+      const diff_y = lambda_n_Gn_y - lambda_nm1_Gnm1_y;
+
+      // Xₙ - Xₙ₋₁
+      const step_x = traj[idx].x - traj[idx - 1].x;
+      const step_y = traj[idx].y - traj[idx - 1].y;
+
+      // Dot product: ⟨λₙGₙ - λₙ₋₁Gₙ₋₁, Xₙ - Xₙ₋₁⟩
+      dotProduct = diff_x * step_x + diff_y * step_y;
       dotProducts.push(dotProduct);
 
       // Store terminal values
@@ -295,8 +295,7 @@ export function ConvergencePanel() {
           result.delayed.projectionDistances,
           result.delayed.gradientNorms,
           result.classical.gradientNorms,
-          h,
-          params.epsilon
+          h
         );
 
         newResults.push({

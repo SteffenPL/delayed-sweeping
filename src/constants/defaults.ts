@@ -63,16 +63,16 @@ export const CONVERGENCE_METRICS = [
   // Delayed sweeping min/max
   { id: 'maxProjDistance', label: 'max ||X - X̄||', color: '#2563eb' },
   { id: 'minProjDistance', label: 'min ||X - X̄||', color: '#60a5fa' },
-  { id: 'maxLagrangeDotProduct', label: 'max ⟨λG⟩', color: '#0891b2' },
-  { id: 'minLagrangeDotProduct', label: 'min ⟨λG⟩', color: '#67e8f9' },
+  { id: 'maxLagrangeDotProduct', label: 'max ⟨λₙGₙ - λₙ₋₁Gₙ₋₁, Xₙ - Xₙ₋₁⟩', color: '#0891b2' },
+  { id: 'minLagrangeDotProduct', label: 'min ⟨λₙGₙ - λₙ₋₁Gₙ₋₁, Xₙ - Xₙ₋₁⟩', color: '#67e8f9' },
   { id: 'maxLagrangeMultiplier', label: 'max λₙ', color: '#be185d' },
   { id: 'minLagrangeMultiplier', label: 'min λₙ', color: '#f9a8d4' },
 
   // Classical sweeping min/max
   { id: 'classicalMaxProjDistance', label: 'Classical max ||X - X̄||', color: '#5b21b6' },
   { id: 'classicalMinProjDistance', label: 'Classical min ||X - X̄||', color: '#a78bfa' },
-  { id: 'classicalMaxLagrangeDotProduct', label: 'Classical max ⟨λG⟩', color: '#0e7490' },
-  { id: 'classicalMinLagrangeDotProduct', label: 'Classical min ⟨λG⟩', color: '#22d3ee' },
+  { id: 'classicalMaxLagrangeDotProduct', label: 'Classical max ⟨λₙGₙ - λₙ₋₁Gₙ₋₁, Xₙ - Xₙ₋₁⟩', color: '#0e7490' },
+  { id: 'classicalMinLagrangeDotProduct', label: 'Classical min ⟨λₙGₙ - λₙ₋₁Gₙ₋₁, Xₙ - Xₙ₋₁⟩', color: '#22d3ee' },
   { id: 'classicalMaxLagrangeMultiplier', label: 'Classical max λₙ', color: '#9d174d' },
   { id: 'classicalMinLagrangeMultiplier', label: 'Classical min λₙ', color: '#fda4af' },
 
