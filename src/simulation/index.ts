@@ -6,3 +6,4 @@ export { ClassicalSweepingSimulator } from './ClassicalSweepingSimulator';
 export type { ClassicalSweepingConfig } from './ClassicalSweepingSimulator';
 export { SimulationRunner } from './SimulationRunner';
 export type { StepCallback, CompleteCallback } from './SimulationRunner';
+export { SimulationFactory } from './SimulationFactory';

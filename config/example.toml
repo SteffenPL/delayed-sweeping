@@ -1,0 +1,27 @@
+# Example Simulation Configuration
+# Delayed Sweeping Process
+
+[metadata]
+name = "Circular Motion Example"
+description = "Circular trajectory with disk constraint"
+author = "Delayed Sweeping Simulator"
+
+[simulation]
+T = 10.0                    # Final time (seconds)
+h = 0.01                    # Time step
+epsilon = 2.0               # Kernel decay rate (1/epsilon = memory time scale)
+infiniteMode = false        # Run for fixed time T
+xPastExpression = "2"       # Initial past condition x_p(t) for t < 0
+yPastExpression = "0"       # Initial past condition y_p(t) for t < 0
+
+[constraint]
+expression = "R - sqrt(x^2 + y^2)"  # Disk constraint: g(x,y) >= 0
+R = 0.8                              # Disk radius
+r = 0.5                              # (not used for disk)
+a = 0.0                              # General parameter
+b = 0.0                              # General parameter
+
+[trajectory]
+xExpression = "2 * cos(t)"     # Constraint center x(t)
+yExpression = "2 * sin(t)"     # Constraint center y(t)
+alphaExpression = "0"          # Constraint rotation angle α(t)

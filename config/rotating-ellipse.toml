@@ -1,0 +1,25 @@
+# Rotating Ellipse Configuration
+
+[metadata]
+name = "Rotating Ellipse"
+description = "Elliptical constraint rotating over time"
+
+[simulation]
+T = 15.0
+h = 0.01
+epsilon = 1.5
+infiniteMode = false
+xPastExpression = "0"
+yPastExpression = "1.5"
+
+[constraint]
+expression = "1 - sqrt((x/R)^2 + (y/r)^2)"  # Ellipse
+R = 1.2                                       # Semi-major axis
+r = 0.6                                       # Semi-minor axis
+a = 0.0
+b = 0.0
+
+[trajectory]
+xExpression = "0"          # Stationary center
+yExpression = "0"
+alphaExpression = "t/2"    # Rotate at constant rate

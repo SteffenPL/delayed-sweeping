@@ -1,0 +1,25 @@
+# Figure-8 (Lissajous) Configuration
+
+[metadata]
+name = "Figure-8 Motion"
+description = "Lissajous curve trajectory"
+
+[simulation]
+T = 12.0
+h = 0.005
+epsilon = 2.5
+infiniteMode = false
+xPastExpression = "0"
+yPastExpression = "0"
+
+[constraint]
+expression = "R - sqrt(x^2 + y^2)"
+R = 0.5
+r = 0.3
+a = 0.0
+b = 0.0
+
+[trajectory]
+xExpression = "2 * sin(t)"
+yExpression = "2 * sin(2*t)"
+alphaExpression = "0"

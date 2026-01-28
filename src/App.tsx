@@ -4,6 +4,7 @@ import {
   PlaybackControls,
   TweakpanePanel,
 } from '@/components/controls';
+import { ConfigControls } from '@/components/controls/ConfigControls';
 import { StatisticsPanel } from '@/components/statistics';
 import { useSimulationStore } from '@/store';
 import './index.css';
@@ -19,8 +20,13 @@ export function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Delayed Sweeping Simulator</h1>
-        <p className="subtitle">Interactive visualization of the delayed convex sweeping process</p>
+        <div className="header-content">
+          <div className="header-title">
+            <h1>Delayed Sweeping Simulator</h1>
+            <p className="subtitle">Interactive visualization of the delayed convex sweeping process</p>
+          </div>
+          <ConfigControls />
+        </div>
       </header>
 
       <main className="app-main">

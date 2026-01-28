@@ -16,14 +16,24 @@ This simulator implements the numerical time-stepping scheme for delayed convex 
 
 ## Features
 
-- **Multiple constraint shapes**: Ball, star, polygon, and custom shapes via mathematical expressions
+### Web UI
+- **Multiple constraint shapes**: Disk, ellipse, stadium, rectangle, diamond, and custom shapes via mathematical expressions
+- **Expression-based trajectories**: Define constraint motion using `x(t)`, `y(t)`, and rotation `α(t)`
 - **Trajectory modes**:
-  - Parametric trajectories (predefined motion paths)
+  - Parametric trajectories with expression-based motion
   - Free-drag mode (interactive constraint manipulation)
-- **Real-time parameter control**: Adjust time step, kernel decay rate, constraint size, and more
-- **Statistics & visualization**: Track and export metrics like distance, speed, and constraint violations
+- **Real-time parameter control**: Adjust time step, kernel decay rate ε, and initial past conditions
+- **Statistics & visualization**: Track and export metrics like projection distance, velocity, and gradient norms
 - **Preset scenarios**: Quick-start templates for common configurations
-- **Export capabilities**: Save simulation data for further analysis
+- **Configuration management**: Save/Load configurations as TOML files
+
+### Command Line Interface
+- **Batch simulations**: Run simulations from TOML configuration files
+- **Standalone execution**: No UI dependencies, perfect for parameter sweeps and convergence studies
+- **Multiple output formats**: TSV (tab-separated) and JSON
+- **Scriptable**: Integrate into analysis pipelines
+
+See [CLI.md](CLI.md) for detailed CLI usage.
 
 ## Running Locally
 
@@ -42,11 +52,14 @@ cd delayed-sweeping
 # Install dependencies
 npm install
 
-# Start development server
+# Start development server (Web UI)
 npm run dev
+
+# OR run a simulation via CLI
+npm run simulate -- config/example.toml -o output/results.tsv -v
 ```
 
-The application will be available at `http://localhost:5173`
+The web application will be available at `http://localhost:5173`
 
 ### Building for Production
 
@@ -59,28 +72,50 @@ npm run preview
 
 The discrete time-stepping scheme implements a delayed convex sweeping process:
 
-- **Kernel**: Exponential kernel `ρ(a) = λe^{-λa}` with memory effect
-- **Constraint**: Time-varying convex set `C(t)` (ball, star, polygon, or custom)
-- **Projection**: Closest point projection onto the constraint set
+- **Kernel**: Exponential kernel `ρ(a) = εe^{-εa}` with memory effect
+- **Constraint**: Time-varying convex set `C(t)` that can translate and rotate
+- **Projection**: Closest point projection onto the constraint set via Newton's method
+- **Initial past condition**: User-defined `x_p(t)`, `y_p(t)` for `t < 0`
 
-Key parameters:
+### Key Parameters
+
+**Simulation**:
 - `T`: Final simulation time
-- `h`: Time step (smaller = more accurate, slower)
-- `lambda`: Kernel decay rate (larger = shorter memory)
-- `R`: Constraint size (radius for ball)
+- `h`: Time step (smaller = more accurate)
+- `ε` (epsilon): Kernel decay rate (larger = shorter memory, memory time ≈ 1/ε)
+- `x_p(t)`, `y_p(t)`: Initial past condition expressions
+
+**Constraint**:
+- `expression`: Signed distance function g(x,y) ≥ 0
+- `R`, `r`, `a`, `b`: Parameters available in expressions
+
+**Trajectory** (parametric mode):
+- `x(t)`, `y(t)`: Constraint center motion
+- `α(t)`: Constraint rotation angle
+
+All expressions use [math.js](https://mathjs.org/) syntax.
 
 ## Project Structure
 
 ```
 src/
 ├── simulation/          # Core simulation engine
-│   ├── DelayedSweepingSimulator.ts
-│   ├── kernel.ts
-│   └── vec2.ts
+│   ├── DelayedSweepingSimulator.ts  # Main delayed sweeping algorithm
+│   ├── ClassicalSweepingSimulator.ts # Classical sweeping (no delay)
+│   ├── SimulationFactory.ts          # Standalone simulation creation
+│   ├── kernel.ts                     # Exponential kernel weights
+│   └── vec2.ts                       # 2D vector utilities
+├── cli/                 # Command-line interface
+│   └── index.ts
 ├── shapes/              # Constraint shape definitions
 ├── components/          # React UI components
 ├── store/               # State management (Zustand)
-└── utils/               # Helpers, presets, export
+├── utils/               # Helpers, presets, export, TOML
+├── types/               # TypeScript type definitions
+└── docs/                # Documentation (numerics, statistics)
+
+config/                  # Example TOML configuration files
+output/                  # CLI output directory (gitignored)
 ```
 
 ## Technologies
@@ -90,7 +125,38 @@ src/
 - **PixiJS** - High-performance 2D rendering
 - **Zustand** - State management
 - **Recharts** - Data visualization
+- **math.js** - Expression parsing and evaluation
+- **smol-toml** - TOML configuration format
+- **tsx** - TypeScript execution for CLI
 - **Vite** - Build tool
+
+## Documentation
+
+- [CLI.md](CLI.md) - Command-line interface usage
+- [CLAUDE.md](CLAUDE.md) - Development documentation
+- [src/docs/numerics.md](src/docs/numerics.md) - Mathematical formulation and numerical implementation
+- [src/docs/statistics.md](src/docs/statistics.md) - Statistical quantities and metrics
+- [src/docs/index.md](src/docs/index.md) - Documentation overview
+
+## Quick Start Examples
+
+### Web UI
+1. Open http://localhost:5173 after `npm run dev`
+2. Use preset buttons or adjust parameters in the sidebar
+3. Click "Save Config" to export as TOML
+4. Click "Load Config" to import a saved TOML file
+
+### CLI
+```bash
+# Run example simulation
+npm run simulate -- config/example.toml -v
+
+# Run with custom output
+npm run simulate -- config/figure8.toml -o results/figure8.tsv
+
+# JSON output for further processing
+npm run simulate -- config/rotating-ellipse.toml -f json -o data.json
+```
 
 ## License
 

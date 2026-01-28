@@ -142,3 +142,8 @@ vite.config.ts.timestamp-*
 
 # bv (beads viewer) local config and caches
 .bv/
+
+# Simulation output files
+output/
+*.tsv
+*.toml.bak

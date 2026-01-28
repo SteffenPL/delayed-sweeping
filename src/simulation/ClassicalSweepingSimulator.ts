@@ -99,6 +99,17 @@ export class ClassicalSweepingSimulator {
   }
 
   /**
+   * Run full simulation (batch mode)
+   */
+  simulate(): void {
+    this.reset();
+    const N = Math.floor(this.params.T / this.params.h);
+    for (let n = 0; n <= N; n++) {
+      this.step(n);
+    }
+  }
+
+  /**
    * Reset simulation
    */
   reset(): void {
