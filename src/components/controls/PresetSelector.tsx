@@ -1,24 +1,29 @@
 import { useSimulationStore } from '@/store';
 import { PRESETS } from '@/utils';
+import { Collapsible, Button } from '@/components/ui';
 
 export function PresetSelector() {
   const { loadPreset } = useSimulationStore();
 
   return (
-    <div className="preset-selector">
-      <h3>Presets</h3>
-      <div className="preset-buttons">
+    <Collapsible title="Presets" defaultOpen={false}>
+      <div className="flex flex-col gap-2">
         {PRESETS.map((preset) => (
-          <button
+          <Button
             key={preset.id}
-            className="btn btn-preset"
+            variant="ghost"
+            size="sm"
             onClick={() => loadPreset(preset.id)}
             title={preset.description}
+            className="justify-start"
           >
-            {preset.name}
-          </button>
+            <div className="flex flex-col items-start gap-0.5">
+              <span className="font-medium">{preset.name}</span>
+              <span className="text-xs opacity-75">{preset.description}</span>
+            </div>
+          </Button>
         ))}
       </div>
-    </div>
+    </Collapsible>
   );
 }

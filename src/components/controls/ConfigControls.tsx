@@ -1,6 +1,8 @@
 import { useSimulationStore } from '@/store';
 import { configToTOML, downloadTOML, loadTOMLFile } from '@/utils/toml';
 import type { SimulationConfig } from '@/types/config';
+import { Collapsible, Button } from '@/components/ui';
+import { Save, FolderOpen, Copy } from 'lucide-react';
 
 export function ConfigControls() {
   const {
@@ -61,19 +63,18 @@ export function ConfigControls() {
   };
 
   return (
-    <div className="config-controls">
-      <h3>Configuration</h3>
-      <div className="button-group">
-        <button className="btn" onClick={handleSave}>
-          💾 Save Config
-        </button>
-        <button className="btn" onClick={handleLoad}>
-          📂 Load Config
-        </button>
-        <button className="btn btn-small" onClick={handleExportPreview}>
-          📋 Copy TOML
-        </button>
+    <Collapsible title="Configuration" defaultOpen={false}>
+      <div className="flex flex-col gap-2">
+        <Button onClick={handleSave} variant="ghost" size="sm" className="gap-2 justify-start">
+          <Save className="w-4 h-4" /> Save Config (TOML)
+        </Button>
+        <Button onClick={handleLoad} variant="ghost" size="sm" className="gap-2 justify-start">
+          <FolderOpen className="w-4 h-4" /> Load Config (TOML)
+        </Button>
+        <Button onClick={handleExportPreview} variant="ghost" size="sm" className="gap-2 justify-start">
+          <Copy className="w-4 h-4" /> Copy as TOML
+        </Button>
       </div>
-    </div>
+    </Collapsible>
   );
 }

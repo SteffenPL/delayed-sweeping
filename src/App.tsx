@@ -1,13 +1,8 @@
 import { useEffect } from 'react';
-import { SimulationCanvas } from '@/components/canvas/SimulationCanvas';
-import {
-  PlaybackControls,
-  TweakpanePanel,
-} from '@/components/controls';
-import { ConfigControls } from '@/components/controls/ConfigControls';
+import { SimulationCanvas, ZoomControls } from '@/components/canvas';
+import { ControlPanel } from '@/components/controls';
 import { StatisticsPanel } from '@/components/statistics';
 import { useSimulationStore } from '@/store';
-import './index.css';
 
 export function App() {
   const { loadFromLocalStorage } = useSimulationStore();
@@ -20,25 +15,20 @@ export function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <div className="header-content">
-          <div className="header-title">
-            <h1>Delayed Sweeping Simulator</h1>
-            <p className="subtitle">Interactive visualization of the delayed convex sweeping process</p>
-          </div>
-          <ConfigControls />
-        </div>
+        <h1>Delayed Sweeping Simulator</h1>
+        <p className="subtitle">Interactive visualization of the delayed convex sweeping process</p>
       </header>
 
       <main className="app-main">
         <div className="simulation-section">
           <div className="canvas-container">
             <SimulationCanvas width={500} height={500} />
+            <ZoomControls />
           </div>
-          <PlaybackControls />
         </div>
 
         <aside className="controls-sidebar">
-          <TweakpanePanel />
+          <ControlPanel />
         </aside>
       </main>
 
@@ -50,7 +40,9 @@ export function App() {
         <p>
           Based on the mathematical model from the delayed sweeping process manuscript.
           <br />
-          <small>Use mouse wheel on canvas to rotate shapes. Drag in free-drag mode to move constraint.</small>
+          <small>
+            💡 Controls: Wheel = rotate • Ctrl/Cmd+Wheel = zoom • Middle mouse or Space+Drag = pan • Drag = move constraint
+          </small>
         </p>
       </footer>
     </div>

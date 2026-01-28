@@ -3,9 +3,10 @@ import type { SimulationParameters, ConstraintConfig, ParametricTrajectory } fro
 export const DEFAULT_PARAMS: SimulationParameters = {
   T: 12.0,
   h: 0.01,
-  lambda: 2.0,
-  R: 0.8,
+  epsilon: 2.0,
   infiniteMode: true,
+  xPastExpression: '2',
+  yPastExpression: '0',
 };
 
 export const DEFAULT_CONSTRAINT: ConstraintConfig = {
@@ -17,19 +18,17 @@ export const DEFAULT_CONSTRAINT: ConstraintConfig = {
 };
 
 export const DEFAULT_TRAJECTORY: ParametricTrajectory = {
-  type: 'circular',
-  params: {
-    centerX: 0,
-    centerY: 0,
-    radius: 2.0,
-    omega: 1.0,
-    phase: 0,
-  },
+  xExpression: '2 * cos(t)',
+  yExpression: '2 * sin(t)',
+  alphaExpression: '0',
 };
 
 // Viewport defaults
 export const DEFAULT_SCALE = 60; // pixels per unit
 export const DEFAULT_VIEW_CENTER = { x: 0, y: 0 };
+export const DEFAULT_ZOOM = 1.0;
+export const MIN_ZOOM = 0.25;
+export const MAX_ZOOM = 4.0;
 
 // Rendering defaults
 export const MAX_TRAJECTORY_POINTS = 10000;

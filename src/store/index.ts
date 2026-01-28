@@ -75,6 +75,13 @@ interface SimulationStore {
   setSelectedMetrics: (metrics: string[]) => void;
   setSpeed: (speed: number) => void;
 
+  // Viewport state
+  zoom: number;
+  pan: Vec2;
+  setZoom: (zoom: number) => void;
+  setPan: (pan: Vec2) => void;
+  resetViewport: () => void;
+
   // Presets
   loadPreset: (presetId: string) => void;
 
@@ -149,6 +156,9 @@ export const useSimulationStore = create<SimulationStore>()(
     selectedMetrics: ['projectionDistance'],
     speed: 1,
 
+    zoom: 1.0,
+    pan: { x: 0, y: 0 },
+
     // Actions
     setParams: (params) =>
       set((state) => ({
@@ -215,6 +225,12 @@ export const useSimulationStore = create<SimulationStore>()(
     setSelectedMetrics: (metrics) => set({ selectedMetrics: metrics }),
 
     setSpeed: (speed) => set({ speed: Math.max(1, Math.min(100, speed)) }),
+
+    setZoom: (zoom) => set({ zoom: Math.max(0.25, Math.min(4.0, zoom)) }),
+
+    setPan: (pan) => set({ pan }),
+
+    resetViewport: () => set({ zoom: 1.0, pan: { x: 0, y: 0 } }),
 
     loadPreset: (presetId) => {
       const preset = PRESETS.find((p) => p.id === presetId);
