@@ -47,10 +47,10 @@ X_ρ(t) = weighted average of X(s) for s ≤ t
 
 **Exponential Kernel**:
 ```
-ρ(a) = λ e^{-λa}
+ρ(a) = ε e^{-εa}
 ```
-- Larger λ = shorter memory
-- Smaller λ = longer memory (more inertia)
+- Larger ε = shorter memory
+- Smaller ε = longer memory (more inertia)
 
 **Time-Stepping**:
 ```
@@ -66,7 +66,7 @@ X^n = P_{C^n}(X̄^n)            (projection)
 | `C(t)` | Time-varying constraint set |
 | `X_ρ(t)` | Delayed state (weighted average) |
 | `ρ(a)` | Exponential kernel function |
-| `λ` | Kernel decay rate |
+| `ε` | Kernel decay rate |
 | `h` | Time step size |
 | `r̃_j` | Normalized discrete kernel weights |
 | `P_C(·)` | Projection operator onto set C |
@@ -96,10 +96,10 @@ The discrete time-stepping scheme consists of:
 
 ### 3. Kernel Computation
 
-The exponential kernel `ρ(a) = λe^{-λa}` is discretized with exact integration:
+The exponential kernel `ρ(a) = εe^{-εa}` is discretized with exact integration:
 
 ```
-R_j = (1/h) · e^{-λjh} · (1 - e^{-λh})
+R_j = (1/h) · e^{-εjh} · (1 - e^{-εh})
 ```
 
 and normalized to satisfy `Σ h·r̃_j = 1`.
@@ -120,8 +120,7 @@ p* = p - [g(p) / |∇g(p)|²] · ∇g(p)
 
 Key parameters:
 - **h**: Time step (smaller = more accurate)
-- **λ**: Decay rate (larger = shorter memory)
-- **R**: Constraint size
+- **ε**: Decay rate (larger = shorter memory)
 - **T**: Total simulation time
 
 **Learn more**: [Numerics - Numerical Parameters](./numerics.md#numerical-parameters)
@@ -167,7 +166,7 @@ The delay creates **inertial effects**:
 - Classical sweeping: Point immediately snaps to boundary when violated
 - Delayed sweeping: Point responds more smoothly, with memory of past states
 
-The parameter `λ` controls the memory length: `T_memory ≈ 1/λ`
+The parameter `ε` controls the memory length: `T_memory ≈ 1/ε`
 
 ### What constraints are supported?
 
@@ -186,14 +185,14 @@ The scheme is first-order accurate: `O(h)` error per step.
 
 Total error after time `T`:
 - Time discretization: `O(h)`
-- Kernel truncation: `O(e^{-λ·J_max·h})` ≈ `10^-12` (negligible)
+- Kernel truncation: `O(e^{-ε·J_max·h})` ≈ `10^-12` (negligible)
 - Projection: `O(10^-8)` (Newton tolerance)
 
 For most purposes, `h = 0.01` provides excellent accuracy.
 
 ### How fast is it?
 
-Typical performance (T=10, h=0.01, λ=1.0):
+Typical performance (T=10, h=0.01, ε=1.0):
 - 1000 time steps
 - ~3 million kernel weight lookups
 - **~100ms** on modern hardware

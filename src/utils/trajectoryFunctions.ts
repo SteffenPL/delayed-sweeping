@@ -1,54 +1,56 @@
-import type {
-  Vec2,
-  ParametricTrajectory,
-  CircularParams,
-  EllipseParams,
-  LissajousParams,
-  LinearParams,
-} from '@/types';
+import type { Vec2, ParametricTrajectory } from '@/types';
+import { compile } from 'mathjs';
 
 /**
- * Create a trajectory function from parametric configuration
+ * Create a trajectory function from expression-based configuration
  */
 export function createTrajectoryFunction(
   trajectory: ParametricTrajectory
 ): (t: number) => Vec2 {
-  switch (trajectory.type) {
-    case 'circular': {
-      const p = trajectory.params as CircularParams;
-      return (t: number) => ({
-        x: p.centerX + p.radius * Math.cos(p.omega * t + p.phase),
-        y: p.centerY + p.radius * Math.sin(p.omega * t + p.phase),
-      });
-    }
+  try {
+    const xFunc = compile(trajectory.xExpression);
+    const yFunc = compile(trajectory.yExpression);
 
-    case 'ellipse': {
-      const p = trajectory.params as EllipseParams;
-      return (t: number) => ({
-        x: p.centerX + p.semiMajor * Math.cos(p.omega * t + p.phase),
-        y: p.centerY + p.semiMinor * Math.sin(p.omega * t + p.phase),
-      });
-    }
+    return (t: number) => {
+      try {
+        const x = xFunc.evaluate({ t });
+        const y = yFunc.evaluate({ t });
+        return {
+          x: typeof x === 'number' ? x : 0,
+          y: typeof y === 'number' ? y : 0
+        };
+      } catch (error) {
+        console.error('Error evaluating trajectory at t =', t, error);
+        return { x: 0, y: 0 };
+      }
+    };
+  } catch (error) {
+    console.error('Error compiling trajectory expressions:', error);
+    return () => ({ x: 0, y: 0 });
+  }
+}
 
-    case 'lissajous': {
-      const p = trajectory.params as LissajousParams;
-      return (t: number) => ({
-        x: p.centerX + p.amplitudeX * Math.sin(p.freqX * t + p.phaseX),
-        y: p.centerY + p.amplitudeY * Math.sin(p.freqY * t + p.phaseY),
-      });
-    }
+/**
+ * Create an alpha (rotation angle) function from expression
+ */
+export function createAlphaFunction(
+  trajectory: ParametricTrajectory
+): (t: number) => number {
+  try {
+    const alphaFunc = compile(trajectory.alphaExpression);
 
-    case 'linear': {
-      const p = trajectory.params as LinearParams;
-      return (t: number) => ({
-        x: p.startX + p.velocityX * t,
-        y: p.startY + p.velocityY * t,
-      });
-    }
-
-    default:
-      // Default: stationary at origin
-      return () => ({ x: 0, y: 0 });
+    return (t: number) => {
+      try {
+        const alpha = alphaFunc.evaluate({ t });
+        return typeof alpha === 'number' ? alpha : 0;
+      } catch (error) {
+        console.error('Error evaluating alpha at t =', t, error);
+        return 0;
+      }
+    };
+  } catch (error) {
+    console.error('Error compiling alpha expression:', error);
+    return () => 0;
   }
 }
 

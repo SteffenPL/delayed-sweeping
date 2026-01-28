@@ -37,30 +37,15 @@ export function ParameterPanel() {
       </div>
 
       <div className="param-group">
-        <label htmlFor="param-lambda">
-          Decay rate &lambda;
+        <label htmlFor="param-epsilon">
+          Decay rate &epsilon;
           <input
-            id="param-lambda"
+            id="param-epsilon"
             type="number"
-            value={params.lambda}
-            onChange={(e) => setParams({ lambda: parseFloat(e.target.value) || 0.1 })}
+            value={params.epsilon}
+            onChange={(e) => setParams({ epsilon: parseFloat(e.target.value) || 0.1 })}
             min={0.1}
             max={10}
-            step={0.1}
-          />
-        </label>
-      </div>
-
-      <div className="param-group">
-        <label htmlFor="param-R">
-          Constraint size R
-          <input
-            id="param-R"
-            type="number"
-            value={params.R}
-            onChange={(e) => setParams({ R: parseFloat(e.target.value) || 0.1 })}
-            min={0.1}
-            max={5}
             step={0.1}
           />
         </label>

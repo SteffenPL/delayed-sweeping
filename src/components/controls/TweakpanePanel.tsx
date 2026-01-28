@@ -58,8 +58,7 @@ export function TweakpanePanel() {
       infiniteMode: params.infiniteMode,
       T: params.T,
       h: params.h,
-      lambda: params.lambda,
-      R: params.R,
+      epsilon: params.epsilon,
       speed: speed,
 
       // Constraint
@@ -73,7 +72,9 @@ export function TweakpanePanel() {
 
       // Trajectory
       trajectoryMode: trajectoryMode,
-      trajectoryType: parametricTrajectory.type,
+      xExpression: parametricTrajectory.xExpression,
+      yExpression: parametricTrajectory.yExpression,
+      alphaExpression: parametricTrajectory.alphaExpression,
     };
     paramsRef.current = PARAMS;
 
@@ -97,19 +98,12 @@ export function TweakpanePanel() {
       label: 'Time Step h'
     }).on('change', (ev: TweakpaneAny) => setParams({ h: ev.value }));
 
-    simFolder.addBinding(PARAMS, 'lambda', {
+    simFolder.addBinding(PARAMS, 'epsilon', {
       min: 0.1,
       max: 10,
       step: 0.1,
-      label: 'Decay λ'
-    }).on('change', (ev: TweakpaneAny) => setParams({ lambda: ev.value }));
-
-    simFolder.addBinding(PARAMS, 'R', {
-      min: 0.1,
-      max: 5,
-      step: 0.1,
-      label: 'Size R'
-    }).on('change', (ev: TweakpaneAny) => setParams({ R: ev.value }));
+      label: 'ε'
+    }).on('change', (ev: TweakpaneAny) => setParams({ epsilon: ev.value }));
 
     simFolder.addBinding(PARAMS, 'speed', {
       min: 1,
@@ -239,51 +233,37 @@ export function TweakpanePanel() {
       }
     }).on('change', (ev: TweakpaneAny) => setTrajectoryMode(ev.value as 'parametric' | 'free-drag'));
 
-    const typeBinding = trajFolder.addBinding(PARAMS, 'trajectoryType', {
-      label: 'Type',
-      options: {
-        Circular: 'circular',
-        Ellipse: 'ellipse',
-        'Figure-8': 'lissajous',
-        Linear: 'linear',
-      }
+    // Expression inputs
+    const xExprBinding = trajFolder.addBinding(PARAMS, 'xExpression', {
+      label: 'x(t)',
     }).on('change', (ev: TweakpaneAny) => {
-      const type = ev.value as 'circular' | 'ellipse' | 'lissajous' | 'linear';
-
-      // Set default params for each type
-      if (type === 'circular') {
-        setParametricTrajectory({
-          type: 'circular',
-          params: { centerX: 0, centerY: 0, radius: 2.0, omega: 1.0, phase: 0 },
-        });
-      } else if (type === 'ellipse') {
-        setParametricTrajectory({
-          type: 'ellipse',
-          params: { centerX: 0, centerY: 0, semiMajor: 2.0, semiMinor: 1.0, omega: 1.0, phase: 0 },
-        });
-      } else if (type === 'lissajous') {
-        setParametricTrajectory({
-          type: 'lissajous',
-          params: {
-            centerX: 0, centerY: 0,
-            amplitudeX: 2.0, amplitudeY: 2.0,
-            freqX: 1.0, freqY: 2.0,
-            phaseX: 0, phaseY: 0,
-          },
-        });
-      } else if (type === 'linear') {
-        setParametricTrajectory({
-          type: 'linear',
-          params: { startX: -3, startY: 0, velocityX: 1.0, velocityY: 0.0 },
-        });
-      }
+      const current = useSimulationStore.getState().parametricTrajectory;
+      setParametricTrajectory({ ...current, xExpression: ev.value });
     });
-    typeBinding.hidden = trajectoryMode === 'free-drag';
+    xExprBinding.hidden = trajectoryMode === 'free-drag';
+
+    const yExprBinding = trajFolder.addBinding(PARAMS, 'yExpression', {
+      label: 'y(t)',
+    }).on('change', (ev: TweakpaneAny) => {
+      const current = useSimulationStore.getState().parametricTrajectory;
+      setParametricTrajectory({ ...current, yExpression: ev.value });
+    });
+    yExprBinding.hidden = trajectoryMode === 'free-drag';
+
+    const alphaExprBinding = trajFolder.addBinding(PARAMS, 'alphaExpression', {
+      label: 'α(t)',
+    }).on('change', (ev: TweakpaneAny) => {
+      const current = useSimulationStore.getState().parametricTrajectory;
+      setParametricTrajectory({ ...current, alphaExpression: ev.value });
+    });
+    alphaExprBinding.hidden = trajectoryMode === 'free-drag';
 
     // Store bindings to update visibility later
     (pane as any)._bindings = {
       trajectory: {
-        type: typeBinding,
+        xExpr: xExprBinding,
+        yExpr: yExprBinding,
+        alphaExpr: alphaExprBinding,
       },
       constraint: {
         expression: expressionBinding,
@@ -303,7 +283,10 @@ export function TweakpanePanel() {
     if (!pane || !(pane as any)._bindings) return;
 
     const bindings = (pane as any)._bindings;
-    bindings.trajectory.type.hidden = trajectoryMode === 'free-drag';
+    const hidden = trajectoryMode === 'free-drag';
+    bindings.trajectory.xExpr.hidden = hidden;
+    bindings.trajectory.yExpr.hidden = hidden;
+    bindings.trajectory.alphaExpr.hidden = hidden;
   }, [trajectoryMode]);
 
   // Update bound params and refresh when store changes
@@ -332,13 +315,14 @@ export function TweakpanePanel() {
     PARAMS.infiniteMode = params.infiniteMode;
     PARAMS.T = params.T;
     PARAMS.h = params.h;
-    PARAMS.lambda = params.lambda;
-    PARAMS.R = params.R;
+    PARAMS.epsilon = params.epsilon;
     PARAMS.speed = speed;
 
     // Update trajectory params
     PARAMS.trajectoryMode = trajectoryMode;
-    PARAMS.trajectoryType = parametricTrajectory.type;
+    PARAMS.xExpression = parametricTrajectory.xExpression;
+    PARAMS.yExpression = parametricTrajectory.yExpression;
+    PARAMS.alphaExpression = parametricTrajectory.alphaExpression;
 
     // Refresh UI
     paneRef.current?.refresh();

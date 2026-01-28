@@ -39,7 +39,7 @@ export class DelayedSweepingSimulator {
     this.projectFunc = config.projectFunc;
 
     this.N = Math.floor(config.params.T / config.params.h);
-    this.rTilde = computeDiscreteWeights(config.params.lambda, config.params.h);
+    this.rTilde = computeDiscreteWeights(config.params.epsilon, config.params.h);
   }
 
   /**
@@ -183,7 +183,7 @@ export class DelayedSweepingSimulator {
   updateParams(params: Partial<SimulationParameters>): void {
     this.params = { ...this.params, ...params };
     this.N = Math.floor(this.params.T / this.params.h);
-    this.rTilde = computeDiscreteWeights(this.params.lambda, this.params.h);
+    this.rTilde = computeDiscreteWeights(this.params.epsilon, this.params.h);
   }
 
   /**

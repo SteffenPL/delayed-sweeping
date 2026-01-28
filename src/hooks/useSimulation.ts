@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useSimulationStore } from '@/store';
 import { DelayedSweepingSimulator, ClassicalSweepingSimulator, SimulationRunner } from '@/simulation';
 import { createProjectionFunction, createFullProjectionFunction } from '@/shapes';
-import { createTrajectoryFunction, createPastFunction } from '@/utils';
+import { createTrajectoryFunction, createPastFunction, createAlphaFunction } from '@/utils';
 
 /**
  * Hook to manage simulation lifecycle
@@ -38,6 +38,8 @@ export function useSimulation() {
   const initializeSimulator = useCallback(() => {
     const centerFunc = createCenterFunc();
     const pastFunc = createPastFunction(parametricTrajectory);
+    const alphaFunc = createAlphaFunction(parametricTrajectory);
+
     // Use getter functions to access current constraint state dynamically
     const getConstraint = () => useSimulationStore.getState().constraint;
     const getAngle = () => useSimulationStore.getState().constraintAngle;
@@ -64,6 +66,13 @@ export function useSimulation() {
 
     runnerRef.current.setCallbacks(
       (step, position, center, xBar, projDist, gradNorm) => {
+        // Update constraint angle based on alpha(t) for parametric mode
+        if (trajectoryMode === 'parametric') {
+          const t = step * params.h;
+          const alpha = alphaFunc(t);
+          useSimulationStore.getState().setConstraintAngle(alpha);
+        }
+
         appendTrajectoryPoint(position, xBar, center, projDist, gradNorm);
 
         // Also run classical sweeping step
@@ -80,7 +89,7 @@ export function useSimulation() {
 
     runnerRef.current.setSpeed(speed);
     runnerRef.current.setInfiniteMode(params.infiniteMode);
-  }, [params, parametricTrajectory, speed, createCenterFunc, appendTrajectoryPoint, appendClassicalPoint, setRunning]);
+  }, [params, parametricTrajectory, trajectoryMode, speed, createCenterFunc, appendTrajectoryPoint, appendClassicalPoint, setRunning]);
 
   // Start simulation
   const start = useCallback(() => {

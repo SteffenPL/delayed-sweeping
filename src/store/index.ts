@@ -88,8 +88,7 @@ interface SimulationStore {
 const DEFAULT_PARAMS: SimulationParameters = {
   T: 12.0,
   h: 0.01,
-  lambda: 2.0,
-  R: 0.8,
+  epsilon: 2.0,
   infiniteMode: true,
 };
 
@@ -118,14 +117,9 @@ function computeBoundaryFromConfig(config: ConstraintConfig): Vec2[] {
 }
 
 const DEFAULT_TRAJECTORY: ParametricTrajectory = {
-  type: 'circular',
-  params: {
-    centerX: 0,
-    centerY: 0,
-    radius: 2.0,
-    omega: 1.0,
-    phase: 0,
-  },
+  xExpression: '2 * cos(t)',
+  yExpression: '2 * sin(t)',
+  alphaExpression: '0',
 };
 
 export const useSimulationStore = create<SimulationStore>()(

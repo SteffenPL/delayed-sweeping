@@ -8,8 +8,7 @@ export interface Vec2 {
 export interface SimulationParameters {
   T: number;           // Final simulation time (or window size in infinite mode)
   h: number;           // Time step size
-  lambda: number;      // Kernel decay rate
-  R: number;           // Constraint radius (disk radius)
+  epsilon: number;     // Kernel decay rate
   infiniteMode: boolean; // Run indefinitely until manually stopped
 }
 
@@ -25,47 +24,11 @@ export interface ConstraintConfig {
 // Trajectory mode
 export type TrajectoryMode = 'free-drag' | 'parametric';
 
-// Parametric trajectory types
-export type TrajectoryType = 'circular' | 'ellipse' | 'lissajous' | 'linear';
-
-export interface CircularParams {
-  centerX: number;
-  centerY: number;
-  radius: number;
-  omega: number;
-  phase: number;
-}
-
-export interface EllipseParams {
-  centerX: number;
-  centerY: number;
-  semiMajor: number;
-  semiMinor: number;
-  omega: number;
-  phase: number;
-}
-
-export interface LissajousParams {
-  centerX: number;
-  centerY: number;
-  amplitudeX: number;
-  amplitudeY: number;
-  freqX: number;
-  freqY: number;
-  phaseX: number;
-  phaseY: number;
-}
-
-export interface LinearParams {
-  startX: number;
-  startY: number;
-  velocityX: number;
-  velocityY: number;
-}
-
+// Expression-based parametric trajectory
 export interface ParametricTrajectory {
-  type: TrajectoryType;
-  params: CircularParams | EllipseParams | LissajousParams | LinearParams;
+  xExpression: string;  // Expression for x(t)
+  yExpression: string;  // Expression for y(t)
+  alphaExpression: string;  // Expression for alpha(t) - constraint rotation angle
 }
 
 // Simulation state

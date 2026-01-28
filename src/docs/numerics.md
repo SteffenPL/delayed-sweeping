@@ -36,10 +36,10 @@ X_ρ(t) = ∫_{-∞}^{t} ρ(t - s) X(s) ds / ∫_{-∞}^{t} ρ(t - s) ds
 The kernel `ρ(a)` determines the memory effect. We use the **exponential kernel**:
 
 ```
-ρ(a) = λ e^{-λa}    for a ≥ 0
+ρ(a) = ε e^{-εa}    for a ≥ 0
 ```
 
-where `λ > 0` is the decay rate (larger λ = shorter memory).
+where `ε > 0` is the decay rate (larger ε = shorter memory).
 
 ### Physical Interpretation
 
@@ -108,11 +108,11 @@ step(n: number): Vec2 {
 
 ### Discrete Kernel Weights
 
-The continuous exponential kernel `ρ(a) = λe^{-λa}` is discretized via exact integration over time intervals:
+The continuous exponential kernel `ρ(a) = εe^{-εa}` is discretized via exact integration over time intervals:
 
 ```
 R_j = (1/h) · ∫_{jh}^{(j+1)h} ρ(a) da
-    = (1/h) · e^{-λjh} · (1 - e^{-λh})
+    = (1/h) · e^{-εjh} · (1 - e^{-εh})
 ```
 
 This gives the unnormalized weights `R_j` for `j = 0, 1, 2, ...`
@@ -134,13 +134,13 @@ This ensures `∑_{j≥0} h·r̃_j = 1`.
 In practice, we truncate the sum at index `J_max` where:
 
 ```
-e^{-λ·J_max·h} < tol
+e^{-ε·J_max·h} < tol
 ```
 
 Solving for `J_max`:
 
 ```
-J_max = ⌈-ln(tol) / (λh)⌉
+J_max = ⌈-ln(tol) / (εh)⌉
 ```
 
 Default tolerance: `tol = 1e-12`
@@ -151,18 +151,18 @@ See `src/simulation/kernel.ts:18-42`:
 
 ```typescript
 export function computeDiscreteWeights(
-  lambda: number,
+  epsilon: number,
   h: number,
   tol: number = 1e-12
 ): number[] {
   // Compute truncation index
-  const J_max = Math.ceil(-Math.log(tol) / (lambda * h));
+  const J_max = Math.ceil(-Math.log(tol) / (epsilon * h));
 
   // Compute R_j values
-  const factor = (1 / h) * (1 - Math.exp(-lambda * h));
+  const factor = (1 / h) * (1 - Math.exp(-epsilon * h));
   const R = [];
   for (let j = 0; j < J_max; j++) {
-    R.push(factor * Math.exp(-lambda * j * h));
+    R.push(factor * Math.exp(-epsilon * j * h));
   }
 
   // Normalize
@@ -176,10 +176,10 @@ export function computeDiscreteWeights(
 The effective memory length (time span with significant weights) is:
 
 ```
-T_memory ≈ -ln(tol) / λ
+T_memory ≈ -ln(tol) / ε
 ```
 
-For default `tol = 0.01`, this gives `T_memory ≈ 4.6/λ`.
+For default `tol = 0.01`, this gives `T_memory ≈ 4.6/ε`.
 
 ---
 
@@ -321,29 +321,21 @@ export function projectToConstraint(
 **Guidelines**:
 - For smooth trajectories: `h = 0.01` to `0.05`
 - For fast-moving constraints: `h < 0.01`
-- Ensure `h < 1/λ` for kernel accuracy
+- Ensure `h < 1/ε` for kernel accuracy
 
-### Decay Rate (`λ`)
+### Decay Rate (`ε`)
 
 **Range**: Typically `0.1` to `10.0`
 
 **Physical meaning**:
-- Memory time scale: `τ_memory ≈ 1/λ`
-- `λ = 1.0`: Memory of ~5 time units
-- `λ = 10.0`: Short memory (~0.5 time units)
-- `λ = 0.1`: Long memory (~50 time units)
+- Memory time scale: `τ_memory ≈ 1/ε`
+- `ε = 1.0`: Memory of ~5 time units
+- `ε = 10.0`: Short memory (~0.5 time units)
+- `ε = 0.1`: Long memory (~50 time units)
 
 **Trade-offs**:
-- Larger `λ` → Less delay, behaves more like classical sweeping
-- Smaller `λ` → More inertia, smoother trajectories
-
-### Constraint Size (`R`)
-
-**Range**: Typically `0.1` to `5.0`
-
-**Considerations**:
-- Should match the scale of the trajectory motion
-- Visualization viewport is typically `-10` to `+10`
+- Larger `ε` → Less delay, behaves more like classical sweeping
+- Smaller `ε` → More inertia, smoother trajectories
 
 ### Total Time (`T`)
 
@@ -359,8 +351,8 @@ export function projectToConstraint(
 **Parameter**: `tol = 1e-12`
 
 **Effect**:
-- Controls kernel memory array length: `J_max ≈ -ln(tol)/(λh)`
-- Example: `λ = 1.0`, `h = 0.01` → `J_max ≈ 2764` weights
+- Controls kernel memory array length: `J_max ≈ -ln(tol)/(εh)`
+- Example: `ε = 1.0`, `h = 0.01` → `J_max ≈ 2764` weights
 - Memory usage: `O(J_max)` per simulation run
 
 ---
@@ -390,7 +382,7 @@ export function projectToConstraint(
 ### Data Flow
 
 ```
-Parameters (T, h, λ, R)
+Parameters (T, h, ε)
     ↓
 Kernel Weights (r̃_j)
     ↓
@@ -412,14 +404,14 @@ Trajectory Output
 
 **Time Complexity**: `O(N · J_max)` where:
 - `N = T/h` (number of time steps)
-- `J_max ≈ -ln(tol)/(λh)` (kernel length)
+- `J_max ≈ -ln(tol)/(εh)` (kernel length)
 
 **Space Complexity**: `O(N + J_max)`
 - Storage for `N` trajectory points
 - Storage for `J_max` kernel weights
 
 **Typical Performance**:
-- `T = 10`, `h = 0.01`, `λ = 1.0`
+- `T = 10`, `h = 0.01`, `ε = 1.0`
 - `N = 1000`, `J_max ≈ 2764`
 - ~3 million weight lookups
 - Runs in <100ms on modern hardware
@@ -445,7 +437,7 @@ As `h → 0`, the discrete scheme converges to the continuous solution with:
 **Convergence requirements**:
 - Constraint sets `C(t)` must be uniformly convex
 - Trajectory `c(t)` must be Lipschitz continuous
-- Kernel truncation error must be negligible: `e^{-λ·J_max·h} ≪ 1`
+- Kernel truncation error must be negligible: `e^{-ε·J_max·h} ≪ 1`
 
 ### Error Sources
 
@@ -466,7 +458,7 @@ As `h → 0`, the discrete scheme converges to the continuous solution with:
 - Constraint moves very rapidly
 - High-frequency trajectory components
 
-**When to reduce `λ`**:
+**When to reduce `ε`**:
 - More inertial behavior desired
 - Smoother trajectories needed
 - Study long-memory effects

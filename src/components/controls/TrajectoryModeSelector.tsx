@@ -1,5 +1,5 @@
 import { useSimulationStore } from '@/store';
-import type { TrajectoryMode, TrajectoryType, CircularParams } from '@/types';
+import type { TrajectoryMode } from '@/types';
 
 export function TrajectoryModeSelector() {
   const {
@@ -13,60 +13,12 @@ export function TrajectoryModeSelector() {
     setTrajectoryMode(mode);
   };
 
-  const handleTrajectoryTypeChange = (type: TrajectoryType) => {
-    switch (type) {
-      case 'circular':
-        setParametricTrajectory({
-          type: 'circular',
-          params: {
-            centerX: 0,
-            centerY: 0,
-            radius: 2.0,
-            omega: 1.0,
-            phase: 0,
-          },
-        });
-        break;
-      case 'ellipse':
-        setParametricTrajectory({
-          type: 'ellipse',
-          params: {
-            centerX: 0,
-            centerY: 0,
-            semiMajor: 3.0,
-            semiMinor: 1.5,
-            omega: 1.0,
-            phase: 0,
-          },
-        });
-        break;
-      case 'lissajous':
-        setParametricTrajectory({
-          type: 'lissajous',
-          params: {
-            centerX: 0,
-            centerY: 0,
-            amplitudeX: 2.0,
-            amplitudeY: 2.0,
-            freqX: 1.0,
-            freqY: 2.0,
-            phaseX: 0,
-            phaseY: 0,
-          },
-        });
-        break;
-      case 'linear':
-        setParametricTrajectory({
-          type: 'linear',
-          params: {
-            startX: -3,
-            startY: 0,
-            velocityX: 0.5,
-            velocityY: 0,
-          },
-        });
-        break;
-    }
+  const setPreset = (preset: { x: string; y: string; alpha: string }) => {
+    setParametricTrajectory({
+      xExpression: preset.x,
+      yExpression: preset.y,
+      alphaExpression: preset.alpha,
+    });
   };
 
   return (
@@ -90,75 +42,86 @@ export function TrajectoryModeSelector() {
 
       {trajectoryMode === 'parametric' && (
         <>
-          <div className="trajectory-type-buttons">
-            <button
-              className={`btn btn-small ${parametricTrajectory.type === 'circular' ? 'btn-active' : ''}`}
-              onClick={() => handleTrajectoryTypeChange('circular')}
-            >
-              Circle
-            </button>
-            <button
-              className={`btn btn-small ${parametricTrajectory.type === 'ellipse' ? 'btn-active' : ''}`}
-              onClick={() => handleTrajectoryTypeChange('ellipse')}
-            >
-              Ellipse
-            </button>
-            <button
-              className={`btn btn-small ${parametricTrajectory.type === 'lissajous' ? 'btn-active' : ''}`}
-              onClick={() => handleTrajectoryTypeChange('lissajous')}
-            >
-              Figure-8
-            </button>
-            <button
-              className={`btn btn-small ${parametricTrajectory.type === 'linear' ? 'btn-active' : ''}`}
-              onClick={() => handleTrajectoryTypeChange('linear')}
-            >
-              Linear
-            </button>
+          <div className="trajectory-presets">
+            <label>Presets:</label>
+            <div className="preset-buttons">
+              <button
+                className="btn btn-small"
+                onClick={() => setPreset({ x: '2 * cos(t)', y: '2 * sin(t)', alpha: '0' })}
+              >
+                Circle
+              </button>
+              <button
+                className="btn btn-small"
+                onClick={() => setPreset({ x: '3 * cos(t)', y: '1.5 * sin(t)', alpha: '0' })}
+              >
+                Ellipse
+              </button>
+              <button
+                className="btn btn-small"
+                onClick={() => setPreset({ x: '2 * sin(t)', y: '2 * sin(2*t)', alpha: '0' })}
+              >
+                Figure-8
+              </button>
+              <button
+                className="btn btn-small"
+                onClick={() => setPreset({ x: 't', y: '0', alpha: '0' })}
+              >
+                Linear
+              </button>
+              <button
+                className="btn btn-small"
+                onClick={() => setPreset({ x: '2 * cos(t)', y: '2 * sin(t)', alpha: 't/2' })}
+              >
+                Rotating
+              </button>
+            </div>
           </div>
 
-          {parametricTrajectory.type === 'circular' && (
-            <div className="trajectory-params">
-              <label>
-                Radius
-                <input
-                  type="number"
-                  value={(parametricTrajectory.params as CircularParams).radius}
-                  onChange={(e) =>
-                    setParametricTrajectory({
-                      ...parametricTrajectory,
-                      params: {
-                        ...(parametricTrajectory.params as CircularParams),
-                        radius: parseFloat(e.target.value) || 1,
-                      },
-                    })
-                  }
-                  min={0.5}
-                  max={5}
-                  step={0.1}
-                />
-              </label>
-              <label>
-                Angular velocity &omega;
-                <input
-                  type="number"
-                  value={(parametricTrajectory.params as CircularParams).omega}
-                  onChange={(e) =>
-                    setParametricTrajectory({
-                      ...parametricTrajectory,
-                      params: {
-                        ...(parametricTrajectory.params as CircularParams),
-                        omega: parseFloat(e.target.value) || 0.1,
-                      },
-                    })
-                  }
-                  min={0.1}
-                  max={5}
-                  step={0.1}
-                />
-              </label>
-            </div>
-          )}
+          <div className="trajectory-expressions">
+            <label>
+              x(t)
+              <input
+                type="text"
+                value={parametricTrajectory.xExpression}
+                onChange={(e) =>
+                  setParametricTrajectory({
+                    ...parametricTrajectory,
+                    xExpression: e.target.value,
+                  })
+                }
+                placeholder="e.g. 2*cos(t)"
+              />
+            </label>
+            <label>
+              y(t)
+              <input
+                type="text"
+                value={parametricTrajectory.yExpression}
+                onChange={(e) =>
+                  setParametricTrajectory({
+                    ...parametricTrajectory,
+                    yExpression: e.target.value,
+                  })
+                }
+                placeholder="e.g. 2*sin(t)"
+              />
+            </label>
+            <label>
+              &alpha;(t)
+              <input
+                type="text"
+                value={parametricTrajectory.alphaExpression}
+                onChange={(e) =>
+                  setParametricTrajectory({
+                    ...parametricTrajectory,
+                    alphaExpression: e.target.value,
+                  })
+                }
+                placeholder="e.g. 0 or t/2"
+              />
+            </label>
+          </div>
         </>
       )}
 

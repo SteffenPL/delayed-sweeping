@@ -4,12 +4,11 @@ export const PRESETS: Preset[] = [
   {
     id: 'circular-standard',
     name: 'Circular Standard',
-    description: 'Disk on circular track (r=2, omega=1, lambda=2)',
+    description: 'Disk on circular track (r=2, omega=1, epsilon=2)',
     params: {
       T: 12.0,
       h: 0.01,
-      lambda: 2.0,
-      R: 0.8,
+      epsilon: 2.0,
       infiniteMode: true,
     },
     constraint: {
@@ -20,14 +19,9 @@ export const PRESETS: Preset[] = [
       b: 0,
     },
     trajectory: {
-      type: 'circular',
-      params: {
-        centerX: 0,
-        centerY: 0,
-        radius: 2.0,
-        omega: 1.0,
-        phase: 0,
-      },
+      xExpression: '2 * cos(t)',
+      yExpression: '2 * sin(t)',
+      alphaExpression: '0',
     },
   },
   {
@@ -37,8 +31,7 @@ export const PRESETS: Preset[] = [
     params: {
       T: 15.0,
       h: 0.005,
-      lambda: 2.5,
-      R: 0.5,
+      epsilon: 2.5,
       infiniteMode: true,
     },
     constraint: {
@@ -49,17 +42,9 @@ export const PRESETS: Preset[] = [
       b: 0,
     },
     trajectory: {
-      type: 'lissajous',
-      params: {
-        centerX: 0,
-        centerY: 0,
-        amplitudeX: 2.0,
-        amplitudeY: 2.0,
-        freqX: 1.0,
-        freqY: 2.0,
-        phaseX: 0,
-        phaseY: 0,
-      },
+      xExpression: '2 * sin(t)',
+      yExpression: '2 * sin(2*t)',
+      alphaExpression: '0',
     },
   },
 ];
