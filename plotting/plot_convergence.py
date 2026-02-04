@@ -29,26 +29,6 @@ def run_single_simulation(config_file: str, h: float, output_dir: Path, verbose:
     return h, df
 
 
-def build_dyadic_h_values(h_min: float, h_max: float, num_points: int) -> list[float]:
-    """
-    Build dyadic h values: h_min * 2^k, k >= 0.
-    Stops when h exceeds h_max or num_points is reached.
-    """
-    if h_min <= 0 or h_max <= 0:
-        raise ValueError("h_min and h_max must be positive.")
-    if h_min > h_max:
-        raise ValueError(f"h_min ({h_min}) must be <= h_max ({h_max}).")
-
-    h_values: list[float] = [h_min]
-    while len(h_values) < num_points:
-        next_h = h_values[-1] * 2.0
-        if next_h > h_max:
-            break
-        h_values.append(next_h)
-
-    return h_values
-
-
 def run_convergence_study(
     config_file: str,
     h_min: float,
@@ -65,7 +45,7 @@ def run_convergence_study(
         config_file: Path to TOML config
         h_min: Minimum h value
         h_max: Maximum h value
-        num_points: Number of dyadic h values starting from h_min
+        num_points: Number of h values to test (logarithmically spaced)
         verbose: Print detailed simulation output
         parallel: Run simulations in parallel
         max_workers: Maximum parallel workers (None = use CPU count)
@@ -73,27 +53,12 @@ def run_convergence_study(
     Returns:
         DataFrame with columns: h, error, reference_h, reference_error
     """
-    # Generate dyadic h values (powers of 2 multiples of h_min)
-    h_values = build_dyadic_h_values(h_min, h_max, num_points)
-    if len(h_values) < 1:
-        raise ValueError(
-            "Need at least one h value for convergence analysis. "
-            "Increase h_max or num_points."
-        )
+    # Generate h values (logarithmically spaced)
+    h_values = np.logspace(np.log10(h_min), np.log10(h_max), num_points)
+    h_values = sorted(h_values)  # Ensure ascending order
 
-    reference_h = h_values[0]
-    eval_min = reference_h * 4.0
-    eval_h_values = [h for h in h_values if h >= eval_min]
-    if len(eval_h_values) < 1:
-        raise ValueError(
-            "Need at least one evaluation h >= 4*h_min. "
-            "Increase h_max or num_points."
-        )
-
-    print(f"Running convergence study with {len(eval_h_values)} evaluation h values:")
-    print(f"  reference h: {reference_h:.6e}")
-    print(f"  h range: [{eval_h_values[0]:.6e}, {eval_h_values[-1]:.6e}]")
-    print("  h values are dyadic multiples of the smallest h (powers of 2).")
+    print(f"Running convergence study with {num_points} h values:")
+    print(f"  h range: [{h_values[0]:.6e}, {h_values[-1]:.6e}]")
     if parallel:
         print(f"  Running in parallel with {max_workers or 'auto'} workers")
 
@@ -104,47 +69,47 @@ def run_convergence_study(
     # Run simulations
     results_dict = {}
 
-    all_h_values = [reference_h] + [h for h in eval_h_values if h != reference_h]
-
     if parallel:
         # Parallel execution with progress bar
         with ProcessPoolExecutor(max_workers=max_workers) as executor:
             # Submit all jobs
             futures = {
                 executor.submit(run_single_simulation, config_file, h, output_dir, verbose): h
-                for h in all_h_values
+                for h in h_values
             }
 
             # Collect results with progress bar
-            with tqdm(total=len(all_h_values), desc="Simulations", unit="sim") as pbar:
+            with tqdm(total=len(h_values), desc="Simulations", unit="sim") as pbar:
                 for future in as_completed(futures):
                     h, df = future.result()
                     results_dict[h] = df
                     pbar.update(1)
     else:
         # Sequential execution with progress bar
-        for h in tqdm(all_h_values, desc="Simulations", unit="sim"):
+        for h in tqdm(h_values, desc="Simulations", unit="sim"):
             _, df = run_single_simulation(config_file, h, output_dir, verbose)
             results_dict[h] = df
 
+    # Sort results by h (to ensure reference is finest)
+    results = [results_dict[h] for h in h_values]
+
     # Compute terminal errors relative to finest h (reference)
-    ref = results_dict[reference_h]
+    ref = results[0]  # Finest h is reference
     x_ref = ref['delayed_x'].iloc[-1]
     y_ref = ref['delayed_y'].iloc[-1]
 
-    print(f"\nReference solution (h = {reference_h:.6e}):")
+    print(f"\nReference solution (h = {h_values[0]:.6e}):")
     print(f"  X(T) = ({x_ref:.10f}, {y_ref:.10f})")
 
     errors = []
-    for h in eval_h_values:
-        df = results_dict[h]
+    for h, df in zip(h_values, results):
         x_T = df['delayed_x'].iloc[-1]
         y_T = df['delayed_y'].iloc[-1]
         error = np.sqrt((x_T - x_ref)**2 + (y_T - y_ref)**2)
         errors.append({
             'h': h,
             'error': error,
-            'reference_h': reference_h,
+            'reference_h': h_values[0],
             'reference_x': x_ref,
             'reference_y': y_ref
         })
@@ -228,9 +193,6 @@ def main():
     if len(sys.argv) < 2:
         print("Usage: python plotting/plot_convergence.py <config.toml> [h_min] [h_max] [num_points] [options]")
         print("\nDefaults: h_min=1e-4, h_max=1e-1, num_points=5")
-        print("\nNotes:")
-        print("  - h values are dyadic multiples of h_min (h_min * 2^k) up to h_max.")
-        print("  - h_min is used as the reference; evaluation uses h >= 4*h_min.")
         print("\nOptions:")
         print("  --verbose, -v       Show detailed simulation output")
         print("  --no-parallel       Run simulations sequentially (default: parallel)")
