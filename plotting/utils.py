@@ -4,51 +4,13 @@ Utility functions for running simulations and loading data.
 import subprocess
 import tempfile
 from pathlib import Path
-from dataclasses import dataclass
-import pandas as pd
 from typing import Optional
 
-# Handle tomllib import (tomllib in Python 3.11+, tomli for earlier versions)
-try:
-    import tomllib
-except ImportError:
-    import tomli as tomllib
+import pandas as pd
 
-
-@dataclass
-class Config:
-    """Configuration loaded from TOML file."""
-    name: str
-    T: float
-    h: float
-    epsilon: float
-    x_past: str
-    y_past: str
-    constraint_expr: str
-    x_traj: str
-    y_traj: str
-    alpha_traj: str
-    solver_type: str
-
-
-def load_config(path: str) -> Config:
-    """Load TOML config file."""
-    with open(path, 'rb') as f:
-        data = tomllib.load(f)
-
-    return Config(
-        name=data.get('metadata', {}).get('name', Path(path).stem),
-        T=data['simulation']['T'],
-        h=data['simulation']['h'],
-        epsilon=data['simulation']['epsilon'],
-        x_past=data['simulation']['xPastExpression'],
-        y_past=data['simulation']['yPastExpression'],
-        constraint_expr=data['constraint']['expression'],
-        x_traj=data['trajectory']['xExpression'],
-        y_traj=data['trajectory']['yExpression'],
-        alpha_traj=data['trajectory']['alphaExpression'],
-        solver_type=data['simulation'].get('solverType', 'norm1-sum1'),
-    )
+from config import Config, load_config
+from solver import run_simulation as run_simulation_python
+from solver import results_to_dataframe
 
 
 def run_simulation(
@@ -56,25 +18,59 @@ def run_simulation(
     output_path: str,
     h: float = None,
     solver_type: Optional[str] = None,
-    verbose: bool = False
+    verbose: bool = False,
+    backend: str = "python",
+    use_alpha: bool = True
 ) -> pd.DataFrame:
     """
-    Run CLI simulation and return data as DataFrame.
+    Run simulation and return data as DataFrame.
 
     Args:
         config_path: Path to TOML config file
         output_path: Path for TSV output
-        h: Optional override for time step (creates temp config)
-        solver_type: Optional override for solver type (creates temp config)
-        verbose: Print CLI output
+        h: Optional override for time step
+        solver_type: Optional override for solver type
+        verbose: Print detailed output
+        backend: "python" (default) or "cli"
+        use_alpha: Apply alpha(t) rotation when using python backend
 
     Returns:
         DataFrame with simulation results
     """
+    backend = backend.lower()
+    if backend not in ("python", "cli"):
+        raise ValueError(f"Unsupported backend: {backend}")
+
+    if backend == "python":
+        config = load_config(config_path)
+        if h is not None:
+            config.h = float(h)
+        if solver_type is not None:
+            config.solver_type = solver_type
+
+        if verbose:
+            print("Running python solver...")
+            print(f"  T = {config.T}, h = {config.h}, epsilon = {config.epsilon}")
+            print(f"  solver = {config.solver_type}, alpha = {'on' if use_alpha else 'off'}")
+
+        results = run_simulation_python(config, use_alpha=use_alpha)
+        df = results_to_dataframe(results, config.h)
+
+        Path(output_path).parent.mkdir(exist_ok=True, parents=True)
+        df.to_csv(output_path, sep='\t', index=False, float_format='%.12f')
+        return df
+
+    # CLI backend
     actual_config = config_path
 
     # If overrides specified, create modified config
     if h is not None or solver_type is not None:
+        # Handle tomllib import locally for CLI path
+        try:
+            import tomllib
+        except ImportError:
+            import tomli as tomllib
+
         with open(config_path, 'rb') as f:
             config_data = tomllib.load(f)
 
@@ -92,10 +88,8 @@ def run_simulation(
         actual_config = temp_config.name
 
     try:
-        # Create output directory if needed
         Path(output_path).parent.mkdir(exist_ok=True, parents=True)
 
-        # Run simulation via npm
         cmd = ['npm', 'run', 'simulate', '--', actual_config, '-o', output_path]
         if verbose:
             cmd.append('--verbose')
@@ -114,14 +108,11 @@ def run_simulation(
             if result.stderr:
                 print("STDERR:", result.stderr)
 
-        # Check if output file exists and has content
         if not Path(output_path).exists():
             raise FileNotFoundError(f"Simulation did not create output file: {output_path}")
 
-        # Check file size
         file_size = Path(output_path).stat().st_size
-        if file_size < 200:  # Less than header size indicates empty or failed
-            # Show file content for debugging
+        if file_size < 200:
             with open(output_path) as f:
                 content = f.read()
             raise ValueError(
@@ -130,15 +121,12 @@ def run_simulation(
                 f"Stderr: {result.stderr if result.stderr else 'none'}"
             )
 
-        # Load and return data
         df = pd.read_csv(output_path, sep='\t')
-
         if len(df) == 0:
             raise ValueError(f"Simulation produced empty DataFrame despite file size {file_size}")
 
         return df
 
     finally:
-        # Clean up temp config if created
         if h is not None:
             Path(actual_config).unlink(missing_ok=True)

@@ -698,6 +698,9 @@ All statistics can be exported to TSV (Tab-Separated Values) format via the Expo
 - Perform statistical analysis
 - Compare multiple simulation runs
 
+**Python plotting notes**:
+- The Python plotting utilities can additionally generate feasible-set boundary snapshots (polygonal curves) alongside trajectory plots.
+
 ---
 
 ## References

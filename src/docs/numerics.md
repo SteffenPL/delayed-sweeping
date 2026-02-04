@@ -641,6 +641,11 @@ As `h → 0`, the discrete scheme converges to the continuous solution with:
 - The default evaluation time is `t_eval = T * 7/8`.
 - You can override the solver via `--solver-type` (or `--solver`) in the plotting script.
 
+**Python solver backend**:
+- The plotting utilities now default to a native Python implementation of the same discrete scheme.
+- The Python solver applies the rotation angle `α(t)` when projecting onto the constraint (matching the UI/CLI).
+- Feasible-set boundaries are generated via ray-casting with binary search in the local frame, then rotated and translated.
+
 ### Error Sources
 
 1. **Time discretization**: `O(h)` per step

@@ -48,6 +48,7 @@ Standard 4-panel trajectory visualization:
 - y(t) vs t
 - Phase portrait (x vs y)
 - Gradient norms
+- Feasible set snapshots (t = 0, T/2, T) in the phase portrait
 
 **Usage:**
 ```bash
@@ -107,14 +108,15 @@ Example custom figure script showing:
 Shared functions for all scripts:
 
 - `load_config(path)`: Load TOML configuration
-- `run_simulation(config_path, output_path, h=None)`: Run CLI simulation
+- `run_simulation(config_path, output_path, h=None, backend="python")`: Run Python solver (default) or CLI
 
 ## How It Works
 
-1. **Python calls CLI**: Uses `npm run simulate` to generate TSV data
-2. **Loads results**: Parses TSV into pandas DataFrame
-3. **Creates plots**: Uses matplotlib for publication-quality figures
-4. **Saves outputs**: PDFs in `figures/`, data in `output/`
+1. **Python solver (default)**: Runs the delayed + classical schemes directly in Python
+2. **Optional CLI fallback**: Use `backend="cli"` to call `npm run simulate`
+3. **Loads results**: Parses TSV into pandas DataFrame
+4. **Creates plots**: Uses matplotlib for publication-quality figures
+5. **Saves outputs**: PDFs in `figures/`, data in `output/`
 
 ## Data Format
 
