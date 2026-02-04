@@ -7,7 +7,7 @@ description = "Circular trajectory with disk constraint"
 author = "Delayed Sweeping Simulator"
 
 [simulation]
-T = 1.0                    # Final time (seconds)
+T = 2.0                    # Final time (seconds)
 h = 0.01                    # Time step
 solverType = "trapezoidal"
 epsilon = 2.0               # Kernel decay rate (1/epsilon = memory time scale)
@@ -23,6 +23,6 @@ a = 0.0                              # General parameter
 b = 0.0                              # General parameter
 
 [trajectory]
-xExpression = "2 * cos(t)"     # Constraint center x(t)
-yExpression = "2 * sin(t)"     # Constraint center y(t)
+xExpression = "2 * cos(2*t)"     # Constraint center x(t)
+yExpression = "2 * sin(2*t)"     # Constraint center y(t)
 alphaExpression = "0"          # Constraint rotation angle α(t)
