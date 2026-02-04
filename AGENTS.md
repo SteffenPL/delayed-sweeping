@@ -61,6 +61,18 @@ npm run build
 npm run preview
 ```
 
+## Python Setup
+
+Use `uv` for managing Python dependencies and virtual environments.
+
+```bash
+# Create/update the environment and install deps
+uv sync
+
+# Activate the virtual environment
+source .venv/bin/activate
+```
+
 ## Mathematical Model
 
 Discrete time-stepping scheme:

@@ -77,10 +77,10 @@ uv run plotting/plot_convergence.py config/example.toml 5e-3 2e-2 6 --no-paralle
 **Parameters:**
 - `h_min`: Reference time step (default: 1e-4, supports scientific notation)
 - `h_max`: Maximum time step (default: 1e-1, supports scientific notation)
-- `num_points`: Number of dyadic h values starting at `h_min` (default: 5)
+- `num_points`: Number of h values between `h_min` and `h_max` (default: 5)
 
 **Notes:**
-- h values are chosen as dyadic multiples of `h_min` (i.e., `h_min * 2^k`) up to `h_max`.
+- h values are chosen by linearly spacing the base-2 exponent between `h_min` and `h_max`.
 - `h_min` is used as the reference solution; evaluation uses `h >= 4*h_min`.
 - Errors are evaluated at `t_eval = T * 7/8` using linear interpolation in time.
 
