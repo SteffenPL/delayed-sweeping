@@ -1,111 +1,90 @@
-# Python Plotting
+# Python Plotting Setup
 
-Simple Python scripts for creating publication-ready plots from simulation data.
-
-## Philosophy
-
-- **Simple scripts**: Each figure has its own script (e.g., `plot_fig1.py`)
-- **No abstractions**: Direct plotting code, no complex CLI or classes
-- **Easy to modify**: Copy a script and customize for your needs
-- **Shared utilities**: Common functions in `utils.py`
+Minimal Python setup for creating publication-ready plots from simulation data.
 
 ## Quick Start
 
-### 1. Setup (one-time)
+### 1. Setup Python Environment (using uv)
 
 ```bash
 # Sync dependencies from pyproject.toml
 uv sync
+
+# Or use the setup script
+./setup-plotting.sh
 ```
 
-### 2. Run Scripts
+### 2. Run Simulations
 
-**Generic trajectory plot:**
+**Single trajectory plot:**
 ```bash
-uv run plotting/plot_trajectory.py config/example.toml
-# Output: figures/trajectory.pdf (4-panel standard plot)
+uv run plotting/plot.py config/example.toml
+# Output: figures/trajectory.pdf (4-panel: x(t), y(t), phase, gradient norms)
 ```
 
 **Convergence analysis:**
 ```bash
-uv run plotting/plot_convergence.py config/example.toml 1e-4 1e-1 8
-# Arguments: config_file h_min h_max num_points
+uv run plotting/plot.py config/example.toml --convergence
 # Output: figures/convergence.pdf (log-log error plot)
 ```
 
-**Custom figure (example):**
+**Custom convergence range:**
 ```bash
-uv run plotting/plot_fig1.py
-# Output: figures/fig1_circular.pdf
+uv run plotting/plot.py config/example.toml --convergence --h-min -12 --h-max -4
+# Tests h from 2^-12 to 2^-4
 ```
 
-## Available Scripts
-
-### `plot_trajectory.py`
-
-Standard 4-panel trajectory visualization:
-- x(t) vs t
-- y(t) vs t
-- Phase portrait (x vs y)
-- Gradient norms
-
-**Usage:**
+Alternatively, activate the venv and use `python` directly:
 ```bash
-uv run plotting/plot_trajectory.py <config.toml> [output_name]
+source .venv/bin/activate
+python plotting/plot.py config/example.toml
 ```
 
-### `plot_convergence.py`
+## Output
 
-Convergence study with log-log error plot:
-- Runs multiple simulations with different h values
-- Computes terminal error ||X(T) - X_ref(T)||
-- Plots log-log convergence with fitted slope
-- Shows reference lines for order 1 and 2
+### Trajectory Plots
+- **figures/trajectory.pdf**: 4-panel figure showing:
+  - Top-left: x(t) vs t (delayed vs classical)
+  - Top-right: y(t) vs t (delayed vs classical)
+  - Bottom-left: Phase portrait (x vs y)
+  - Bottom-right: Gradient norms over time
 
-**Usage:**
-```bash
-uv run plotting/plot_convergence.py <config.toml> [h_min] [h_max] [num_points]
+### Convergence Plots
+- **figures/convergence.pdf**: Log-log plot of terminal error vs h
+  - Shows convergence rate (fitted slope)
+  - Reference lines for first/second order
+- **output/convergence.csv**: Numerical data
 
-# Examples:
-uv run plotting/plot_convergence.py config/example.toml 1e-4 1e-1 8
-uv run plotting/plot_convergence.py config/example.toml 0.001 0.1 5
+## CLI Options
+
 ```
+python plotting/plot.py [-h] [--convergence] [--h-min H_MIN] [--h-max H_MAX]
+                        [--output-dir OUTPUT_DIR] [--figure-dir FIGURE_DIR] [-v]
+                        config
 
-**Parameters:**
-- `h_min`: Minimum time step (default: 1e-4)
-- `h_max`: Maximum time step (default: 1e-1)
-- `num_points`: Number of h values, logarithmically spaced (default: 5)
+positional arguments:
+  config                TOML config file
 
-### `plot_fig1.py`
-
-Example custom figure script showing:
-- How to create specialized plots
-- Custom layout and styling
-- Combining multiple metrics
-
-**To create your own figure:**
-1. Copy `plot_fig1.py` to `plot_figN.py`
-2. Modify the config file, layout, and plots
-3. Run directly: `uv run plotting/plot_figN.py`
-
-## Utility Functions (`utils.py`)
-
-Shared functions for all scripts:
-
-- `load_config(path)`: Load TOML configuration
-- `run_simulation(config_path, output_path, h=None)`: Run CLI simulation
+options:
+  --convergence         Run convergence analysis
+  --h-min H_MIN         Minimum log2(h) for convergence (default: -10)
+  --h-max H_MAX         Maximum log2(h) for convergence (default: -3)
+  --output-dir DIR      Output directory for TSV files (default: output)
+  --figure-dir DIR      Output directory for figures (default: figures)
+  -v, --verbose         Verbose output
+```
 
 ## How It Works
 
 1. **Python calls CLI**: Uses `npm run simulate` to generate TSV data
 2. **Loads results**: Parses TSV into pandas DataFrame
 3. **Creates plots**: Uses matplotlib for publication-quality figures
-4. **Saves outputs**: PDFs in `figures/`, data in `output/`
+4. **Convergence**: Runs multiple simulations with different h values
 
 ## Data Format
 
-CLI outputs TSV with 10 columns:
-- `time`: Simulation time (uses h from config)
+The CLI outputs TSV with 10 columns:
+- `time`: Simulation time (now correctly uses h from config)
 - `delayed_x`, `delayed_y`: Delayed sweeping trajectory
 - `delayed_xBar`, `delayed_yBar`: Pre-projection weighted average
 - `delayed_projDist`: Projection distance
@@ -113,39 +92,10 @@ CLI outputs TSV with 10 columns:
 - `classical_x`, `classical_y`: Classical sweeping trajectory
 - `classical_gradNorm`: Classical gradient norm
 
-## Creating Custom Figures
+## Statistics (Computed in Python)
 
-Copy and modify an existing script:
+Convergence analysis computes:
+- **Terminal error**: ||X(T) - X_ref(T)|| where X_ref uses finest h
+- **Convergence rate**: Slope of log2(error) vs log2(h)
 
-```python
-#!/usr/bin/env python3
-from pathlib import Path
-import matplotlib.pyplot as plt
-from utils import load_config, run_simulation
-
-# Your config and output name
-CONFIG_FILE = "config/myconfig.toml"
-OUTPUT_NAME = "my_figure"
-
-def main():
-    config = load_config(CONFIG_FILE)
-    df = run_simulation(CONFIG_FILE, "output/mydata.tsv")
-
-    # Create your custom plot
-    fig, ax = plt.subplots(figsize=(8, 6))
-    ax.plot(df['time'], df['delayed_x'], label='x(t)')
-    ax.set_xlabel(r'$t$')
-    ax.set_ylabel(r'$x$')
-    ax.legend()
-
-    # Save
-    Path("figures").mkdir(exist_ok=True)
-    fig.savefig(f"figures/{OUTPUT_NAME}.pdf", dpi=300)
-
-if __name__ == '__main__':
-    main()
-```
-
-## Examples
-
-See `examples.sh` for batch processing examples.
+This makes it easy to add more statistics without rebuilding the CLI.
