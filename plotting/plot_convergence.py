@@ -5,39 +5,13 @@ Runs simulations at multiple h values and plots log-log error convergence.
 """
 import sys
 from pathlib import Path
-from concurrent.futures import ProcessPoolExecutor, as_completed
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from tqdm import tqdm
 from utils import load_config, run_simulation
 
 
-def run_single_simulation(config_file: str, h: float, output_dir: Path, verbose: bool = False):
-    """
-    Run a single simulation with given h value.
-
-    Returns:
-        Tuple of (h, DataFrame)
-    """
-    output_path = output_dir / f"conv_h_{h:.10e}.tsv"
-    df = run_simulation(config_file, str(output_path), h=h, verbose=verbose)
-
-    if len(df) == 0:
-        raise ValueError(f"Simulation with h={h:.6e} produced no data. Check if h is too large relative to T.")
-
-    return h, df
-
-
-def run_convergence_study(
-    config_file: str,
-    h_min: float,
-    h_max: float,
-    num_points: int,
-    verbose: bool = False,
-    parallel: bool = True,
-    max_workers: int = None
-):
+def run_convergence_study(config_file: str, h_min: float, h_max: float, num_points: int, verbose: bool = False):
     """
     Run convergence study with multiple h values.
 
@@ -46,9 +20,7 @@ def run_convergence_study(
         h_min: Minimum h value
         h_max: Maximum h value
         num_points: Number of h values to test (logarithmically spaced)
-        verbose: Print detailed simulation output
-        parallel: Run simulations in parallel
-        max_workers: Maximum parallel workers (None = use CPU count)
+        verbose: Print progress
 
     Returns:
         DataFrame with columns: h, error, reference_h, reference_error
@@ -59,47 +31,33 @@ def run_convergence_study(
 
     print(f"Running convergence study with {num_points} h values:")
     print(f"  h range: [{h_values[0]:.6e}, {h_values[-1]:.6e}]")
-    if parallel:
-        print(f"  Running in parallel with {max_workers or 'auto'} workers")
 
     # Create output directory
     output_dir = Path("output")
     output_dir.mkdir(exist_ok=True)
 
     # Run simulations
-    results_dict = {}
+    results = []
+    for i, h in enumerate(h_values):
+        if verbose:
+            print(f"  [{i+1}/{num_points}] Running with h = {h:.6e}...")
 
-    if parallel:
-        # Parallel execution with progress bar
-        with ProcessPoolExecutor(max_workers=max_workers) as executor:
-            # Submit all jobs
-            futures = {
-                executor.submit(run_single_simulation, config_file, h, output_dir, verbose): h
-                for h in h_values
-            }
+        output_path = output_dir / f"conv_h_{h:.10e}.tsv"
+        df = run_simulation(config_file, str(output_path), h=h, verbose=verbose)
 
-            # Collect results with progress bar
-            with tqdm(total=len(h_values), desc="Simulations", unit="sim") as pbar:
-                for future in as_completed(futures):
-                    h, df = future.result()
-                    results_dict[h] = df
-                    pbar.update(1)
-    else:
-        # Sequential execution with progress bar
-        for h in tqdm(h_values, desc="Simulations", unit="sim"):
-            _, df = run_single_simulation(config_file, h, output_dir, verbose)
-            results_dict[h] = df
+        if len(df) == 0:
+            raise ValueError(f"Simulation with h={h:.6e} produced no data. Check if h is too large relative to T.")
 
-    # Sort results by h (to ensure reference is finest)
-    results = [results_dict[h] for h in h_values]
+        results.append(df)
 
     # Compute terminal errors relative to finest h (reference)
     ref = results[0]  # Finest h is reference
     x_ref = ref['delayed_x'].iloc[-1]
     y_ref = ref['delayed_y'].iloc[-1]
 
-    print(f"\nReference solution (h = {h_values[0]:.6e}):")
-    print(f"  X(T) = ({x_ref:.10f}, {y_ref:.10f})")
+    if verbose:
+        print(f"\nReference solution (h = {h_values[0]:.6e}):")
+        print(f"  X(T) = ({x_ref:.10f}, {y_ref:.10f})")
 
     errors = []
     for h, df in zip(h_values, results):
@@ -191,31 +149,16 @@ def plot_convergence_loglog(conv_df: pd.DataFrame, config_name: str, output_name
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python plotting/plot_convergence.py <config.toml> [h_min] [h_max] [num_points] [options]")
+        print("Usage: python plotting/plot_convergence.py <config.toml> [h_min] [h_max] [num_points] [--verbose]")
         print("\nDefaults: h_min=1e-4, h_max=1e-1, num_points=5")
-        print("\nOptions:")
-        print("  --verbose, -v       Show detailed simulation output")
-        print("  --no-parallel       Run simulations sequentially (default: parallel)")
-        print("  --workers N         Set number of parallel workers (default: auto)")
-        print("\nExamples:")
+        print("\nExample:")
         print("  python plotting/plot_convergence.py config/example.toml 1e-4 1e-1 8")
-        print("  python plotting/plot_convergence.py config/example.toml 1e-6 1e-3 10 --workers 4")
-        print("  python plotting/plot_convergence.py config/example.toml 0.001 0.01 5 --no-parallel")
+        print("  python plotting/plot_convergence.py config/example.toml 1e-3 1e-2 5 --verbose")
         sys.exit(1)
 
     # Parse arguments
-    args = [a for a in sys.argv[1:] if not a.startswith('--') and not a.startswith('-')]
+    args = [a for a in sys.argv[1:] if not a.startswith('--')]
     verbose = '--verbose' in sys.argv or '-v' in sys.argv
-    parallel = '--no-parallel' not in sys.argv
-
-    # Parse max_workers
-    max_workers = None
-    if '--workers' in sys.argv:
-        idx = sys.argv.index('--workers')
-        if idx + 1 < len(sys.argv):
-            max_workers = int(sys.argv[idx + 1])
-            # Remove from args list if it was added
-            args = [a for a in args if a != str(max_workers)]
 
     config_file = args[0]
     h_min = float(args[1]) if len(args) > 1 else 1e-4
@@ -228,10 +171,7 @@ def main():
     print(f"  T = {config.T}, ε = {config.epsilon}\n")
 
     # Run convergence study
-    conv_df = run_convergence_study(
-        config_file, h_min, h_max, num_points,
-        verbose=verbose, parallel=parallel, max_workers=max_workers
-    )
+    conv_df = run_convergence_study(config_file, h_min, h_max, num_points, verbose=verbose)
 
     # Create plot
     plot_convergence_loglog(conv_df, config.name)

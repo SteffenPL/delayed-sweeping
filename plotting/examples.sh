@@ -10,9 +10,9 @@ echo "1. Generating trajectory plot for example config..."
 uv run plotting/plot_trajectory.py config/example.toml
 echo ""
 
-# Example 2: Convergence study (parallel)
-echo "2. Running convergence study (6 points, h from 5e-3 to 2e-2, parallel)..."
-uv run plotting/plot_convergence.py config/example.toml 5e-3 2e-2 6
+# Example 2: Convergence study
+echo "2. Running convergence study (5 points, h from 1e-3 to 0.05)..."
+uv run plotting/plot_convergence.py config/example.toml 1e-3 0.05 5
 echo ""
 
 # Example 3: Custom figure
