@@ -629,6 +629,12 @@ As `h → 0`, the discrete scheme converges to the continuous solution with:
 - Trajectory `c(t)` must be Lipschitz continuous
 - Kernel truncation error must be negligible: `e^{-ε·J_max·h} ≪ 1`
 
+**Convergence plots (Python)**:
+- The convergence script compares **terminal-time** errors `||X(T) - X_ref(T)||`.
+- To keep terminal times aligned, it selects h values as dyadic multiples of the smallest h: `h_k = h_min * 2^k`,
+  stopping before exceeding `h_max`. Choose `h_min` so that `T / h_min` is an integer.
+- The reference solution uses `h_ref = h_min`, while evaluation uses `h >= 4*h_min`.
+
 ### Error Sources
 
 1. **Time discretization**: `O(h)` per step
