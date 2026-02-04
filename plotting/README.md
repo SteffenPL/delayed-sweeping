@@ -57,24 +57,31 @@ uv run plotting/plot_trajectory.py <config.toml> [output_name]
 ### `plot_convergence.py`
 
 Convergence study with log-log error plot:
-- Runs multiple simulations with different h values
+- Runs multiple simulations with different h values (in parallel by default)
 - Computes terminal error ||X(T) - X_ref(T)||
 - Plots log-log convergence with fitted slope
 - Shows reference lines for order 1 and 2
+- Progress bars with tqdm
 
 **Usage:**
 ```bash
-uv run plotting/plot_convergence.py <config.toml> [h_min] [h_max] [num_points]
+uv run plotting/plot_convergence.py <config.toml> [h_min] [h_max] [num_points] [options]
 
 # Examples:
 uv run plotting/plot_convergence.py config/example.toml 1e-4 1e-1 8
-uv run plotting/plot_convergence.py config/example.toml 0.001 0.1 5
+uv run plotting/plot_convergence.py config/example.toml 1e-6 1e-3 10 --workers 4
+uv run plotting/plot_convergence.py config/example.toml 5e-3 2e-2 6 --no-parallel
 ```
 
 **Parameters:**
-- `h_min`: Minimum time step (default: 1e-4)
-- `h_max`: Maximum time step (default: 1e-1)
+- `h_min`: Minimum time step (default: 1e-4, supports scientific notation)
+- `h_max`: Maximum time step (default: 1e-1, supports scientific notation)
 - `num_points`: Number of h values, logarithmically spaced (default: 5)
+
+**Options:**
+- `--verbose, -v`: Show detailed simulation output
+- `--no-parallel`: Run simulations sequentially (default: parallel)
+- `--workers N`: Set number of parallel workers (default: auto)
 
 ### `plot_fig1.py`
 
