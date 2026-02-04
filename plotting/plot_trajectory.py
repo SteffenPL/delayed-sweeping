@@ -5,10 +5,8 @@ Generates 4-panel figure: x(t), y(t), phase portrait, gradient norms.
 """
 import sys
 from pathlib import Path
-import numpy as np
 import matplotlib.pyplot as plt
 from utils import load_config, run_simulation
-from solver import feasible_set_polygons, estimate_max_radius
 
 
 def main():
@@ -60,18 +58,6 @@ def main():
     ax3.plot(df['classical_x'], df['classical_y'], '--', label='Classical', linewidth=1.5, alpha=0.8)
     ax3.plot(df['delayed_x'].iloc[0], df['delayed_y'].iloc[0], 'go', markersize=8, label='Start')
     ax3.plot(df['delayed_x'].iloc[-1], df['delayed_y'].iloc[-1], 'ro', markersize=8, label='End')
-
-    # Feasible set snapshots (t = 0, T/2, T)
-    times = [0.0, 0.5 * config.T, config.T]
-    max_radius = estimate_max_radius(config)
-    polygons = feasible_set_polygons(config, times, num_rays=192, max_radius=max_radius, use_alpha=True)
-    colors = plt.cm.Blues(np.linspace(0.4, 0.85, len(times)))
-    for idx, t in enumerate(times):
-        poly = polygons[float(t)]
-        closed = np.vstack([poly, poly[0]])
-        label = 'Feasible set' if idx == 0 else None
-        ax3.plot(closed[:, 0], closed[:, 1], color=colors[idx], linewidth=1.0, alpha=0.6, label=label)
-
     ax3.set_xlabel(r'$x$', fontsize=12)
     ax3.set_ylabel(r'$y$', fontsize=12)
     ax3.legend(fontsize=10)

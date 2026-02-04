@@ -39,7 +39,7 @@ See [CLI.md](CLI.md) for detailed CLI usage.
 - **Publication-ready plots**: Generate matplotlib figures from simulation data
 - **Trajectory visualization**: 4-panel plots (x(t), y(t), phase portrait, metrics)
 - **Convergence analysis**: Automated convergence studies with log-log error plots
-- **Python-driven workflow**: Native Python solver (or CLI fallback), compute statistics, create plots
+- **Python-driven workflow**: Call CLI from Python, compute statistics, create plots
 
 See [plotting/README.md](plotting/README.md) for plotting documentation.
 
