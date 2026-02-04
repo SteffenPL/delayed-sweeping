@@ -165,6 +165,10 @@ tail_num = ∫_{Jh}^{∞} ρ(a) X_p(t_n - a) da
 tail_den = ∫_{Jh}^{∞} ρ(a) da = e^{-εJh}
 ```
 
+**Default selection**:
+- If `solverType` is omitted in the TOML config, the code defaults to `norm1-sum1`.
+- The CLI and plotting scripts read `simulation.solverType` from the TOML unless overridden.
+
 ### Implementation
 
 See `src/simulation/DelayedSweepingSimulator.ts:59-94`:
@@ -630,10 +634,12 @@ As `h → 0`, the discrete scheme converges to the continuous solution with:
 - Kernel truncation error must be negligible: `e^{-ε·J_max·h} ≪ 1`
 
 **Convergence plots (Python)**:
-- The convergence script compares **terminal-time** errors `||X(T) - X_ref(T)||`.
+- The convergence script compares errors at a fixed evaluation time using linear interpolation.
 - To keep terminal times aligned, it selects h values as dyadic multiples of the smallest h: `h_k = h_min * 2^k`,
   stopping before exceeding `h_max`. Choose `h_min` so that `T / h_min` is an integer.
 - The reference solution uses `h_ref = h_min`, while evaluation uses `h >= 4*h_min`.
+- The default evaluation time is `t_eval = T * 7/8`.
+- You can override the solver via `--solver-type` (or `--solver`) in the plotting script.
 
 ### Error Sources
 

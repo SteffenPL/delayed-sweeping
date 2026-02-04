@@ -6,6 +6,7 @@ import tempfile
 from pathlib import Path
 from dataclasses import dataclass
 import pandas as pd
+from typing import Optional
 
 # Handle tomllib import (tomllib in Python 3.11+, tomli for earlier versions)
 try:
@@ -27,6 +28,7 @@ class Config:
     x_traj: str
     y_traj: str
     alpha_traj: str
+    solver_type: str
 
 
 def load_config(path: str) -> Config:
@@ -45,10 +47,17 @@ def load_config(path: str) -> Config:
         x_traj=data['trajectory']['xExpression'],
         y_traj=data['trajectory']['yExpression'],
         alpha_traj=data['trajectory']['alphaExpression'],
+        solver_type=data['simulation'].get('solverType', 'norm1-sum1'),
     )
 
 
-def run_simulation(config_path: str, output_path: str, h: float = None, verbose: bool = False) -> pd.DataFrame:
+def run_simulation(
+    config_path: str,
+    output_path: str,
+    h: float = None,
+    solver_type: Optional[str] = None,
+    verbose: bool = False
+) -> pd.DataFrame:
     """
     Run CLI simulation and return data as DataFrame.
 
@@ -56,6 +65,7 @@ def run_simulation(config_path: str, output_path: str, h: float = None, verbose:
         config_path: Path to TOML config file
         output_path: Path for TSV output
         h: Optional override for time step (creates temp config)
+        solver_type: Optional override for solver type (creates temp config)
         verbose: Print CLI output
 
     Returns:
@@ -63,13 +73,16 @@ def run_simulation(config_path: str, output_path: str, h: float = None, verbose:
     """
     actual_config = config_path
 
-    # If h override specified, create modified config
-    if h is not None:
+    # If overrides specified, create modified config
+    if h is not None or solver_type is not None:
         with open(config_path, 'rb') as f:
             config_data = tomllib.load(f)
 
         # Convert to plain Python float to avoid numpy types in TOML
-        config_data['simulation']['h'] = float(h)
+        if h is not None:
+            config_data['simulation']['h'] = float(h)
+        if solver_type is not None:
+            config_data['simulation']['solverType'] = solver_type
 
         # Write to temporary file
         temp_config = tempfile.NamedTemporaryFile(mode='w', suffix='.toml', delete=False)
