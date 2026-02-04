@@ -316,13 +316,13 @@ def simulate_delayed(
     proj_dist: list[float] = [0.0] * (n_steps + 1)
     grad_norms: list[float] = [0.0] * (n_steps + 1)
 
-    for n in range(n_steps + 1):
-        t_n = n * config.h
-        center = center_func(t_n)
-        angle = alpha_func(t_n) if use_alpha else 0.0
-        centers[n] = center
+    if config.solver_type == 'trapezoidal':
+        for n in range(n_steps + 1):
+            t_n = n * config.h
+            center = center_func(t_n)
+            angle = alpha_func(t_n) if use_alpha else 0.0
+            centers[n] = center
 
-        if config.solver_type == 'trapezoidal':
             x_bar = (0.0, 0.0)
             for j, weight in enumerate(weights):
                 if j == 0:
@@ -339,30 +339,68 @@ def simulate_delayed(
                     x_bar[0] + weight * x_past[0],
                     x_bar[1] + weight * x_past[1],
                 )
+
+            pre_projection[n] = x_bar
+
+            local = _rotate_to_local(x_bar, center, angle)
+            projected_local = project_to_constraint(evaluator, local, max_iterations=max_iter, tolerance=proj_tol)
+            projected_world = _rotate_to_world(projected_local, center, angle)
+
+            trajectory[n] = projected_world
+            proj_dist[n] = _distance(projected_world, x_bar)
+
+            grad_x, grad_y = numerical_gradient(evaluator, projected_local[0], projected_local[1], grad_eps)
+            grad_norms[n] = math.sqrt(grad_x * grad_x + grad_y * grad_y)
+    else:
+        # Use geometric recurrence to avoid O(N*J) inner loops for exact schemes.
+        # r_tilde[j] = base * q^j, with q = exp(-epsilon * h)
+        q = math.exp(-config.epsilon * config.h)
+        if len(weights) > 1:
+            base = weights[1] / q
         else:
-            x_bar = (0.0, 0.0)
-            for j in range(1, len(weights)):
-                if n - j >= 0:
-                    x_past = trajectory[n - j]
+            base = 0.0
+        scale = config.h * base
+        j_max = len(weights)
+        q_pow_L = math.exp(-config.epsilon * config.h * j_max)
+
+        # Initialize S0 = sum_{j=1}^{J-1} q^j X[-j]
+        s_x = 0.0
+        s_y = 0.0
+        q_power = q
+        for j in range(1, j_max):
+            x_past = past_func(-j * config.h)
+            s_x += q_power * x_past[0]
+            s_y += q_power * x_past[1]
+            q_power *= q
+
+        for n in range(n_steps + 1):
+            t_n = n * config.h
+            center = center_func(t_n)
+            angle = alpha_func(t_n) if use_alpha else 0.0
+            centers[n] = center
+
+            x_bar = (scale * s_x, scale * s_y)
+            pre_projection[n] = x_bar
+
+            local = _rotate_to_local(x_bar, center, angle)
+            projected_local = project_to_constraint(evaluator, local, max_iterations=max_iter, tolerance=proj_tol)
+            projected_world = _rotate_to_world(projected_local, center, angle)
+
+            trajectory[n] = projected_world
+            proj_dist[n] = _distance(projected_world, x_bar)
+
+            grad_x, grad_y = numerical_gradient(evaluator, projected_local[0], projected_local[1], grad_eps)
+            grad_norms[n] = math.sqrt(grad_x * grad_x + grad_y * grad_y)
+
+            # Update S for next step (skip after last iteration)
+            if n < n_steps:
+                old_index = n - (j_max - 1)
+                if old_index >= 0:
+                    old_value = trajectory[old_index]
                 else:
-                    x_past = past_func((n - j) * config.h)
-                scale = config.h * weights[j]
-                x_bar = (
-                    x_bar[0] + scale * x_past[0],
-                    x_bar[1] + scale * x_past[1],
-                )
-
-        pre_projection[n] = x_bar
-
-        local = _rotate_to_local(x_bar, center, angle)
-        projected_local = project_to_constraint(evaluator, local, max_iterations=max_iter, tolerance=proj_tol)
-        projected_world = _rotate_to_world(projected_local, center, angle)
-
-        trajectory[n] = projected_world
-        proj_dist[n] = _distance(projected_world, x_bar)
-
-        grad_x, grad_y = numerical_gradient(evaluator, projected_local[0], projected_local[1], grad_eps)
-        grad_norms[n] = math.sqrt(grad_x * grad_x + grad_y * grad_y)
+                    old_value = past_func(old_index * config.h)
+                s_x = q * projected_world[0] + q * s_x - q_pow_L * old_value[0]
+                s_y = q * projected_world[1] + q * s_y - q_pow_L * old_value[1]
 
     return {
         'trajectory': trajectory,
