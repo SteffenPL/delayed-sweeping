@@ -91,14 +91,6 @@ uv run plotting/plot_convergence.py config/example.toml 5e-3 2e-2 6 --no-paralle
 - `--solver-type TYPE`: Override solver type (`norm1-sum1`, `norm0-sum1`, `trapezoidal`)
 - `--solver TYPE`: Alias for `--solver-type`
 
-### `compare_solvers.py`
-
-Compare the Python solver against the TypeScript CLI for the same config:
-
-```bash
-uv run plotting/compare_solvers.py config/example.toml --solver-type norm1-sum1 --tol 1e-4
-```
-
 ### `plot_fig1.py`
 
 Example custom figure script showing:
