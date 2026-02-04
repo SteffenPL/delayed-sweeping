@@ -28,7 +28,10 @@ head -5 output/test.tsv
 
 **Files Created**:
 - `pyproject.toml` - uv package configuration with dependencies
-- `plotting/plot.py` - Main plotting script (~400 lines)
+- `plotting/utils.py` - Shared utility functions (~110 lines)
+- `plotting/plot_trajectory.py` - Standard 4-panel trajectory plots (~90 lines)
+- `plotting/plot_convergence.py` - Log-log convergence analysis (~180 lines)
+- `plotting/plot_fig1.py` - Example custom figure script (~60 lines)
 - `plotting/README.md` - Documentation and usage guide
 - `plotting/examples.sh` - Example workflows
 - `requirements-plotting.txt` - Legacy requirements file (kept for reference)
