@@ -85,7 +85,7 @@ function loadConfig(configPath: string): SimulationConfig {
   return tomlToConfig(tomlContent);
 }
 
-function exportTSV(results: any, outputPath: string) {
+function exportTSV(results: any, h: number, outputPath: string) {
   const { delayed, classical } = results;
 
   // Build TSV with time, positions, and metrics
@@ -108,7 +108,7 @@ function exportTSV(results: any, outputPath: string) {
   // Data rows
   const n = delayed.trajectory.length;
   for (let i = 0; i < n; i++) {
-    const t = i * 0.01; // TODO: get h from config
+    const t = i * h;
 
     lines.push([
       t.toFixed(6),
@@ -171,7 +171,7 @@ async function main() {
     }
 
     if (options.format === 'tsv') {
-      exportTSV(results, options.outputFile);
+      exportTSV(results, config.simulation.h, options.outputFile);
     } else {
       exportJSON(results, options.outputFile);
     }
