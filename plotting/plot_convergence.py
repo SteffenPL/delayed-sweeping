@@ -4,7 +4,6 @@ Convergence analysis script.
 Runs simulations at multiple h values and plots log-log error convergence.
 """
 import sys
-import argparse
 from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import numpy as np
@@ -20,8 +19,7 @@ def run_single_simulation(
     h: float,
     output_dir: Path,
     solver_type: Optional[str] = None,
-    verbose: bool = False,
-    index: Optional[int] = None
+    verbose: bool = False
 ):
     """
     Run a single simulation with given h value.
@@ -29,10 +27,7 @@ def run_single_simulation(
     Returns:
         Tuple of (h, DataFrame)
     """
-    if index is None:
-        output_path = output_dir / f"conv_h_{h:.10e}.tsv"
-    else:
-        output_path = output_dir / f"conv_{index:03d}_h_{h:.10e}.tsv"
+    output_path = output_dir / f"conv_h_{h:.10e}.tsv"
     df = run_simulation(config_file, str(output_path), h=h, solver_type=solver_type, verbose=verbose)
 
     if len(df) == 0:
@@ -41,23 +36,24 @@ def run_single_simulation(
     return h, df
 
 
-def build_log2_h_values(h_min: float, h_max: float, num_points: int) -> list[float]:
+def build_dyadic_h_values(h_min: float, h_max: float, num_points: int) -> list[float]:
     """
-    Build h values with linearly spaced base-2 exponents between log2(h_min) and log2(h_max).
-    This yields geometric spacing without restricting to powers of two.
+    Build dyadic h values: h_min * 2^k, k >= 0.
+    Stops when h exceeds h_max or num_points is reached.
     """
     if h_min <= 0 or h_max <= 0:
         raise ValueError("h_min and h_max must be positive.")
     if h_min > h_max:
         raise ValueError(f"h_min ({h_min}) must be <= h_max ({h_max}).")
 
-    if num_points < 2:
-        raise ValueError("num_points must be >= 2 for convergence analysis.")
+    h_values: list[float] = [h_min]
+    while len(h_values) < num_points:
+        next_h = h_values[-1] * 2.0
+        if next_h > h_max:
+            break
+        h_values.append(next_h)
 
-    exp_min = np.log2(h_min)
-    exp_max = np.log2(h_max)
-    exps = np.linspace(exp_min, exp_max, num_points)
-    return [float(2.0 ** e) for e in exps]
+    return h_values
 
 
 def run_convergence_study(
@@ -78,7 +74,7 @@ def run_convergence_study(
         config_file: Path to TOML config
         h_min: Minimum h value
         h_max: Maximum h value
-        num_points: Number of h values between h_min and h_max
+        num_points: Number of dyadic h values starting from h_min
         t_eval: Evaluation time for error computation
         solver_type: Solver type override (None = use config/default)
         verbose: Print detailed simulation output
@@ -88,8 +84,8 @@ def run_convergence_study(
     Returns:
         DataFrame with columns: h, error, reference_h, reference_error
     """
-    # Generate h values with linearly spaced base-2 exponents
-    h_values = build_log2_h_values(h_min, h_max, num_points)
+    # Generate dyadic h values (powers of 2 multiples of h_min)
+    h_values = build_dyadic_h_values(h_min, h_max, num_points)
     if len(h_values) < 1:
         raise ValueError(
             "Need at least one h value for convergence analysis. "
@@ -108,7 +104,7 @@ def run_convergence_study(
     print(f"Running convergence study with {len(eval_h_values)} evaluation h values:")
     print(f"  reference h: {reference_h:.6e}")
     print(f"  h range: [{eval_h_values[0]:.6e}, {eval_h_values[-1]:.6e}]")
-    print("  h values use linearly spaced base-2 exponents between h_min and h_max.")
+    print("  h values are dyadic multiples of the smallest h (powers of 2).")
     if parallel:
         print(f"  Running in parallel with {max_workers or 'auto'} workers")
 
@@ -120,17 +116,14 @@ def run_convergence_study(
     results_dict = {}
 
     all_h_values = [reference_h] + [h for h in eval_h_values if h != reference_h]
-    h_jobs = list(enumerate(all_h_values))
 
     if parallel:
         # Parallel execution with progress bar
         with ProcessPoolExecutor(max_workers=max_workers) as executor:
             # Submit all jobs
             futures = {
-                executor.submit(
-                    run_single_simulation, config_file, h, output_dir, solver_type, verbose, index
-                ): h
-                for index, h in h_jobs
+                executor.submit(run_single_simulation, config_file, h, output_dir, solver_type, verbose): h
+                for h in all_h_values
             }
 
             # Collect results with progress bar
@@ -141,8 +134,8 @@ def run_convergence_study(
                     pbar.update(1)
     else:
         # Sequential execution with progress bar
-        for index, h in tqdm(h_jobs, desc="Simulations", unit="sim"):
-            _, df = run_single_simulation(config_file, h, output_dir, solver_type, verbose, index)
+        for h in tqdm(all_h_values, desc="Simulations", unit="sim"):
+            _, df = run_single_simulation(config_file, h, output_dir, solver_type, verbose)
             results_dict[h] = df
 
     # Compute errors relative to finest h (reference) at t_eval
@@ -275,35 +268,63 @@ def plot_convergence_loglog(conv_df: pd.DataFrame, config_name: str, output_name
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Convergence analysis script. Runs simulations at multiple h values and plots log-log error convergence."
-    )
-    parser.add_argument("config", help="Path to TOML config")
-    parser.add_argument("h_min", nargs="?", type=float, default=1e-4, help="Minimum h value (default: 1e-4)")
-    parser.add_argument("h_max", nargs="?", type=float, default=1e-1, help="Maximum h value (default: 1e-1)")
-    parser.add_argument("num_points", nargs="?", type=int, default=5, help="Number of h values (default: 5)")
-    parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed simulation output")
-    parser.add_argument("--no-parallel", action="store_true", help="Run simulations sequentially (default: parallel)")
-    parser.add_argument("--workers", type=int, default=None, help="Set number of parallel workers (default: auto)")
-    parser.add_argument(
-        "--solver-type", "--solver", dest="solver_type",
-        choices=["norm1-sum1", "norm0-sum1", "trapezoidal"],
-        help="Override solver type"
-    )
+    if len(sys.argv) < 2:
+        print("Usage: python plotting/plot_convergence.py <config.toml> [h_min] [h_max] [num_points] [options]")
+        print("\nDefaults: h_min=1e-4, h_max=1e-1, num_points=5")
+        print("\nNotes:")
+        print("  - h values are dyadic multiples of h_min (h_min * 2^k) up to h_max.")
+        print("  - h_min is used as the reference; evaluation uses h >= 4*h_min.")
+        print("  - errors are evaluated at t_eval = T * 7/8 using linear interpolation.")
+        print("\nOptions:")
+        print("  --verbose, -v       Show detailed simulation output")
+        print("  --no-parallel       Run simulations sequentially (default: parallel)")
+        print("  --workers N         Set number of parallel workers (default: auto)")
+        print("  --solver-type TYPE  Override solver type (norm1-sum1, norm0-sum1, trapezoidal)")
+        print("  --solver TYPE       Alias for --solver-type")
+        print("\nExamples:")
+        print("  python plotting/plot_convergence.py config/example.toml 1e-4 1e-1 8")
+        print("  python plotting/plot_convergence.py config/example.toml 1e-6 1e-3 10 --workers 4")
+        print("  python plotting/plot_convergence.py config/example.toml 0.001 0.01 5 --no-parallel")
+        print("  python plotting/plot_convergence.py config/example.toml 1e-4 1e-1 8 --solver-type trapezoidal")
+        sys.exit(1)
 
-    args = parser.parse_args()
+    # Parse arguments
+    args = [a for a in sys.argv[1:] if not a.startswith('--') and not a.startswith('-')]
+    verbose = '--verbose' in sys.argv or '-v' in sys.argv
+    parallel = '--no-parallel' not in sys.argv
+    solver_type = None
 
-    if args.num_points < 2:
-        parser.error("num_points must be >= 2 for convergence analysis.")
+    # Parse max_workers
+    max_workers = None
+    if '--workers' in sys.argv:
+        idx = sys.argv.index('--workers')
+        if idx + 1 < len(sys.argv):
+            max_workers = int(sys.argv[idx + 1])
+            # Remove from args list if it was added
+            args = [a for a in args if a != str(max_workers)]
 
-    config_file = args.config
-    h_min = args.h_min
-    h_max = args.h_max
-    num_points = args.num_points
-    verbose = args.verbose
-    parallel = not args.no_parallel
-    max_workers = args.workers
-    solver_type = args.solver_type
+    # Parse solver type
+    solver_flags = ['--solver-type', '--solver']
+    for flag in solver_flags:
+        if flag in sys.argv:
+            idx = sys.argv.index(flag)
+            if idx + 1 < len(sys.argv):
+                solver_type = sys.argv[idx + 1]
+                args = [a for a in args if a != solver_type]
+            break
+
+    if solver_type is not None:
+        valid_solvers = {'norm1-sum1', 'norm0-sum1', 'trapezoidal'}
+        if solver_type not in valid_solvers:
+            raise ValueError(
+                f"Invalid solver type: {solver_type}. "
+                f"Choose one of {sorted(valid_solvers)}."
+            )
+
+    config_file = args[0]
+    h_min = float(args[1]) if len(args) > 1 else 1e-4
+    h_max = float(args[2]) if len(args) > 2 else 1e-1
+    num_points = int(args[3]) if len(args) > 3 else 5
 
     # Load config
     config = load_config(config_file)
