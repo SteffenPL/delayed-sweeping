@@ -52,6 +52,26 @@ export function ParameterPanel() {
       </div>
 
       <div className="param-group">
+        <label htmlFor="param-solver">
+          Solver Type
+          <select
+            id="param-solver"
+            value={params.solverType}
+            onChange={(e) => setParams({ solverType: e.target.value as any })}
+          >
+            <option value="norm1-sum1">norm1-sum1 (default)</option>
+            <option value="norm0-sum1">norm0-sum1</option>
+            <option value="trapezoidal">trapezoidal</option>
+          </select>
+        </label>
+        <small className="param-help">
+          {params.solverType === 'norm1-sum1' && 'Exact integration, normalize j≥1'}
+          {params.solverType === 'norm0-sum1' && 'Exact integration, normalize j≥0'}
+          {params.solverType === 'trapezoidal' && 'Trapezoidal rule with predictor'}
+        </small>
+      </div>
+
+      <div className="param-group">
         <label htmlFor="param-xPast">
           Initial past x<sub>p</sub>(t)
           <input

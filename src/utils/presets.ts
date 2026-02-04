@@ -12,6 +12,7 @@ export const PRESETS: Preset[] = [
       infiniteMode: true,
       xPastExpression: '2',
       yPastExpression: '0',
+      solverType: 'norm1-sum1',
     },
     constraint: {
       expression: 'R - sqrt(x^2 + y^2)',
@@ -37,6 +38,7 @@ export const PRESETS: Preset[] = [
       infiniteMode: true,
       xPastExpression: '0',
       yPastExpression: '0',
+      solverType: 'norm1-sum1',
     },
     constraint: {
       expression: 'R - sqrt(x^2 + y^2)',

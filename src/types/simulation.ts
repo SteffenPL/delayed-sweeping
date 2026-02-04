@@ -4,6 +4,9 @@ export interface Vec2 {
   y: number;
 }
 
+// Solver types for discretization scheme
+export type SolverType = 'norm0-sum1' | 'norm1-sum1' | 'trapezoidal';
+
 // Simulation parameters
 export interface SimulationParameters {
   T: number;           // Final simulation time (or window size in infinite mode)
@@ -12,6 +15,7 @@ export interface SimulationParameters {
   infiniteMode: boolean; // Run indefinitely until manually stopped
   xPastExpression: string;  // Initial past condition x_p(t) for t < 0
   yPastExpression: string;  // Initial past condition y_p(t) for t < 0
+  solverType: SolverType;   // Discretization solver type
 }
 
 // Constraint configuration - expression-based with standardized parameters

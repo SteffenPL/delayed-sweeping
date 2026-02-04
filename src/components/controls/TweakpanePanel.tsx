@@ -59,6 +59,7 @@ export function TweakpanePanel() {
       T: params.T,
       h: params.h,
       epsilon: params.epsilon,
+      solverType: params.solverType,
       xPastExpression: params.xPastExpression,
       yPastExpression: params.yPastExpression,
       speed: speed,
@@ -106,6 +107,15 @@ export function TweakpanePanel() {
       step: 0.1,
       label: 'ε'
     }).on('change', (ev: TweakpaneAny) => setParams({ epsilon: ev.value }));
+
+    simFolder.addBinding(PARAMS, 'solverType', {
+      label: 'Solver Type',
+      options: {
+        'norm1-sum1': 'norm1-sum1',
+        'norm0-sum1': 'norm0-sum1',
+        'trapezoidal': 'trapezoidal',
+      },
+    }).on('change', (ev: TweakpaneAny) => setParams({ solverType: ev.value }));
 
     simFolder.addBinding(PARAMS, 'xPastExpression', {
       label: 'xₚ(t) (t<0)'
@@ -326,6 +336,7 @@ export function TweakpanePanel() {
     PARAMS.T = params.T;
     PARAMS.h = params.h;
     PARAMS.epsilon = params.epsilon;
+    PARAMS.solverType = params.solverType;
     PARAMS.xPastExpression = params.xPastExpression;
     PARAMS.yPastExpression = params.yPastExpression;
     PARAMS.speed = speed;

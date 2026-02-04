@@ -39,7 +39,11 @@ export class DelayedSweepingSimulator {
     this.projectFunc = config.projectFunc;
 
     this.N = Math.floor(config.params.T / config.params.h);
-    this.rTilde = computeDiscreteWeights(config.params.epsilon, config.params.h);
+    this.rTilde = computeDiscreteWeights(
+      config.params.epsilon,
+      config.params.h,
+      config.params.solverType
+    );
   }
 
   /**
@@ -59,25 +63,17 @@ export class DelayedSweepingSimulator {
    * @returns The new position X^n
    */
   step(n: number): Vec2 {
-    const { h } = this.params;
+    const { h, solverType } = this.params;
     const t_n = n * h;
 
-    // Compute weighted average: X_bar^n = h * sum_{j>=1} r_tilde_j * X^{n-j}
-    let xBar: Vec2 = vec2.zero();
+    // Compute weighted average using solver-specific scheme
+    let xBar: Vec2;
 
-    for (let j = 1; j < this.rTilde.length; j++) {
-      let xPast: Vec2;
-
-      if (n - j >= 0) {
-        // Use computed trajectory value
-        xPast = this.X[n - j];
-      } else {
-        // Use past condition for t < 0
-        const tPast = (n - j) * h;
-        xPast = this.pastFunc(tPast);
-      }
-
-      xBar = vec2.add(xBar, vec2.scale(xPast, h * this.rTilde[j]));
+    if (solverType === 'trapezoidal') {
+      xBar = this.computeWeightedAverageTrapezoidal(n);
+    } else {
+      // Both 'norm1-sum1' and 'norm0-sum1' use the same summation
+      xBar = this.computeWeightedAverageExact(n);
     }
 
     this.XBar[n] = xBar;
@@ -95,6 +91,70 @@ export class DelayedSweepingSimulator {
     this.gradientNorms[n] = gradientNorm;
 
     return xNew;
+  }
+
+  /**
+   * Compute weighted average using exact integration schemes
+   * Used by 'norm1-sum1' and 'norm0-sum1'
+   * Sum: X_bar^n = h * sum_{j>=1} r_tilde_j * X^{n-j}
+   */
+  private computeWeightedAverageExact(n: number): Vec2 {
+    const { h } = this.params;
+    let xBar: Vec2 = vec2.zero();
+
+    for (let j = 1; j < this.rTilde.length; j++) {
+      let xPast: Vec2;
+
+      if (n - j >= 0) {
+        // Use computed trajectory value
+        xPast = this.X[n - j];
+      } else {
+        // Use past condition for t < 0
+        const tPast = (n - j) * h;
+        xPast = this.pastFunc(tPast);
+      }
+
+      xBar = vec2.add(xBar, vec2.scale(xPast, h * this.rTilde[j]));
+    }
+
+    return xBar;
+  }
+
+  /**
+   * Compute weighted average using trapezoidal rule with predictor
+   * Sum: X_bar^n = w_tilde_0 * X^{n-1} + sum_{j>=1} w_tilde_j * X^{n-j}
+   * Note: w_tilde_0 multiplies X^{n-1} (predictor) instead of X^n
+   */
+  private computeWeightedAverageTrapezoidal(n: number): Vec2 {
+    const { h } = this.params;
+    let xBar: Vec2 = vec2.zero();
+
+    for (let j = 0; j < this.rTilde.length; j++) {
+      let xPast: Vec2;
+
+      if (j === 0) {
+        // j=0: Use X^{n-1} as predictor
+        if (n - 1 >= 0) {
+          xPast = this.X[n - 1];
+        } else {
+          // Use past condition for t < 0
+          const tPast = (n - 1) * h;
+          xPast = this.pastFunc(tPast);
+        }
+      } else {
+        // j >= 1: Use X^{n-j}
+        if (n - j >= 0) {
+          xPast = this.X[n - j];
+        } else {
+          const tPast = (n - j) * h;
+          xPast = this.pastFunc(tPast);
+        }
+      }
+
+      xBar = vec2.add(xBar, vec2.scale(xPast, this.rTilde[j]));
+    }
+
+    return xBar;
   }
 
   /**
@@ -183,7 +243,11 @@ export class DelayedSweepingSimulator {
   updateParams(params: Partial<SimulationParameters>): void {
     this.params = { ...this.params, ...params };
     this.N = Math.floor(this.params.T / this.params.h);
-    this.rTilde = computeDiscreteWeights(this.params.epsilon, this.params.h);
+    this.rTilde = computeDiscreteWeights(
+      this.params.epsilon,
+      this.params.h,
+      this.params.solverType
+    );
   }
 
   /**

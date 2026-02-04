@@ -7,6 +7,7 @@ export const DEFAULT_PARAMS: SimulationParameters = {
   infiniteMode: true,
   xPastExpression: '2*cos(t)',
   yPastExpression: '2*sin(t)',
+  solverType: 'norm1-sum1',
 };
 
 export const DEFAULT_CONSTRAINT: ConstraintConfig = {

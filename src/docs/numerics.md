@@ -82,6 +82,89 @@ where:
 - `P_{C^n}(·)` is the projection operator onto `C(t_n)`
 - For `n - j < 0`, we use the initial past condition: `X^{n-j} = X_p((n-j)·h) = (x_p((n-j)·h), y_p((n-j)·h))`
 
+### Solver Variants
+
+The simulator supports three discretization schemes that differ in how the kernel integral is approximated:
+
+#### 1. **norm1-sum1** (Default)
+
+Uses exact integration over intervals with normalization starting at j ≥ 1:
+
+```
+R_j = (1/h) · e^{-εjh} · (1 - e^{-εh})
+μ₀ₕ = h · ∑_{j≥1} R_j
+r̃_j = R_j / μ₀ₕ
+X̄^n = h · ∑_{j≥1} r̃_j · X^{n-j}
+```
+
+This is the standard scheme described in the rest of this document.
+
+#### 2. **norm0-sum1**
+
+Uses exact integration but normalizes starting at j ≥ 0 while still summing from j ≥ 1:
+
+```
+R_j = (1/h) · e^{-εjh} · (1 - e^{-εh})
+μ₀ₕ = h · ∑_{j≥0} R_j
+r̃_j = R_j / μ₀ₕ
+X̄^n = h · ∑_{j≥1} r̃_j · X^{n-j}
+```
+
+This gives slightly different weight normalization while keeping the sum explicit (excluding the unknown X^n).
+
+#### 3. **trapezoidal**
+
+Uses the trapezoidal rule to discretize both the kernel integral and normalization. This is naturally an implicit scheme but is made explicit using a predictor step.
+
+**Continuous formulation:**
+```
+X_ρ(t_n) = ∫_{-∞}^{t_n} ρ(t_n - s) X(s) ds / ∫_{-∞}^{t_n} ρ(t_n - s) ds
+         = ∫_{0}^{∞} ρ(a) X(t_n - a) da / ∫_{0}^{∞} ρ(a) da
+```
+
+**Trapezoidal discretization of numerator:**
+```
+∫_{0}^{∞} ρ(a) X(t_n - a) da ≈ h/2 · ε · X^n
+                                + h · ∑_{j=1}^{J-1} ε e^{-εjh} · X^{n-j}
+                                + h/2 · ε e^{-εJh} · X^{n-J}
+                                + (tail contribution)
+```
+
+**Trapezoidal discretization of denominator:**
+```
+μ_trap = ∫_{0}^{∞} ρ(a) da ≈ h/2 · ε
+                             + h · ∑_{j=1}^{J-1} ε e^{-εjh}
+                             + h/2 · ε e^{-εJh}
+                             + (tail contribution)
+```
+
+**Predictor-corrector approach (explicit):**
+
+The trapezoidal rule naturally gives an implicit scheme since X^n appears with weight h/2 · ε. We make it explicit by using the previous value X^{n-1} as a predictor:
+
+```
+X̄^n = (1/μ_trap) · [h/2 · ε · X^{n-1}
+                     + h · ∑_{j=1}^{J-1} ε e^{-εjh} · X^{n-j}
+                     + h/2 · ε e^{-εJh} · X^{n-J}
+                     + (tail)]
+
+X^n = P_{C^n}(X̄^n)
+```
+
+**Key differences from exact integration:**
+- Includes the endpoint contribution at j=0 with weight h/2 (using X^{n-1} as predictor)
+- Includes the endpoint contribution at j=J with weight h/2
+- Provides second-order accuracy in the quadrature (though overall scheme remains O(h))
+- More accurate representation of smooth integrands
+
+**Tail contribution:**
+
+For j > J, we use the past condition and exact integration for the tail:
+```
+tail_num = ∫_{Jh}^{∞} ρ(a) X_p(t_n - a) da
+tail_den = ∫_{Jh}^{∞} ρ(a) da = e^{-εJh}
+```
+
 ### Implementation
 
 See `src/simulation/DelayedSweepingSimulator.ts:59-94`:
@@ -109,7 +192,11 @@ step(n: number): Vec2 {
 
 ### Discrete Kernel Weights
 
-The continuous exponential kernel `ρ(a) = εe^{-εa}` is discretized via exact integration over time intervals:
+The continuous exponential kernel `ρ(a) = εe^{-εa}` is discretized differently depending on the solver type:
+
+#### Exact Integration (norm1-sum1, norm0-sum1)
+
+For the exact integration schemes, we integrate the kernel over each time interval:
 
 ```
 R_j = (1/h) · ∫_{jh}^{(j+1)h} ρ(a) da
@@ -118,9 +205,23 @@ R_j = (1/h) · ∫_{jh}^{(j+1)h} ρ(a) da
 
 This gives the unnormalized weights `R_j` for `j = 0, 1, 2, ...`
 
+#### Trapezoidal Rule (trapezoidal)
+
+For the trapezoidal scheme, we evaluate the kernel at grid points:
+
+```
+W_0 = h/2 · ε
+W_j = h · ε e^{-εjh}         for j = 1, 2, ..., J-1
+W_J = h/2 · ε e^{-εJh}
+```
+
+These are the quadrature weights for the trapezoidal rule.
+
 ### Normalization
 
-The weights are normalized to ensure the delayed average is a proper convex combination:
+The normalization depends on the solver type:
+
+#### norm1-sum1 (Default)
 
 ```
 μ₀ₕ = h · ∑_{j≥1} R_j
@@ -128,13 +229,46 @@ The weights are normalized to ensure the delayed average is a proper convex comb
 r̃_j = R_j / μ₀ₕ
 ```
 
-**Important**: The normalization sums over j ≥ 1 (not j ≥ 0) because the discrete scheme uses:
+The normalization sums over j ≥ 1 (not j ≥ 0) because the discrete scheme uses:
 ```
 X̄^n = h · ∑_{j≥1} r̃_j · X^{n-j}
 ```
 where X̄^n depends on past values X^{n-1}, X^{n-2}, ... but not the current (unknown) value X^n.
 
 This ensures `∑_{j≥1} h·r̃_j = 1`, making X̄^n a proper weighted average of past states.
+
+#### norm0-sum1
+
+```
+μ₀ₕ = h · ∑_{j≥0} R_j
+
+r̃_j = R_j / μ₀ₕ
+```
+
+The normalization includes j = 0, but the summation in the scheme still starts at j ≥ 1:
+```
+X̄^n = h · ∑_{j≥1} r̃_j · X^{n-j}
+```
+
+This gives `∑_{j≥1} h·r̃_j < 1` (slightly less than unity).
+
+#### trapezoidal
+
+```
+μ_trap = W_0 + ∑_{j=1}^{J-1} W_j + W_J + tail_den
+
+w̃_0 = W_0 / μ_trap
+w̃_j = W_j / μ_trap  for j ≥ 1
+```
+
+where `tail_den = ∫_{Jh}^{∞} ρ(a) da = e^{-εJh}` accounts for the tail beyond J.
+
+The scheme uses:
+```
+X̄^n = w̃_0 · X^{n-1} + ∑_{j=1}^{J-1} w̃_j · X^{n-j} + w̃_J · X^{n-J} + (tail contrib.)
+```
+
+Note that w̃_0 multiplies X^{n-1} (predictor step) rather than X^n.
 
 ### Truncation
 
@@ -151,6 +285,21 @@ J_max = ⌈-ln(tol) / (εh)⌉
 ```
 
 Default tolerance: `tol = 1e-12`
+
+### Solver Comparison
+
+| Solver | Normalization | Summation | Accuracy | Use Case |
+|--------|---------------|-----------|----------|----------|
+| **norm1-sum1** | j ≥ 1 | j ≥ 1 | O(h), exact quadrature | Default, standard scheme |
+| **norm0-sum1** | j ≥ 0 | j ≥ 1 | O(h), exact quadrature | Alternative normalization |
+| **trapezoidal** | j ≥ 0 (with predictor) | j ≥ 0 (using X^{n-1}) | O(h²) quadrature, O(h) overall | Higher accuracy quadrature |
+
+**Key observations:**
+- All three schemes are explicit (no implicit solve needed)
+- All are O(h) accurate overall due to first-order projection scheme
+- Trapezoidal has better quadrature accuracy but same convergence rate
+- norm0-sum1 and norm1-sum1 differ only in normalization constant
+- Trapezoidal includes endpoint corrections (weights h/2 at boundaries)
 
 ### Implementation
 
@@ -421,16 +570,16 @@ export function projectToConstraint(
 ### Data Flow
 
 ```
-Parameters (T, h, ε, x_p(t), y_p(t))
+Parameters (T, h, ε, x_p(t), y_p(t), solverType)
     ↓
-Kernel Weights (r̃_j)
+Kernel Weights (r̃_j or w̃_j, computed based on solverType)
     ↓
 Trajectory Expressions (x(t), y(t), α(t))
     ↓
 Time Loop (n = 0 to N):
     Past States (X^{n-j} or X_p((n-j)h) if n-j < 0)
         ↓
-    Weighted Average (X̄^n)
+    Weighted Average (X̄^n, method depends on solverType)
         ↓
     Constraint Center (c(t_n)) and Angle (α(t_n))
         ↓

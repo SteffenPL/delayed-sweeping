@@ -92,6 +92,7 @@ const DEFAULT_PARAMS: SimulationParameters = {
   infiniteMode: true,
   xPastExpression: '2',
   yPastExpression: '0',
+  solverType: 'norm1-sum1',
 };
 
 const DEFAULT_CONSTRAINT: ConstraintConfig = {
@@ -264,9 +265,17 @@ export const useSimulationStore = create<SimulationStore>()(
             };
           }
           constraint = constraint ?? DEFAULT_CONSTRAINT;
+
+          // Migrate params: ensure solverType is set
+          const params = {
+            ...DEFAULT_PARAMS,
+            ...(data.params ?? {}),
+            solverType: data.params?.solverType ?? 'norm1-sum1',
+          };
+
           const boundaryPolygon = computeBoundaryFromConfig(constraint);
           set({
-            params: data.params ?? DEFAULT_PARAMS,
+            params,
             constraint,
             boundaryPolygon,
             constraintAngle: data.constraintAngle ?? 0,
@@ -307,9 +316,17 @@ export const useSimulationStore = create<SimulationStore>()(
           };
         }
         constraint = constraint ?? DEFAULT_CONSTRAINT;
+
+        // Migrate params: ensure solverType is set
+        const params = {
+          ...DEFAULT_PARAMS,
+          ...(data.params ?? {}),
+          solverType: data.params?.solverType ?? 'norm1-sum1',
+        };
+
         const boundaryPolygon = computeBoundaryFromConfig(constraint);
         set({
-          params: data.params ?? DEFAULT_PARAMS,
+          params,
           constraint,
           boundaryPolygon,
           constraintAngle: data.constraintAngle ?? 0,
