@@ -81,14 +81,11 @@ uv run plotting/plot_convergence.py config/example.toml 5e-3 2e-2 6 --no-paralle
 **Notes:**
 - h values are chosen as dyadic multiples of `h_min` (i.e., `h_min * 2^k`) up to `h_max`.
 - `h_min` is used as the reference solution; evaluation uses `h >= 4*h_min`.
-- Errors are evaluated at `t_eval = T * 7/8` using linear interpolation in time.
 
 **Options:**
 - `--verbose, -v`: Show detailed simulation output
 - `--no-parallel`: Run simulations sequentially (default: parallel)
 - `--workers N`: Set number of parallel workers (default: auto)
-- `--solver-type TYPE`: Override solver type (`norm1-sum1`, `norm0-sum1`, `trapezoidal`)
-- `--solver TYPE`: Alias for `--solver-type`
 
 ### `plot_fig1.py`
 

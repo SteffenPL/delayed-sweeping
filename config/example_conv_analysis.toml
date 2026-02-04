@@ -9,7 +9,6 @@ author = "Delayed Sweeping Simulator"
 [simulation]
 T = 1.0                    # Final time (seconds)
 h = 0.01                    # Time step
-solverType = "trapezoidal"
 epsilon = 2.0               # Kernel decay rate (1/epsilon = memory time scale)
 infiniteMode = false        # Run for fixed time T
 xPastExpression = "2"       # Initial past condition x_p(t) for t < 0
