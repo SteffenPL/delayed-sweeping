@@ -145,7 +145,5 @@ vite.config.ts.timestamp-*
 
 # Simulation output files
 output/
-figures/*.pdf
-figures/*.png
 *.tsv
 *.toml.bak

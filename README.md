@@ -35,14 +35,6 @@ This simulator implements the numerical time-stepping scheme for delayed convex 
 
 See [CLI.md](CLI.md) for detailed CLI usage.
 
-### Python Plotting Tools
-- **Publication-ready plots**: Generate matplotlib figures from simulation data
-- **Trajectory visualization**: 4-panel plots (x(t), y(t), phase portrait, metrics)
-- **Convergence analysis**: Automated convergence studies with log-log error plots
-- **Python-driven workflow**: Call CLI from Python, compute statistics, create plots
-
-See [plotting/README.md](plotting/README.md) for plotting documentation.
-
 ## Running Locally
 
 ### Prerequisites
@@ -164,18 +156,6 @@ npm run simulate -- config/figure8.toml -o results/figure8.tsv
 
 # JSON output for further processing
 npm run simulate -- config/rotating-ellipse.toml -f json -o data.json
-```
-
-### Python Plotting
-```bash
-# Setup (one-time)
-uv sync
-
-# Generate trajectory plots
-uv run plotting/plot.py config/example.toml
-
-# Run convergence analysis
-uv run plotting/plot.py config/example.toml --convergence
 ```
 
 ## License
