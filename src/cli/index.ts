@@ -85,8 +85,9 @@ function loadConfig(configPath: string): SimulationConfig {
   return tomlToConfig(tomlContent);
 }
 
-function exportTSV(results: any, outputPath: string) {
+function exportTSV(results: any, h: number, outputPath: string) {
   const { delayed, classical } = results;
+  const precision = 12;
 
   // Build TSV with time, positions, and metrics
   const lines: string[] = [];
@@ -108,19 +109,19 @@ function exportTSV(results: any, outputPath: string) {
   // Data rows
   const n = delayed.trajectory.length;
   for (let i = 0; i < n; i++) {
-    const t = i * 0.01; // TODO: get h from config
+    const t = i * h;
 
     lines.push([
-      t.toFixed(6),
-      delayed.trajectory[i].x.toFixed(6),
-      delayed.trajectory[i].y.toFixed(6),
-      delayed.preProjection[i].x.toFixed(6),
-      delayed.preProjection[i].y.toFixed(6),
-      delayed.projectionDistances[i].toFixed(6),
-      delayed.gradientNorms[i].toFixed(6),
-      classical.trajectory[i]?.x.toFixed(6) || '',
-      classical.trajectory[i]?.y.toFixed(6) || '',
-      classical.gradientNorms[i]?.toFixed(6) || '',
+      t.toFixed(precision),
+      delayed.trajectory[i].x.toFixed(precision),
+      delayed.trajectory[i].y.toFixed(precision),
+      delayed.preProjection[i].x.toFixed(precision),
+      delayed.preProjection[i].y.toFixed(precision),
+      delayed.projectionDistances[i].toFixed(precision),
+      delayed.gradientNorms[i].toFixed(precision),
+      classical.trajectory[i]?.x.toFixed(precision) || '',
+      classical.trajectory[i]?.y.toFixed(precision) || '',
+      classical.gradientNorms[i]?.toFixed(precision) || '',
     ].join('\t'));
   }
 
@@ -171,7 +172,7 @@ async function main() {
     }
 
     if (options.format === 'tsv') {
-      exportTSV(results, options.outputFile);
+      exportTSV(results, config.simulation.h, options.outputFile);
     } else {
       exportJSON(results, options.outputFile);
     }

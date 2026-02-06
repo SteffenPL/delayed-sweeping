@@ -387,6 +387,8 @@ C(t_n) = R(α(t_n)) · C_0 + c(t_n)
 ```
 where `R(α)` is a 2D rotation matrix and `C_0` is the base constraint shape.
 
+Batch/CLI simulations use `α(t)` when projecting points to the constraint.
+
 ### Projection Algorithm
 
 For a point `p` that violates the constraint (`g(p) < 0`), we compute the projection `P_C(p)` using **Newton's method** to find the closest point on the boundary.

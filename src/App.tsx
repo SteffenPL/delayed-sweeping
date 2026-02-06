@@ -1,11 +1,9 @@
 import { useEffect } from 'react';
 import { SimulationCanvas } from '@/components/canvas/SimulationCanvas';
-import {
-  PlaybackControls,
-  TweakpanePanel,
-} from '@/components/controls';
-import { ConfigControls } from '@/components/controls/ConfigControls';
+import { PlaybackControls } from '@/components/controls';
 import { StatisticsPanel, ConvergencePanel } from '@/components/statistics';
+import { MainLayout } from '@/components/layout';
+import { ParameterPanel } from '@/components/panels';
 import { useSimulationStore } from '@/store';
 import './index.css';
 
@@ -18,42 +16,26 @@ export function App() {
   }, [loadFromLocalStorage]);
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <div className="header-content">
-          <div className="header-title">
-            <h1>Delayed Sweeping Simulator</h1>
-            <p className="subtitle">Interactive visualization of the delayed convex sweeping process</p>
-          </div>
-          <ConfigControls />
-        </div>
-      </header>
-
-      <main className="app-main">
-        <div className="simulation-section">
+    <MainLayout>
+      {/* Main content area */}
+      <div className="flex flex-col lg:flex-row gap-6 justify-center">
+        {/* Simulation view - left/top */}
+        <div className="flex flex-col items-center">
           <div className="canvas-container">
             <SimulationCanvas width={500} height={500} />
           </div>
           <PlaybackControls />
         </div>
 
-        <aside className="controls-sidebar">
-          <TweakpanePanel />
-        </aside>
-      </main>
+        {/* Parameter panel - right/bottom */}
+        <ParameterPanel />
+      </div>
 
-      <section className="statistics-section">
+      {/* Statistics section */}
+      <section className="mt-8 space-y-4">
         <StatisticsPanel />
         <ConvergencePanel />
       </section>
-
-      <footer className="app-footer">
-        <p>
-          Based on the mathematical model from the delayed sweeping process manuscript.
-          <br />
-          <small>Use mouse wheel on canvas to rotate shapes. Drag in free-drag mode to move constraint.</small>
-        </p>
-      </footer>
-    </div>
+    </MainLayout>
   );
 }

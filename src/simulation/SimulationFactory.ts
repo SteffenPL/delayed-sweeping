@@ -2,7 +2,7 @@ import type { SimulationConfig } from '@/types/config';
 import type { Vec2 } from '@/types';
 import { DelayedSweepingSimulator } from './DelayedSweepingSimulator';
 import { ClassicalSweepingSimulator } from './ClassicalSweepingSimulator';
-import { createTrajectoryFunction, createPastFunction } from '@/utils/trajectoryFunctions';
+import { createTrajectoryFunction, createPastFunction, createAlphaFunction } from '@/utils/trajectoryFunctions';
 import {
   createExpressionEvaluator,
   projectToConstraint,
@@ -22,7 +22,13 @@ export class SimulationFactory {
     const { simulation, constraint, trajectory } = config;
 
     // Create center function from trajectory expressions
-    const centerFunc = createTrajectoryFunction(trajectory);
+    const baseCenterFunc = createTrajectoryFunction(trajectory);
+    const alphaFunc = createAlphaFunction(trajectory);
+    let currentAngle = 0;
+    const centerFunc = (t: number) => {
+      currentAngle = alphaFunc(t);
+      return baseCenterFunc(t);
+    };
 
     // Create past function from simulation parameters
     const pastFunc = createPastFunction(simulation);
@@ -67,10 +73,7 @@ export class SimulationFactory {
       params: simulation,
       centerFunc,
       pastFunc,
-      projectFunc: (point: Vec2, center: Vec2) => {
-        // For batch mode, we don't have time available, use angle = 0
-        return projectFunc(point, center, 0);
-      },
+      projectFunc: (point: Vec2, center: Vec2) => projectFunc(point, center, currentAngle),
     });
   }
 
@@ -80,7 +83,13 @@ export class SimulationFactory {
   static createClassicalSimulator(config: SimulationConfig): ClassicalSweepingSimulator {
     const { simulation, constraint, trajectory } = config;
 
-    const centerFunc = createTrajectoryFunction(trajectory);
+    const baseCenterFunc = createTrajectoryFunction(trajectory);
+    const alphaFunc = createAlphaFunction(trajectory);
+    let currentAngle = 0;
+    const centerFunc = (t: number) => {
+      currentAngle = alphaFunc(t);
+      return baseCenterFunc(t);
+    };
     const pastFunc = createPastFunction(simulation);
 
     const evaluator = createExpressionEvaluator(constraint.expression, {
@@ -120,7 +129,7 @@ export class SimulationFactory {
       params: simulation,
       centerFunc,
       pastFunc,
-      projectFunc: (point: Vec2, center: Vec2) => projectFunc(point, center, 0),
+      projectFunc: (point: Vec2, center: Vec2) => projectFunc(point, center, currentAngle),
     });
   }
 
