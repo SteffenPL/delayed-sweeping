@@ -1,4 +1,4 @@
-import type { SimulationParameters, ConstraintConfig, ParametricTrajectory } from './simulation';
+import type { SimulationParameters, ConstraintConfig, ParametricTrajectory, TrajectoryMode } from './simulation';
 
 /**
  * Complete simulation configuration
@@ -13,6 +13,9 @@ export interface SimulationConfig {
 
   // Trajectory configuration (for parametric mode)
   trajectory: ParametricTrajectory;
+
+  // Trajectory mode
+  trajectoryMode?: TrajectoryMode;
 
   // Metadata
   metadata?: {

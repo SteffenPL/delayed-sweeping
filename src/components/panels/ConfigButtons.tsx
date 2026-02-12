@@ -8,9 +8,11 @@ export function ConfigButtons() {
     params,
     constraint,
     parametricTrajectory,
+    trajectoryMode,
     setParams,
     setConstraint,
     setParametricTrajectory,
+    setTrajectoryMode,
   } = useSimulationStore();
 
   const handleSave = () => {
@@ -18,6 +20,7 @@ export function ConfigButtons() {
       simulation: params,
       constraint,
       trajectory: parametricTrajectory,
+      trajectoryMode,
       metadata: {
         name: 'Simulation Configuration',
         description: 'Delayed sweeping process simulation',
@@ -35,6 +38,9 @@ export function ConfigButtons() {
       setParams(config.simulation);
       setConstraint(config.constraint);
       setParametricTrajectory(config.trajectory);
+      if (config.trajectoryMode) {
+        setTrajectoryMode(config.trajectoryMode);
+      }
       console.log('Configuration loaded successfully:', config.metadata?.name);
     } catch (error) {
       console.error('Failed to load configuration:', error);
@@ -47,6 +53,7 @@ export function ConfigButtons() {
       simulation: params,
       constraint,
       trajectory: parametricTrajectory,
+      trajectoryMode,
     };
 
     const toml = configToTOML(config);
