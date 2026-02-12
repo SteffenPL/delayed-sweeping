@@ -24,8 +24,10 @@ Formulas use [math.js](https://mathjs.org/) syntax with custom tokens for simula
 | `z[n-1]` | Position at step n-1 (general: `z[n-k]`) |
 | `z(t)` | Alias for `z[n]` |
 | `zbar[n]` | Pre-projection weighted average X̄ⁿ |
+| `z_avg[n]` | Alias for `zbar[n]` |
 | `v[n]` | Velocity vector `(z[n] - z[n-1]) / h` |
 | `G[n]` | Gradient ∇g at position z[n] (world coords) |
+| `G_pre[n]` | Gradient ∇g at pre-projection point zbar[n] |
 | `c[n]` | Constraint center at step n |
 | `z_cl[n]` | Classical sweeping position |
 | `v_cl[n]` | Classical velocity |
@@ -37,7 +39,10 @@ Formulas use [math.js](https://mathjs.org/) syntax with custom tokens for simula
 |-------|-------------|
 | `g[n]` | Constraint value g(z[n]) in local coords |
 | `g(z(t))`, `g(z[n])` | Aliases for `g[n]` |
+| `g_pre[n]` | Constraint value g(zbar[n]) at pre-projection point |
 | `lambda[n]` | Lagrange multiplier: `‖z[n] - zbar[n]‖ / ‖∇g(z[n])‖` |
+| `E_adh[n]` | Adhesion energy: `h · Σ_{j≥1} r̃_j · ‖z[n] - z[n-j]‖²` |
+| `E_kin[n]` | Kinetic energy: `(1/2) · ‖(z[n] - z[n-1]) / h‖²` |
 | `g_cl[n]` | Classical constraint value |
 | `lambda_cl[n]` | Classical Lagrange multiplier |
 | `dt` | Time step h |
@@ -63,6 +68,10 @@ norm(z[n] - z_cl[n])          # Delayed vs classical difference
 norm(G[n])                    # Gradient norm
 dot(v[n], G[n])               # Velocity-gradient alignment
 norm(z[n] - zbar[n])          # Projection distance ‖X - X̄‖
+g_pre[n]                      # Constraint value before projection
+E_adh[n]                      # Adhesion energy (kernel-weighted)
+E_kin[n]                      # Kinetic energy
+E_adh[n] + E_kin[n]           # Total energy
 ```
 
 ## Two-Pass Evaluation

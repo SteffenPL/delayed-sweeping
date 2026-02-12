@@ -34,6 +34,7 @@ export interface EvaluationContext {
   h: number;
   epsilon: number;
   constraintEvaluator: (x: number, y: number) => number;
+  kernelWeights: number[];  // Normalized kernel weights r̃_j (for E_adh)
 }
 
 export interface FormulaPreset {

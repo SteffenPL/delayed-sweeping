@@ -180,7 +180,12 @@ export class FormulaEvaluator {
       return `(${comp === 'x' ? p.x : p.y})`;
     });
 
-    // zbar[n], zbar[n-1]
+    // zbar[n], zbar[n-1] and z_avg[n] alias
+    s = s.replace(/z_avg\[n(?:\s*-\s*(\d+))?\]/g, (_match, offset) => {
+      const idx = ctx.n - (offset ? parseInt(offset) : 0);
+      const p = this.safeVec(ctx.preProjection, idx);
+      return `(${comp === 'x' ? p.x : p.y})`;
+    });
     s = s.replace(/zbar\[n(?:\s*-\s*(\d+))?\]/g, (_match, offset) => {
       const idx = ctx.n - (offset ? parseInt(offset) : 0);
       const p = this.safeVec(ctx.preProjection, idx);
@@ -202,6 +207,13 @@ export class FormulaEvaluator {
       const prev = this.safeVec(ctx.trajectory, ctx.n - 1);
       const val = (comp === 'x' ? cur.x - prev.x : cur.y - prev.y) / ctx.h;
       return `(${val})`;
+    });
+
+    // G_pre[n] (gradient at pre-projection point, must come before G[n])
+    s = s.replace(/G_pre\[n(?:\s*-\s*(\d+))?\]/g, (_match, offset) => {
+      const idx = ctx.n - (offset ? parseInt(offset) : 0);
+      const g = this.computeGradientVectorPreProjection(ctx, idx);
+      return `(${comp === 'x' ? g.x : g.y})`;
     });
 
     // G[n], G[n-1] (gradient vector at position, in world coords)
@@ -249,6 +261,12 @@ export class FormulaEvaluator {
   private replaceScalarTokens(expr: string, ctx: EvaluationContext): string {
     let s = expr;
 
+    // g_pre[n] (constraint value at pre-projection point, must come before g[n])
+    s = s.replace(/g_pre\[n(?:\s*-\s*(\d+))?\]/g, (_match, offset) => {
+      const idx = ctx.n - (offset ? parseInt(offset) : 0);
+      return `(${this.evaluateConstraintAtPreProjection(ctx, idx)})`;
+    });
+
     // g[n], g[n-1], g(z(t)), g(z[n])
     s = s.replace(/g\(z\(t\)\)/g, 'g[n]');
     s = s.replace(/g\(z\[n\]\)/g, 'g[n]');
@@ -284,6 +302,18 @@ export class FormulaEvaluator {
       return `(${val})`;
     });
 
+    // E_adh[n] = h * Σ_{j≥1} r̃_j * ||z[n] - z[n-j]||²  (adhesion energy)
+    s = s.replace(/E_adh\[n(?:\s*-\s*(\d+))?\]/g, (_match, offset) => {
+      const idx = ctx.n - (offset ? parseInt(offset) : 0);
+      return `(${this.computeAdhesionEnergy(ctx, idx)})`;
+    });
+
+    // E_kin[n] = (1/2) * ||(z[n] - z[n-1]) / h||²  (kinetic energy)
+    s = s.replace(/E_kin\[n(?:\s*-\s*(\d+))?\]/g, (_match, offset) => {
+      const idx = ctx.n - (offset ? parseInt(offset) : 0);
+      return `(${this.computeKineticEnergy(ctx, idx)})`;
+    });
+
     // dt, epsilon, t, n
     s = s.replace(/\bdt\b/g, `(${ctx.h})`);
     s = s.replace(/\bepsilon\b/g, `(${ctx.epsilon})`);
@@ -299,8 +329,8 @@ export class FormulaEvaluator {
 
   private checkForRemainingVectors(expr: string): void {
     const vectorPatterns = [
-      /z\[n/, /z\(t\)/, /zbar\[n/, /v\[n/, /v\(t\)/,
-      /G\[n/, /z_cl\[n/, /v_cl\[n/, /G_cl\[n/, /c\[n/,
+      /z\[n/, /z\(t\)/, /zbar\[n/, /z_avg\[n/, /v\[n/, /v\(t\)/,
+      /G_pre\[n/, /G\[n/, /z_cl\[n/, /v_cl\[n/, /G_cl\[n/, /c\[n/,
     ];
     for (const pat of vectorPatterns) {
       if (pat.test(expr)) {
@@ -384,5 +414,53 @@ export class FormulaEvaluator {
       x: cosA * localGrad.x - sinA * localGrad.y,
       y: sinA * localGrad.x + cosA * localGrad.y,
     };
+  }
+
+  /**
+   * Evaluate constraint g(x,y) at the pre-projection point (weighted average).
+   */
+  private evaluateConstraintAtPreProjection(ctx: EvaluationContext, idx: number): number {
+    const pos = this.safeVec(ctx.preProjection, idx);
+    const center = this.safeVec(ctx.constraintCenters, idx);
+    const angle = idx >= 0 && idx < ctx.constraintAngles.length ? ctx.constraintAngles[idx] : 0;
+    return this.evalConstraintAtPoint(ctx, pos, center, angle);
+  }
+
+  /**
+   * Compute gradient vector at the pre-projection point (in world coords).
+   */
+  private computeGradientVectorPreProjection(ctx: EvaluationContext, idx: number): Vec2 {
+    const pos = this.safeVec(ctx.preProjection, idx);
+    const center = this.safeVec(ctx.constraintCenters, idx);
+    const angle = idx >= 0 && idx < ctx.constraintAngles.length ? ctx.constraintAngles[idx] : 0;
+    return this.gradientAtPoint(ctx, pos, center, angle);
+  }
+
+  /**
+   * Adhesion energy: E_adh(t_n) = h * Σ_{j≥1} r̃_j * ||z^n - z^{n-j}||²
+   */
+  private computeAdhesionEnergy(ctx: EvaluationContext, idx: number): number {
+    const pos = this.safeVec(ctx.trajectory, idx);
+    let energy = 0;
+    const weights = ctx.kernelWeights;
+    for (let j = 1; j < weights.length && idx - j >= 0; j++) {
+      const past = ctx.trajectory[idx - j];
+      const dx = pos.x - past.x;
+      const dy = pos.y - past.y;
+      energy += ctx.h * weights[j] * (dx * dx + dy * dy);
+    }
+    return energy;
+  }
+
+  /**
+   * Kinetic energy: E_kin(t_n) = (1/2) * ||(z[n] - z[n-1]) / h||²
+   */
+  private computeKineticEnergy(ctx: EvaluationContext, idx: number): number {
+    if (idx <= 0) return 0;
+    const cur = this.safeVec(ctx.trajectory, idx);
+    const prev = this.safeVec(ctx.trajectory, idx - 1);
+    const vx = (cur.x - prev.x) / ctx.h;
+    const vy = (cur.y - prev.y) / ctx.h;
+    return 0.5 * (vx * vx + vy * vy);
   }
 }

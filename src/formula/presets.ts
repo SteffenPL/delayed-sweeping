@@ -43,4 +43,22 @@ export const FORMULA_PRESETS: FormulaPreset[] = [
     formula: 'norm(G[n])',
     description: 'Norm of constraint gradient at current position',
   },
+  {
+    id: 'constraint-pre',
+    label: 'Constraint at pre-projection',
+    formula: 'g_pre[n]',
+    description: 'Value of g at the weighted average (before projection)',
+  },
+  {
+    id: 'adhesion-energy',
+    label: 'Adhesion energy',
+    formula: 'E_adh[n]',
+    description: 'Weighted integral h * Σ r̃_j * ||z[n] - z[n-j]||²',
+  },
+  {
+    id: 'kinetic-energy',
+    label: 'Kinetic energy',
+    formula: 'E_kin[n]',
+    description: 'Kinetic energy (1/2) * ||v[n]||²',
+  },
 ];

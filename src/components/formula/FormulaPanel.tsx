@@ -10,6 +10,7 @@ import type {
 } from '@/formula';
 import { createExpressionEvaluator } from '@/shapes/expressionConstraint';
 import { createAlphaFunction } from '@/utils/trajectoryFunctions';
+import { computeDiscreteWeights } from '@/simulation/kernel';
 import { SimulationFactory } from '@/simulation/SimulationFactory';
 import type { SimulationConfig } from '@/types/config';
 import { FormulaInput } from './FormulaInput';
@@ -59,6 +60,12 @@ export function FormulaPanel() {
     });
   }, [constraint.expression, constraint.R, constraint.r, constraint.a, constraint.b]);
 
+  // Compute kernel weights (memoized)
+  const kernelWeights = useMemo(
+    () => computeDiscreteWeights(params.epsilon, params.h, params.solverType),
+    [params.epsilon, params.h, params.solverType]
+  );
+
   // Create formula evaluator (memoized)
   const evaluator = useMemo(() => new FormulaEvaluator(formula), [formula]);
 
@@ -82,6 +89,7 @@ export function FormulaPanel() {
         h: params.h,
         epsilon: params.epsilon,
         constraintEvaluator,
+        kernelWeights,
       };
       const y = evaluator.evaluate(ctx);
       data.push({ x: n * params.h, y });
@@ -91,7 +99,7 @@ export function FormulaPanel() {
     plotMode, formula, trajectory, preProjection, constraintCenters,
     constraintAngles, projectionDistances, gradientNorms,
     classicalTrajectory, classicalGradientNorms,
-    params.h, params.epsilon, constraintEvaluator, evaluator,
+    params.h, params.epsilon, constraintEvaluator, kernelWeights, evaluator,
   ]);
 
   // Parameter study runner
@@ -158,6 +166,7 @@ export function FormulaPanel() {
           b: constraintCfg.b,
         });
 
+        const studyWeights = computeDiscreteWeights(eps, h, simParams.solverType);
         const ev = new FormulaEvaluator(formula);
         const stepValues: number[] = [];
 
@@ -176,6 +185,7 @@ export function FormulaPanel() {
             h,
             epsilon: eps,
             constraintEvaluator: cEval,
+            kernelWeights: studyWeights,
           };
           stepValues.push(ev.evaluate(ctx));
         }
