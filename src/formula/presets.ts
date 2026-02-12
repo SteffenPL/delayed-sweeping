@@ -61,4 +61,16 @@ export const FORMULA_PRESETS: FormulaPreset[] = [
     formula: 'E_kin[n]',
     description: 'Kinetic energy (1/2) * ||v[n]||²',
   },
+  {
+    id: 'position-vector',
+    label: 'Position (vector)',
+    formula: 'z[n]',
+    description: 'Position vector — use in convergence mode for position convergence',
+  },
+  {
+    id: 'classical-position-vector',
+    label: 'Classical position (vector)',
+    formula: 'z_cl[n]',
+    description: 'Classical sweeping position vector — use in convergence mode',
+  },
 ];

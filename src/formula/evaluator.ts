@@ -35,6 +35,49 @@ export class FormulaEvaluator {
     }
   }
 
+  /**
+   * Evaluate the formula as a Vec2, extracting x and y components separately.
+   * Use this for vector-valued formulas (e.g. `z[n]`, `z[n] - z_cl[n]`).
+   */
+  evaluateVec2(ctx: EvaluationContext): Vec2 {
+    this.error = null;
+    try {
+      let expr = this.formula;
+      expr = this.replaceVectorFunctions(expr, ctx);
+      const x = this.evaluateComponent(expr, 'x', ctx);
+      const y = this.evaluateComponent(expr, 'y', ctx);
+      return { x, y };
+    } catch (e) {
+      this.error = e instanceof Error ? e.message : String(e);
+      return { x: NaN, y: NaN };
+    }
+  }
+
+  /**
+   * Check whether the formula contains unwrapped vector tokens,
+   * meaning it should be treated as a vector-valued formula.
+   */
+  isVectorFormula(): boolean {
+    const vectorPatterns = [
+      /z\[n/, /z\(t\)/, /zbar\[n/, /z_avg\[n/, /v\[n/, /v\(t\)/,
+      /G_pre\[n/, /G\[n/, /z_cl\[n/, /v_cl\[n/, /G_cl\[n/, /c\[n/,
+    ];
+    // Strip out norm(...) and dot(...) calls to check what remains
+    let expr = this.formula;
+    // Remove norm(...) and dot(...) with balanced parens (simple approach)
+    let maxIter = 50;
+    while (maxIter-- > 0) {
+      const before = expr;
+      expr = expr.replace(/\bnorm\([^()]*\)/g, '0');
+      expr = expr.replace(/\bdot\([^()]*\)/g, '0');
+      if (expr === before) break;
+    }
+    for (const pat of vectorPatterns) {
+      if (pat.test(expr)) return true;
+    }
+    return false;
+  }
+
   // ─── internals ───────────────────────────────────────────────
 
   private eval(ctx: EvaluationContext): number {

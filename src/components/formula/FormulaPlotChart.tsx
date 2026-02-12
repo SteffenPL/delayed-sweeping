@@ -24,11 +24,35 @@ function formatTick(v: unknown): string {
   return v.toPrecision(4);
 }
 
+const SUPERSCRIPT_DIGITS: Record<string, string> = {
+  '0': '\u2070', '1': '\u00B9', '2': '\u00B2', '3': '\u00B3', '4': '\u2074',
+  '5': '\u2075', '6': '\u2076', '7': '\u2077', '8': '\u2078', '9': '\u2079',
+  '-': '\u207B',
+};
+
+function toSuperscript(n: number): string {
+  return String(Math.round(n)).split('').map(c => SUPERSCRIPT_DIGITS[c] ?? c).join('');
+}
+
+function formatLogTick(logVal: number): string {
+  const rounded = Math.round(logVal);
+  if (Math.abs(logVal - rounded) < 0.01) {
+    return `10${toSuperscript(rounded)}`;
+  }
+  return formatTick(Math.pow(10, logVal));
+}
+
+function generateLogTicks(logMin: number, logMax: number): number[] {
+  const ticks: number[] = [];
+  for (let p = Math.floor(logMin); p <= Math.ceil(logMax); p++) {
+    ticks.push(p);
+  }
+  return ticks;
+}
+
 export const FormulaPlotChart = forwardRef<HTMLDivElement, FormulaPlotChartProps>(
   function FormulaPlotChart({ data, xLabel, yLabel, logXAxis = false, logYAxis = false }, ref) {
-    // For log axes, transform the data: use log10 of the values as plot coordinates
-    // and show original values in ticks/tooltips
-    const { displayData, xKey, yKey } = useMemo(() => {
+    const { displayData, xKey, yKey, logXMin, logXMax, logYMin, logYMax } = useMemo(() => {
       // Downsample first
       const maxPoints = 500;
       const sampled =
@@ -37,7 +61,7 @@ export const FormulaPlotChart = forwardRef<HTMLDivElement, FormulaPlotChartProps
           : data;
 
       if (!logXAxis && !logYAxis) {
-        return { displayData: sampled, xKey: 'x' as const, yKey: 'y' as const };
+        return { displayData: sampled, xKey: 'x' as const, yKey: 'y' as const, logXMin: 0, logXMax: 0, logYMin: 0, logYMax: 0 };
       }
 
       // Transform data for log axes
@@ -54,10 +78,29 @@ export const FormulaPlotChart = forwardRef<HTMLDivElement, FormulaPlotChartProps
           logY: logYAxis ? Math.log10(d.y) : d.y,
         }));
 
+      // Compute log-space bounds for tick generation
+      let xMin = 0, xMax = 0, yMin = 0, yMax = 0;
+      if (transformed.length > 0) {
+        if (logXAxis) {
+          const logXVals = transformed.map(d => d.logX);
+          xMin = Math.min(...logXVals);
+          xMax = Math.max(...logXVals);
+        }
+        if (logYAxis) {
+          const logYVals = transformed.map(d => d.logY);
+          yMin = Math.min(...logYVals);
+          yMax = Math.max(...logYVals);
+        }
+      }
+
       return {
         displayData: transformed,
         xKey: (logXAxis ? 'logX' : 'x') as string,
         yKey: (logYAxis ? 'logY' : 'y') as string,
+        logXMin: xMin,
+        logXMax: xMax,
+        logYMin: yMin,
+        logYMax: yMax,
       };
     }, [data, logXAxis, logYAxis]);
 
@@ -66,12 +109,22 @@ export const FormulaPlotChart = forwardRef<HTMLDivElement, FormulaPlotChartProps
     }
 
     const xTickFormatter = logXAxis
-      ? (v: number) => formatTick(Math.pow(10, v))
+      ? (v: number) => formatLogTick(v)
       : (v: number) => formatTick(v);
 
     const yTickFormatter = logYAxis
-      ? (v: number) => formatTick(Math.pow(10, v))
+      ? (v: number) => formatLogTick(v)
       : (v: number) => formatTick(v);
+
+    const xTicks = logXAxis ? generateLogTicks(logXMin, logXMax) : undefined;
+    const yTicks = logYAxis ? generateLogTicks(logYMin, logYMax) : undefined;
+
+    const xDomain: [number, number] | undefined = logXAxis
+      ? [Math.floor(logXMin) - 0.2, Math.ceil(logXMax) + 0.2]
+      : undefined;
+    const yDomain: [number, number] | undefined = logYAxis
+      ? [Math.floor(logYMin) - 0.2, Math.ceil(logYMax) + 0.2]
+      : undefined;
 
     const tooltipLabelFormatter = logXAxis
       ? (v: number) => `${xLabel} = ${Math.pow(10, v).toPrecision(4)}`
@@ -92,7 +145,8 @@ export const FormulaPlotChart = forwardRef<HTMLDivElement, FormulaPlotChartProps
               type="number"
               tick={{ fontSize: 11 }}
               tickFormatter={xTickFormatter}
-              domain={['auto', 'auto']}
+              ticks={xTicks}
+              domain={xDomain ?? ['auto', 'auto']}
               label={{
                 value: xLabel + (logXAxis ? ' (log)' : ''),
                 position: 'insideBottomRight',
@@ -102,6 +156,8 @@ export const FormulaPlotChart = forwardRef<HTMLDivElement, FormulaPlotChartProps
             <YAxis
               tick={{ fontSize: 11 }}
               tickFormatter={yTickFormatter}
+              ticks={yTicks}
+              domain={yDomain ?? ['auto', 'auto']}
               label={logYAxis ? { value: 'log', angle: -90, position: 'insideLeft', offset: 5, style: { fontSize: 10 } } : undefined}
             />
             <Tooltip

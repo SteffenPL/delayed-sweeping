@@ -49,6 +49,7 @@ interface ParameterStudyConfigProps {
   onRun: () => void;
   running: boolean;
   progress: number;
+  isConvergenceMode?: boolean;
 }
 
 export function ParameterStudyConfigUI({
@@ -57,6 +58,7 @@ export function ParameterStudyConfigUI({
   onRun,
   running,
   progress,
+  isConvergenceMode = false,
 }: ParameterStudyConfigProps) {
   const [showAggHelp, setShowAggHelp] = useState(false);
 
@@ -113,7 +115,7 @@ export function ParameterStudyConfigUI({
       </div>
 
       {/* Range inputs depend on scaling mode */}
-      <div className="convergence-params" style={{ marginTop: '0.5rem' }}>
+      <div className="convergence-params mt-half">
         {config.scalingMode !== 'exponential' ? (
           <>
             <div className="param-group">
@@ -167,7 +169,7 @@ export function ParameterStudyConfigUI({
                   onChange={(e) => update({ expBase: Number(e.target.value) })}
                   step="any"
                   disabled={running}
-                  style={{ width: '60px' }}
+                  className="input-narrow"
                 />
               </label>
             </div>
@@ -180,7 +182,7 @@ export function ParameterStudyConfigUI({
                   onChange={(e) => update({ expMin: Number(e.target.value) })}
                   step={config.expStep || 1}
                   disabled={running}
-                  style={{ width: '70px' }}
+                  className="input-medium"
                 />
               </label>
             </div>
@@ -193,7 +195,7 @@ export function ParameterStudyConfigUI({
                   onChange={(e) => update({ expMax: Number(e.target.value) })}
                   step={config.expStep || 1}
                   disabled={running}
-                  style={{ width: '70px' }}
+                  className="input-medium"
                 />
               </label>
             </div>
@@ -207,7 +209,7 @@ export function ParameterStudyConfigUI({
                   step="any"
                   min={0.1}
                   disabled={running}
-                  style={{ width: '60px' }}
+                  className="input-narrow"
                 />
               </label>
             </div>
@@ -217,7 +219,7 @@ export function ParameterStudyConfigUI({
 
       {/* Exponential preview */}
       {config.scalingMode === 'exponential' && previewValues && previewValues.length > 0 && (
-        <div className="dt-values" style={{ marginTop: '0.5rem' }}>
+        <div className="dt-values mt-half">
           <span className="dt-label">Values ({previewValues.length}):</span>
           <div className="dt-list">
             {previewValues.map((v, i) => {
@@ -233,11 +235,11 @@ export function ParameterStudyConfigUI({
       )}
 
       {/* Aggregation + axis options row */}
-      <div className="convergence-params" style={{ marginTop: '0.5rem' }}>
+      <div className="convergence-params mt-half">
         <div className="param-group">
           <label>
             Aggregation:
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+            <span className="agg-select-row">
               <select
                 value={config.aggregation}
                 onChange={(e) => update({ aggregation: e.target.value as AggregationMode })}
@@ -253,7 +255,6 @@ export function ParameterStudyConfigUI({
                 className="btn btn-small formula-help-btn"
                 onClick={() => setShowAggHelp(!showAggHelp)}
                 title="Show aggregation formula"
-                style={{ minWidth: '1.5rem', padding: '0.2rem' }}
               >
                 ?
               </button>
@@ -288,23 +289,27 @@ export function ParameterStudyConfigUI({
 
       {/* Aggregation help popover */}
       {showAggHelp && currentAgg && (
-        <div className="formula-help-popover" style={{ marginTop: '0.5rem' }}>
-          <div style={{ fontWeight: 600, marginBottom: '0.25rem', fontSize: '0.85rem' }}>
+        <div className="formula-help-popover mt-half">
+          <div className="agg-help-title">
             {currentAgg.label}
           </div>
           <div
             className="mt-2 p-2 bg-muted rounded-md overflow-x-auto"
             dangerouslySetInnerHTML={{ __html: renderLatex(currentAgg.latex) }}
           />
-          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
+          <div className="agg-help-note">
             where f(n) is the formula evaluated at step n, N is the total number of steps.
           </div>
         </div>
       )}
 
-      <div className="convergence-actions" style={{ marginTop: '0.5rem' }}>
+      {isConvergenceMode && (
+        <div className="convergence-note mt-half">Finest value used as reference</div>
+      )}
+
+      <div className="convergence-actions mt-half">
         <button className="run-button" onClick={onRun} disabled={running}>
-          {running ? 'Running...' : 'Run Study'}
+          {running ? 'Running...' : isConvergenceMode ? 'Run Convergence' : 'Run Study'}
         </button>
         {running && (
           <div className="progress-container">

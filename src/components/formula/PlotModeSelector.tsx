@@ -20,6 +20,12 @@ export function PlotModeSelector({ value, onChange }: PlotModeSelectorProps) {
       >
         Parameter Study
       </button>
+      <button
+        className={`btn btn-small ${value === 'convergence' ? 'btn-primary' : ''}`}
+        onClick={() => onChange('convergence')}
+      >
+        Convergence
+      </button>
     </div>
   );
 }

@@ -491,6 +491,78 @@
   min-width: 40px;
 }
 
+/* Utility classes */
+.mt-half { margin-top: 0.5rem; }
+
+/* Input width classes */
+.input-narrow { width: 60px; }
+.input-medium { width: 70px; }
+
+/* Aggregation help styles */
+.agg-select-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.agg-help-title {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.agg-help-note {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 0.25rem;
+}
+
+/* Convergence mode note */
+.convergence-note {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* Convergence orders table */
+.convergence-orders-table {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: var(--color-bg-alt);
+  border-radius: 4px;
+  border: 1px solid var(--color-border-legacy);
+}
+
+.convergence-orders-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.convergence-orders-table th {
+  text-align: left;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid var(--color-border-legacy);
+  font-size: 0.75rem;
+  color: var(--color-secondary-legacy);
+}
+
+.convergence-orders-table td {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.convergence-orders-table td.mono {
+  font-family: monospace;
+}
+
+.convergence-avg-order {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--color-text);
+}
+
 .convergence-metrics {
   margin-bottom: 1rem;
 }

@@ -1,6 +1,6 @@
 import type { Vec2 } from '@/types';
 
-export type PlotMode = 'instantaneous' | 'parameter-study';
+export type PlotMode = 'instantaneous' | 'parameter-study' | 'convergence';
 
 export type StudyParameter = 'epsilon' | 'h' | 'T' | 'R' | 'r' | 'a' | 'b';
 

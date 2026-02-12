@@ -2,13 +2,25 @@
 
 The simulator uses a formula-based plotting system that replaces the previous fixed-metric statistics and convergence panels. Users type mathematical expressions referencing simulation quantities, and the system evaluates and plots them.
 
-## Two Modes
+## Three Modes
 
 ### Instantaneous Mode
 Evaluates the formula at each simulation step `n = 0, 1, ..., N` and plots the result as a time series (time `t` on x-axis, formula value on y-axis).
 
 ### Parameter Study Mode
 Varies a chosen parameter (e.g., `epsilon`, `h`, `T`, `R`, `r`, `a`, `b`) over a range, runs a full simulation for each value, aggregates the per-step formula results into a single number, and plots the result (parameter value on x-axis, aggregated formula value on y-axis).
+
+### Convergence Mode
+A specialized parameter study mode designed for convergence analysis. It:
+
+1. **Generates parameter values** from the same config as parameter study
+2. **Uses the finest run as reference**: sorts values so the smallest (finest) value is run first and used as the ground-truth reference trajectory
+3. **Supports vector-valued formulas**: if the formula contains unwrapped vector tokens (e.g. `z[n]`, `z[n] - z_cl[n]`), it evaluates component-wise and takes the norm of the difference automatically
+4. **Interpolates reference to coarser grids**: uses linear interpolation to sample the reference time series at coarser time points
+5. **Computes per-step errors**: `|f(t) - f_ref(t)|` for scalars, `‖f(t) - f_ref(t)‖` for vectors
+6. **Aggregates errors** using the selected aggregation mode (default: L² integral)
+7. **Estimates convergence orders**: `order_i = log(E_{i+1}/E_i) / log(p_{i+1}/p_i)` between consecutive pairs
+8. **Defaults**: parameter=h, exponential scaling 2^-8..2^-3, log-log axes, L² aggregation, formula `z[n]`
 
 #### Scaling Modes
 
@@ -119,20 +131,23 @@ When running a parameter study, per-step formula values must be reduced to a sin
 | File | Purpose |
 |------|---------|
 | `src/formula/types.ts` | Type definitions (PlotMode, EvaluationContext, etc.) |
-| `src/formula/evaluator.ts` | Two-pass FormulaEvaluator class |
+| `src/formula/evaluator.ts` | Two-pass FormulaEvaluator class (scalar + vector evaluation) |
 | `src/formula/aggregators.ts` | Aggregation functions for parameter study |
 | `src/formula/presets.ts` | Preset formula definitions |
+| `src/formula/interpolation.ts` | Linear interpolation for Vec2 and scalar time series |
+| `src/formula/convergenceOrder.ts` | Convergence order estimation from error-parameter pairs |
 
 ### UI Components
 
 | File | Purpose |
 |------|---------|
-| `src/components/formula/FormulaPanel.tsx` | Main orchestrator |
+| `src/components/formula/FormulaPanel.tsx` | Main orchestrator (incl. convergence runner) |
 | `src/components/formula/FormulaInput.tsx` | Text input with help popover and presets |
-| `src/components/formula/PlotModeSelector.tsx` | Instantaneous / Parameter Study toggle |
+| `src/components/formula/PlotModeSelector.tsx` | Instantaneous / Parameter Study / Convergence toggle |
 | `src/components/formula/ParameterStudyConfig.tsx` | Parameter range and aggregation controls |
-| `src/components/formula/FormulaPlotChart.tsx` | Recharts line chart |
+| `src/components/formula/FormulaPlotChart.tsx` | Recharts line chart (with log-scale tick fixes) |
 | `src/components/formula/FormulaExportControls.tsx` | TSV and SVG export |
+| `src/components/formula/ConvergenceOrdersTable.tsx` | Convergence orders display table |
 
 ### Store State
 
@@ -166,6 +181,21 @@ User clicks "Run Study"
     → FormulaEvaluator.evaluate() at each step
     → aggregate(values, h, mode) → single number
   → FormulaPlotChart renders {param, value} series
+```
+
+**Convergence mode:**
+```
+User clicks "Run Convergence"
+  → Sort param values, run finest as reference
+  → Evaluate reference formula at each step (scalar or Vec2)
+  → For each coarser run:
+    → Evaluate formula at each step
+    → Interpolate reference to coarse time grid
+    → Compute per-step error (|diff| or ||diff||)
+    → aggregate(errors, h, mode) → single error number
+  → Compute convergence orders between consecutive pairs
+  → FormulaPlotChart renders {param, error} on log-log axes
+  → ConvergenceOrdersTable shows estimated orders
 ```
 
 ## Export
