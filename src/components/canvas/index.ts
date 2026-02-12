@@ -1,1 +1,1 @@
-export { SimulationCanvas } from './SimulationCanvas';
+export { SVGSimulationCanvas } from './SVGSimulationCanvas';

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { SimulationCanvas } from '@/components/canvas/SimulationCanvas';
+import { SVGSimulationCanvas } from '@/components/canvas/SVGSimulationCanvas';
 import { PlaybackControls } from '@/components/controls';
 import { StatisticsPanel, ConvergencePanel } from '@/components/statistics';
 import { MainLayout } from '@/components/layout';
@@ -22,7 +22,7 @@ export function App() {
         {/* Simulation view - left/top */}
         <div className="flex flex-col items-center">
           <div className="canvas-container">
-            <SimulationCanvas width={500} height={500} />
+            <SVGSimulationCanvas width={500} height={500} />
           </div>
           <PlaybackControls />
         </div>

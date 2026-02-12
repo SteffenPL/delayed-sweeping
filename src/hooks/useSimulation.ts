@@ -5,12 +5,17 @@ import { createProjectionFunction, createFullProjectionFunction } from '@/shapes
 import { createTrajectoryFunction, createPastFunction, createAlphaFunction } from '@/utils';
 
 /**
- * Hook to manage simulation lifecycle
+ * Hook to manage simulation lifecycle.
+ * Supports three modes:
+ * - idle: no animation running
+ * - scrubbing: advancing viewStep through existing history
+ * - simulating: computing new simulation steps
  */
 export function useSimulation() {
   const simulatorRef = useRef<DelayedSweepingSimulator | null>(null);
   const classicalSimulatorRef = useRef<ClassicalSweepingSimulator | null>(null);
   const runnerRef = useRef<SimulationRunner | null>(null);
+  const scrubRafRef = useRef<number | null>(null);
 
   const {
     params,
@@ -27,7 +32,6 @@ export function useSimulation() {
   // Create center function based on mode
   const createCenterFunc = useCallback(() => {
     if (trajectoryMode === 'free-drag') {
-      // In free-drag mode, return current drag position
       return () => useSimulationStore.getState().dragPosition;
     } else {
       return createTrajectoryFunction(parametricTrajectory);
@@ -40,13 +44,11 @@ export function useSimulation() {
     const pastFunc = createPastFunction(params);
     const alphaFunc = createAlphaFunction(parametricTrajectory);
 
-    // Use getter functions to access current constraint state dynamically
     const getConstraint = () => useSimulationStore.getState().constraint;
     const getAngle = () => useSimulationStore.getState().constraintAngle;
     const projectFunc = createProjectionFunction(getConstraint, getAngle);
     const fullProjectFunc = createFullProjectionFunction(getConstraint, getAngle);
 
-    // Initialize delayed sweeping simulator
     simulatorRef.current = new DelayedSweepingSimulator({
       params,
       centerFunc,
@@ -54,7 +56,6 @@ export function useSimulation() {
       projectFunc,
     });
 
-    // Initialize classical sweeping simulator (needs full projection with distance)
     classicalSimulatorRef.current = new ClassicalSweepingSimulator({
       params,
       centerFunc,
@@ -66,7 +67,6 @@ export function useSimulation() {
 
     runnerRef.current.setCallbacks(
       (step, position, center, xBar, projDist, gradNorm) => {
-        // Update constraint angle based on alpha(t) for parametric mode
         if (trajectoryMode === 'parametric') {
           const t = step * params.h;
           const alpha = alphaFunc(t);
@@ -75,7 +75,6 @@ export function useSimulation() {
 
         appendTrajectoryPoint(position, xBar, center, projDist, gradNorm);
 
-        // Also run classical sweeping step
         if (classicalSimulatorRef.current) {
           const classicalPos = classicalSimulatorRef.current.step(step);
           const classicalGradNorms = classicalSimulatorRef.current.getGradientNorms();
@@ -91,38 +90,80 @@ export function useSimulation() {
     runnerRef.current.setInfiniteMode(params.infiniteMode);
   }, [params, parametricTrajectory, trajectoryMode, speed, createCenterFunc, appendTrajectoryPoint, appendClassicalPoint, setRunning]);
 
+  // Stop any scrubbing animation
+  const stopScrub = useCallback(() => {
+    if (scrubRafRef.current !== null) {
+      cancelAnimationFrame(scrubRafRef.current);
+      scrubRafRef.current = null;
+    }
+  }, []);
+
+  // Start scrubbing through history, then transition to simulation
+  const startScrub = useCallback(() => {
+    const scrubLoop = () => {
+      const state = useSimulationStore.getState();
+      const { viewStep, trajectory, speed } = state;
+
+      if (viewStep >= trajectory.length) {
+        // Reached end of history, transition to simulation mode
+        stopScrub();
+        if (!runnerRef.current) {
+          initializeSimulator();
+        }
+        runnerRef.current?.start();
+        return;
+      }
+
+      // Advance viewStep
+      const newStep = Math.min(viewStep + speed, trajectory.length);
+      state.setViewStep(newStep);
+      scrubRafRef.current = requestAnimationFrame(scrubLoop);
+    };
+
+    scrubRafRef.current = requestAnimationFrame(scrubLoop);
+  }, [stopScrub, initializeSimulator]);
+
   // Start simulation
   const start = useCallback(() => {
-    if (!runnerRef.current) {
-      initializeSimulator();
+    const { viewStep, trajectory } = useSimulationStore.getState();
+
+    if (viewStep < trajectory.length) {
+      // Viewing history — start scrubbing first
+      startScrub();
+    } else {
+      // At the end — start simulation directly
+      if (!runnerRef.current) {
+        initializeSimulator();
+      }
+      runnerRef.current?.start();
     }
-    runnerRef.current?.start();
     setRunning(true);
-  }, [initializeSimulator, setRunning]);
+  }, [initializeSimulator, setRunning, startScrub]);
 
   // Pause simulation
   const pause = useCallback(() => {
+    stopScrub();
     runnerRef.current?.pause();
     setRunning(false);
-  }, [setRunning]);
+  }, [setRunning, stopScrub]);
 
   // Stop simulation (pause and destroy)
   const stop = useCallback(() => {
+    stopScrub();
     runnerRef.current?.pause();
     runnerRef.current?.destroy();
     runnerRef.current = null;
     simulatorRef.current = null;
     classicalSimulatorRef.current = null;
     setRunning(false);
-  }, [setRunning]);
+  }, [setRunning, stopScrub]);
 
   // Restart simulation
   const restart = useCallback(() => {
+    stopScrub();
     resetTrajectory();
-
-    // Reinitialize simulator with current settings
     initializeSimulator();
-  }, [resetTrajectory, initializeSimulator]);
+  }, [resetTrajectory, initializeSimulator, stopScrub]);
 
   // Toggle play/pause
   const toggle = useCallback(() => {
@@ -147,8 +188,6 @@ export function useSimulation() {
     }
   }, [params.infiniteMode]);
 
-  // Note: Projection function uses getter, so it automatically sees constraint changes.
-
   // Update center function when mode or trajectory changes
   useEffect(() => {
     const centerFunc = createCenterFunc();
@@ -163,9 +202,10 @@ export function useSimulation() {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      stopScrub();
       runnerRef.current?.destroy();
     };
-  }, []);
+  }, [stopScrub]);
 
   return {
     start,

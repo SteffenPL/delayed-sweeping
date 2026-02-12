@@ -6,7 +6,10 @@ import type {
   ConstraintConfig,
   TrajectoryMode,
   ParametricTrajectory,
+  ColorSettings,
+  ColormapName,
 } from '@/types';
+import { DEFAULT_COLOR_SETTINGS } from '@/types/colors';
 import { PRESETS } from '@/utils/presets';
 import {
   createExpressionEvaluator,
@@ -48,6 +51,7 @@ interface SimulationStore {
   trajectory: Vec2[];
   preProjection: Vec2[];
   constraintCenters: Vec2[];
+  constraintAngles: number[];
   projectionDistances: number[];
   gradientNorms: number[];
 
@@ -66,6 +70,22 @@ interface SimulationStore {
   ) => void;
   appendClassicalPoint: (point: Vec2, gradNorm: number) => void;
   resetTrajectory: () => void;
+
+  // History navigation
+  viewStep: number;
+  setViewStep: (step: number) => void;
+
+  // Color settings
+  colorConfig: ColorSettings;
+  setColorConfig: (partial: Partial<ColorSettings>) => void;
+
+  // Past constraints (for SVG export overlay)
+  pastConstraintTimes: number[];
+  pastConstraintColormap: ColormapName;
+  showPastConstraints: boolean;
+  setPastConstraintTimes: (times: number[]) => void;
+  setPastConstraintColormap: (colormap: ColormapName) => void;
+  setShowPastConstraints: (show: boolean) => void;
 
   // UI state
   showStatistics: boolean;
@@ -141,10 +161,22 @@ export const useSimulationStore = create<SimulationStore>()(
     trajectory: [],
     preProjection: [],
     constraintCenters: [],
+    constraintAngles: [],
     projectionDistances: [],
     gradientNorms: [],
     classicalTrajectory: [],
     classicalGradientNorms: [],
+
+    // History navigation
+    viewStep: 0,
+
+    // Color settings
+    colorConfig: DEFAULT_COLOR_SETTINGS,
+
+    // Past constraints
+    pastConstraintTimes: [],
+    pastConstraintColormap: 'plasma',
+    showPastConstraints: false,
 
     showStatistics: true,
     selectedMetrics: ['projectionDistance'],
@@ -184,9 +216,11 @@ export const useSimulationStore = create<SimulationStore>()(
         trajectory: [...state.trajectory, point],
         preProjection: [...state.preProjection, xBar],
         constraintCenters: [...state.constraintCenters, center],
+        constraintAngles: [...state.constraintAngles, state.constraintAngle],
         projectionDistances: [...state.projectionDistances, projDist],
         gradientNorms: [...state.gradientNorms, gradNorm],
         currentStep: state.currentStep + 1,
+        viewStep: state.trajectory.length + 1, // auto-track latest
       })),
 
     appendClassicalPoint: (point, gradNorm) =>
@@ -200,13 +234,26 @@ export const useSimulationStore = create<SimulationStore>()(
         trajectory: [],
         preProjection: [],
         constraintCenters: [],
+        constraintAngles: [],
         projectionDistances: [],
         gradientNorms: [],
         classicalTrajectory: [],
         classicalGradientNorms: [],
         currentStep: 0,
+        viewStep: 0,
         isRunning: false,
       }),
+
+    setViewStep: (step) => set({ viewStep: step }),
+
+    setColorConfig: (partial) =>
+      set((state) => ({
+        colorConfig: { ...state.colorConfig, ...partial },
+      })),
+
+    setPastConstraintTimes: (times) => set({ pastConstraintTimes: times }),
+    setPastConstraintColormap: (colormap) => set({ pastConstraintColormap: colormap }),
+    setShowPastConstraints: (show) => set({ showPastConstraints: show }),
 
     toggleStatistics: () =>
       set((state) => ({
@@ -242,6 +289,7 @@ export const useSimulationStore = create<SimulationStore>()(
         parametricTrajectory: state.parametricTrajectory,
         selectedMetrics: state.selectedMetrics,
         speed: state.speed,
+        colorConfig: state.colorConfig,
       };
       try {
         localStorage.setItem('websim-params', JSON.stringify(data));
@@ -283,6 +331,7 @@ export const useSimulationStore = create<SimulationStore>()(
             parametricTrajectory: data.parametricTrajectory ?? DEFAULT_TRAJECTORY,
             selectedMetrics: data.selectedMetrics ?? ['projectionDistance'],
             speed: data.speed ?? 1,
+            colorConfig: data.colorConfig ?? DEFAULT_COLOR_SETTINGS,
           });
         }
       } catch (e) {
