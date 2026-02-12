@@ -8,6 +8,7 @@ import type {
   ParametricTrajectory,
   ColorSettings,
 } from '@/types';
+import type { PlotMode, ParameterStudyConfig, ParameterStudyResult } from '@/formula';
 import { DEFAULT_COLOR_SETTINGS } from '@/types/colors';
 import { PRESETS } from '@/utils/presets';
 import {
@@ -85,12 +86,24 @@ interface SimulationStore {
   setShowPastConstraints: (show: boolean) => void;
 
   // UI state
-  showStatistics: boolean;
-  selectedMetrics: string[];
   speed: number;
-  toggleStatistics: () => void;
-  setSelectedMetrics: (metrics: string[]) => void;
   setSpeed: (speed: number) => void;
+
+  // Formula plotting
+  formula: string;
+  plotMode: PlotMode;
+  showPlot: boolean;
+  parameterStudyConfig: ParameterStudyConfig;
+  parameterStudyResults: ParameterStudyResult[];
+  parameterStudyRunning: boolean;
+  parameterStudyProgress: number;
+  setFormula: (formula: string) => void;
+  setPlotMode: (mode: PlotMode) => void;
+  setShowPlot: (show: boolean) => void;
+  setParameterStudyConfig: (config: ParameterStudyConfig) => void;
+  setParameterStudyResults: (results: ParameterStudyResult[]) => void;
+  setParameterStudyRunning: (running: boolean) => void;
+  setParameterStudyProgress: (progress: number) => void;
 
   // Presets
   loadPreset: (presetId: string) => void;
@@ -174,9 +187,23 @@ export const useSimulationStore = create<SimulationStore>()(
     pastConstraintTimes: [],
     showPastConstraints: false,
 
-    showStatistics: true,
-    selectedMetrics: ['projectionDistance'],
     speed: 1,
+
+    // Formula plotting defaults
+    formula: 'g[n]',
+    plotMode: 'instantaneous' as PlotMode,
+    showPlot: true,
+    parameterStudyConfig: {
+      parameter: 'epsilon' as const,
+      min: 0.5,
+      max: 10,
+      sampleCount: 8,
+      logScale: false,
+      aggregation: 'final' as const,
+    },
+    parameterStudyResults: [],
+    parameterStudyRunning: false,
+    parameterStudyProgress: 0,
 
     // Actions
     setParams: (params) =>
@@ -250,14 +277,16 @@ export const useSimulationStore = create<SimulationStore>()(
     setPastConstraintTimes: (times) => set({ pastConstraintTimes: times }),
     setShowPastConstraints: (show) => set({ showPastConstraints: show }),
 
-    toggleStatistics: () =>
-      set((state) => ({
-        showStatistics: !state.showStatistics,
-      })),
-
-    setSelectedMetrics: (metrics) => set({ selectedMetrics: metrics }),
-
     setSpeed: (speed) => set({ speed: Math.max(1, Math.min(100, speed)) }),
+
+    // Formula plotting setters
+    setFormula: (formula) => set({ formula }),
+    setPlotMode: (plotMode) => set({ plotMode }),
+    setShowPlot: (showPlot) => set({ showPlot }),
+    setParameterStudyConfig: (parameterStudyConfig) => set({ parameterStudyConfig }),
+    setParameterStudyResults: (parameterStudyResults) => set({ parameterStudyResults }),
+    setParameterStudyRunning: (parameterStudyRunning) => set({ parameterStudyRunning }),
+    setParameterStudyProgress: (parameterStudyProgress) => set({ parameterStudyProgress }),
 
     loadPreset: (presetId) => {
       const preset = PRESETS.find((p) => p.id === presetId);
@@ -282,9 +311,11 @@ export const useSimulationStore = create<SimulationStore>()(
         constraintAngle: state.constraintAngle,
         trajectoryMode: state.trajectoryMode,
         parametricTrajectory: state.parametricTrajectory,
-        selectedMetrics: state.selectedMetrics,
         speed: state.speed,
         colorConfig: state.colorConfig,
+        formula: state.formula,
+        plotMode: state.plotMode,
+        parameterStudyConfig: state.parameterStudyConfig,
       };
       try {
         localStorage.setItem('websim-params', JSON.stringify(data));
@@ -323,9 +354,18 @@ export const useSimulationStore = create<SimulationStore>()(
             constraintAngle: data.constraintAngle ?? 0,
             trajectoryMode: data.trajectoryMode ?? 'parametric',
             parametricTrajectory: data.parametricTrajectory ?? DEFAULT_TRAJECTORY,
-            selectedMetrics: data.selectedMetrics ?? ['projectionDistance'],
             speed: data.speed ?? 1,
             colorConfig: data.colorConfig ?? DEFAULT_COLOR_SETTINGS,
+            formula: data.formula ?? 'g[n]',
+            plotMode: data.plotMode ?? 'instantaneous',
+            parameterStudyConfig: data.parameterStudyConfig ?? {
+              parameter: 'epsilon',
+              min: 0.5,
+              max: 10,
+              sampleCount: 8,
+              logScale: false,
+              aggregation: 'final',
+            },
           });
         }
       } catch (e) {

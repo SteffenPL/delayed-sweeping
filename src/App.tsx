@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { SVGSimulationCanvas } from '@/components/canvas/SVGSimulationCanvas';
 import { PlaybackControls } from '@/components/controls';
 import { AppearanceSection } from '@/components/panels';
-import { StatisticsPanel, ConvergencePanel } from '@/components/statistics';
+import { FormulaPanel } from '@/components/formula';
 import { MainLayout } from '@/components/layout';
 import { ParameterPanel } from '@/components/panels';
 import { useSimulationStore } from '@/store';
@@ -33,10 +33,9 @@ export function App() {
         <ParameterPanel />
       </div>
 
-      {/* Statistics section */}
+      {/* Formula plot section */}
       <section className="mt-8 space-y-4">
-        <StatisticsPanel />
-        <ConvergencePanel />
+        <FormulaPanel />
       </section>
     </MainLayout>
   );

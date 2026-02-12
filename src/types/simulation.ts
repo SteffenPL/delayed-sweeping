@@ -48,31 +48,6 @@ export interface SimulationState {
   projectionDistances: number[];
 }
 
-// Statistics
-export interface SimulationStatistics {
-  time: number[];
-  projectionDistance: number[];
-  velocity: number[];
-  positionX: number[];
-  positionY: number[];
-  distanceFromOrigin: number[];
-  lagrangeMultiplier: number[];
-  lagrangeDotProduct: number[];
-  totalEnergy: number[];
-  gradientNorm: number[];
-  lagrangeMultiplierValue: number[];
-  classicalProjectionDistance: number[];
-  classicalPositionX: number[];
-  classicalPositionY: number[];
-  classicalVelocity: number[];
-  classicalDistanceFromOrigin: number[];
-  classicalLagrangeMultiplier: number[];
-  classicalLagrangeDotProduct: number[];
-  classicalTotalEnergy: number[];
-  classicalGradientNorm: number[];
-  classicalLagrangeMultiplierValue: number[];
-}
-
 // Preset configuration
 export interface Preset {
   id: string;

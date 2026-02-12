@@ -22,10 +22,15 @@ root
 │   ├── shapes/                  # Constraint shapes
 │   │   ├── sdf.ts               # Signed distance functions
 │   │   └── projection.ts        # SDF-based projection
+│   ├── formula/                 # Formula evaluation engine
+│   │   ├── evaluator.ts         # Two-pass formula evaluator
+│   │   ├── aggregators.ts       # Reduction functions for parameter study
+│   │   ├── presets.ts           # Formula presets
+│   │   └── types.ts             # Type definitions
 │   ├── components/              # React components
-│   │   ├── canvas/              # PixiJS rendering
+│   │   ├── canvas/              # SVG rendering
 │   │   ├── controls/            # Parameter inputs, playback
-│   │   ├── statistics/          # Charts and export
+│   │   ├── formula/             # Formula plotting UI
 │   │   ├── layout/              # App layout
 │   │   └── ui/                  # Reusable UI components
 │   ├── hooks/                   # Custom React hooks
@@ -116,7 +121,7 @@ Zustand store in `src/store/index.ts` manages:
 - **Constraint configuration**: expression, R, r, a, b, angle
 - **Trajectory settings**: mode (parametric/free-drag), expressions x(t), y(t), α(t)
 - **Running state**: isRunning, trajectory data, statistics
-- **UI preferences**: showStatistics, selectedMetrics, speed
+- **UI preferences**: showPlot, formula, plotMode, speed
 
 Expression-based system:
 - Trajectories use math.js to evaluate x(t), y(t), α(t)
