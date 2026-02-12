@@ -162,6 +162,22 @@ export function useSimulation() {
   const restart = useCallback(() => {
     stopScrub();
     resetTrajectory();
+
+    // Reset constraint angle and drag position to t=0 values
+    const { trajectoryMode, parametricTrajectory, setConstraintAngle, setDragPosition } = useSimulationStore.getState();
+
+    if (trajectoryMode === 'parametric') {
+      // Evaluate trajectory and angle at t=0
+      const centerFunc = createTrajectoryFunction(parametricTrajectory);
+      const alphaFunc = createAlphaFunction(parametricTrajectory);
+
+      const center0 = centerFunc(0);
+      const alpha0 = alphaFunc(0);
+
+      setConstraintAngle(alpha0);
+      setDragPosition(center0);
+    }
+
     initializeSimulator();
   }, [resetTrajectory, initializeSimulator, stopScrub]);
 
