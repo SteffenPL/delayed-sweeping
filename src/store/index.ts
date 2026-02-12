@@ -116,19 +116,19 @@ interface SimulationStore {
 }
 
 const DEFAULT_PARAMS: SimulationParameters = {
-  T: 12.0,
-  h: 0.01,
-  epsilon: 2.0,
+  T: 15.0,
+  h: 0.005,
+  epsilon: 2.5,
   infiniteMode: true,
-  xPastExpression: '2',
+  xPastExpression: '0',
   yPastExpression: '0',
   solverType: 'norm1-sum1',
 };
 
 const DEFAULT_CONSTRAINT: ConstraintConfig = {
   expression: 'R - sqrt(x^2 + y^2)',
-  R: 0.8,
-  r: 0.5,
+  R: 0.5,
+  r: 0.3,
   a: 0,
   b: 0,
 };
@@ -150,8 +150,8 @@ function computeBoundaryFromConfig(config: ConstraintConfig): Vec2[] {
 }
 
 const DEFAULT_TRAJECTORY: ParametricTrajectory = {
-  xExpression: '2 * cos(t)',
-  yExpression: '2 * sin(t)',
+  xExpression: '2 * sin(t)',
+  yExpression: '2 * sin(2*t)',
   alphaExpression: '0',
 };
 
@@ -162,9 +162,9 @@ export const useSimulationStore = create<SimulationStore>()(
     constraint: DEFAULT_CONSTRAINT,
     constraintAngle: 0,
     boundaryPolygon: computeBoundaryFromConfig(DEFAULT_CONSTRAINT),
-    trajectoryMode: 'free-drag',
+    trajectoryMode: 'parametric',
     parametricTrajectory: DEFAULT_TRAJECTORY,
-    dragPosition: { x: 2, y: 0 },
+    dragPosition: { x: 0, y: 0 },
 
     isRunning: false,
     currentStep: 0,
