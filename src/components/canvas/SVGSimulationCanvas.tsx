@@ -140,10 +140,9 @@ export function SVGSimulationCanvas({ width = 500, height = 500 }: SVGSimulation
   let currentCenter: Vec2;
   if (effectiveStep > 0 && constraintCenters.length >= effectiveStep) {
     currentCenter = constraintCenters[effectiveStep - 1];
-  } else if (trajectoryMode === 'free-drag') {
-    currentCenter = dragPosition;
   } else {
-    currentCenter = { x: 2, y: 0 };
+    // No trajectory data yet - use dragPosition (which is set to trajectory at t=0 in parametric mode)
+    currentCenter = dragPosition;
   }
 
   const currentAngle =
