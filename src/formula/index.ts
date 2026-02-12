@@ -4,6 +4,7 @@ export { FORMULA_PRESETS } from './presets';
 export type {
   PlotMode,
   StudyParameter,
+  ScalingMode,
   AggregationMode,
   ParameterStudyConfig,
   ParameterStudyResult,

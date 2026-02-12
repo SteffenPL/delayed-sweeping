@@ -10,6 +10,17 @@ Evaluates the formula at each simulation step `n = 0, 1, ..., N` and plots the r
 ### Parameter Study Mode
 Varies a chosen parameter (e.g., `epsilon`, `h`, `T`, `R`, `r`, `a`, `b`) over a range, runs a full simulation for each value, aggregates the per-step formula results into a single number, and plots the result (parameter value on x-axis, aggregated formula value on y-axis).
 
+#### Scaling Modes
+
+| Mode | Description |
+|------|-------------|
+| Linear | Uniformly spaced values between min and max |
+| Log-spaced | Logarithmically spaced values between min and max (both must be positive) |
+| Exponential | Values are `base^k` for `k = expMin, expMin+step, ..., expMax` (e.g., `2^{-10}, 2^{-9}, ...`) |
+
+#### Log Axes
+Both x-axis and y-axis can be switched to logarithmic scale independently. When enabled, the data is transformed to log₁₀ space for plotting, with original values shown on tick labels and tooltips.
+
 ## Formula Syntax
 
 Formulas use [math.js](https://mathjs.org/) syntax with custom tokens for simulation quantities.
@@ -93,7 +104,7 @@ If vector tokens remain after Pass 1 (i.e., used outside `norm()` or `dot()`), t
 
 ## Aggregation Modes (Parameter Study)
 
-When running a parameter study, per-step formula values must be reduced to a single number:
+When running a parameter study, per-step formula values must be reduced to a single number. A help button (?) next to the aggregation dropdown shows the LaTeX-rendered formula for the selected mode.
 
 | Mode | Formula | Description |
 |------|---------|-------------|

@@ -6,13 +6,22 @@ export type StudyParameter = 'epsilon' | 'h' | 'T' | 'R' | 'r' | 'a' | 'b';
 
 export type AggregationMode = 'final' | 'l2-integral' | 'h1-seminorm' | 'integral';
 
+export type ScalingMode = 'linear' | 'log' | 'exponential';
+
 export interface ParameterStudyConfig {
   parameter: StudyParameter;
   min: number;
   max: number;
   sampleCount: number;
-  logScale: boolean;
+  scalingMode: ScalingMode;
+  // Exponential scaling: values are base^(expMin), base^(expMin+expStep), ..., base^(expMax)
+  expBase: number;
+  expMin: number;
+  expMax: number;
+  expStep: number;
   aggregation: AggregationMode;
+  logXAxis: boolean;
+  logYAxis: boolean;
 }
 
 export interface ParameterStudyResult {

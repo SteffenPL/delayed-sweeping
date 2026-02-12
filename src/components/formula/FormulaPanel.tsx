@@ -108,11 +108,15 @@ export function FormulaPanel() {
     setParameterStudyProgress(0);
     setParameterStudyResults([]);
 
-    const { parameter, min, max, sampleCount, logScale, aggregation } = parameterStudyConfig;
+    const { parameter, min, max, sampleCount, scalingMode, expBase, expMin, expMax, expStep, aggregation } = parameterStudyConfig;
 
-    // Generate parameter values
+    // Generate parameter values based on scaling mode
     const values: number[] = [];
-    if (logScale && min > 0 && max > 0) {
+    if (scalingMode === 'exponential') {
+      for (let e = expMin; e <= expMax; e += expStep) {
+        values.push(Math.pow(expBase, e));
+      }
+    } else if (scalingMode === 'log' && min > 0 && max > 0) {
       const logMin = Math.log(min);
       const logMax = Math.log(max);
       for (let i = 0; i < sampleCount; i++) {
@@ -250,6 +254,8 @@ export function FormulaPanel() {
               data={chartData}
               xLabel={xLabel}
               yLabel={yLabel}
+              logXAxis={plotMode === 'parameter-study' ? parameterStudyConfig.logXAxis : false}
+              logYAxis={plotMode === 'parameter-study' ? parameterStudyConfig.logYAxis : false}
             />
           )}
 
