@@ -32,19 +32,19 @@ export const DEFAULT_COLOR_SETTINGS: ColorSettings = {
     mode: 'colormap',
     solidColor: '#3b82f6',
     colormap: 'viridis',
-    opacityExpression: '1',
+    opacityExpression: 'exp(-epsilon * s / T)',
   },
   classicalTrajectory: {
     mode: 'solid',
     solidColor: '#808080',
     colormap: 'grayscale',
-    opacityExpression: '1',
+    opacityExpression: 'exp(-epsilon * s / T)',
   },
   pastConstraints: {
     mode: 'colormap',
     solidColor: '#3b82f6',
     colormap: 'plasma',
-    opacityExpression: 'exp(-epsilon * s)',
+    opacityExpression: 'exp(-epsilon * s / T)',
   },
   markers: {
     delayed: '#22c55e',

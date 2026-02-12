@@ -83,12 +83,13 @@ function getCompiled(expression: string): EvalFunction {
  * - s: age (time since this point was recorded, relative to current view time)
  * - t: current view time
  * - epsilon: user-specified decay rate parameter
+ * - T: terminal simulation time
  * Returns clamped value in [0, 1].
  */
-export function evaluateOpacity(expression: string, s: number, t: number, epsilon: number): number {
+export function evaluateOpacity(expression: string, s: number, t: number, epsilon: number, T: number): number {
   try {
     const node = getCompiled(expression);
-    const result = node.evaluate({ s, t, epsilon });
+    const result = node.evaluate({ s, t, epsilon, T });
     const val = typeof result === 'number' ? result : Number(result);
     if (isNaN(val)) return 1;
     return Math.max(0, Math.min(1, val));

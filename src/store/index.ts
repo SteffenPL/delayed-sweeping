@@ -149,6 +149,16 @@ function computeBoundaryFromConfig(config: ConstraintConfig): Vec2[] {
   }
 }
 
+// Helper to generate default past constraint times: 0:(T/6):T
+function generateDefaultPastConstraintTimes(T: number): number[] {
+  const step = T / 6;
+  const times: number[] = [];
+  for (let t = 0; t <= T + 1e-10; t += step) {
+    times.push(t);
+  }
+  return times;
+}
+
 const DEFAULT_TRAJECTORY: ParametricTrajectory = {
   xExpression: '2 * sin(t)',
   yExpression: '2 * sin(2*t)',
@@ -184,8 +194,8 @@ export const useSimulationStore = create<SimulationStore>()(
     colorConfig: DEFAULT_COLOR_SETTINGS,
 
     // Past constraints
-    pastConstraintTimes: [],
-    showPastConstraints: false,
+    pastConstraintTimes: generateDefaultPastConstraintTimes(DEFAULT_PARAMS.T),
+    showPastConstraints: true,
 
     speed: 1,
 

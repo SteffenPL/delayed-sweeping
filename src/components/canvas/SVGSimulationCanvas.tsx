@@ -174,7 +174,7 @@ export function SVGSimulationCanvas({ width = 500, height = 500 }: SVGSimulation
 
           // Opacity from formula: s = age = viewTime - constraintTime
           const s = viewTime - time;
-          const opacity = evaluateOpacity(pcConfig.opacityExpression, s, viewTime, params.epsilon);
+          const opacity = evaluateOpacity(pcConfig.opacityExpression, s, viewTime, params.epsilon, params.T);
 
           return { center, angle, color, opacity, key: `past-${step}` };
         })
@@ -235,6 +235,7 @@ export function SVGSimulationCanvas({ width = 500, height = 500 }: SVGSimulation
           h={params.h}
           viewTime={viewTime}
           epsilon={params.epsilon}
+          T={params.T}
         />
 
         {/* Delayed trajectory */}
@@ -245,6 +246,7 @@ export function SVGSimulationCanvas({ width = 500, height = 500 }: SVGSimulation
           h={params.h}
           viewTime={viewTime}
           epsilon={params.epsilon}
+          T={params.T}
         />
 
         {/* Markers */}

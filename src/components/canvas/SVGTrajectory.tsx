@@ -12,6 +12,7 @@ interface SVGTrajectoryProps {
   h: number;          // time step size, to compute age s
   viewTime: number;   // current view time t
   epsilon: number;    // decay rate from simulation params
+  T: number;          // terminal simulation time
 }
 
 export const SVGTrajectory = React.memo(function SVGTrajectory({
@@ -23,6 +24,7 @@ export const SVGTrajectory = React.memo(function SVGTrajectory({
   h,
   viewTime,
   epsilon,
+  T,
 }: SVGTrajectoryProps) {
   const strokeWidth = lineWidth / scale;
 
@@ -70,7 +72,7 @@ export const SVGTrajectory = React.memo(function SVGTrajectory({
       const segTime = (i + 1) * h;
       const s = viewTime - segTime;
       const opacity = hasOpacity
-        ? evaluateOpacity(colorConfig.opacityExpression, s, viewTime, epsilon)
+        ? evaluateOpacity(colorConfig.opacityExpression, s, viewTime, epsilon, T)
         : 1;
 
       segments.push(

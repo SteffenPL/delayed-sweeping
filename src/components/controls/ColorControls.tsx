@@ -1,10 +1,21 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useSimulationStore } from '@/store';
 import { COLORMAP_NAMES } from '@/utils/colormaps';
+import { parsePastConstraintTimes } from '@/utils';
 import type { TrajectoryColorConfig, PastConstraintColorConfig, MarkerColors } from '@/types/colors';
 
 export function ColorControls() {
-  const { colorConfig, setColorConfig } = useSimulationStore();
+  const timesInputRef = useRef<HTMLInputElement>(null);
+
+  const {
+    colorConfig,
+    setColorConfig,
+    showPastConstraints,
+    setShowPastConstraints,
+    pastConstraintTimes,
+    setPastConstraintTimes,
+    params,
+  } = useSimulationStore();
 
   const updateDelayed = (partial: Partial<TrajectoryColorConfig>) => {
     setColorConfig({
@@ -29,6 +40,12 @@ export function ColorControls() {
       markers: { ...colorConfig.markers, ...partial },
     });
   };
+
+  const handleTimesChange = useCallback(() => {
+    const raw = timesInputRef.current?.value ?? '';
+    const times = parsePastConstraintTimes(raw, params.T);
+    setPastConstraintTimes(times);
+  }, [setPastConstraintTimes, params.T]);
 
   return (
     <div className="space-y-2">
@@ -55,8 +72,39 @@ export function ColorControls() {
         <ColorInput label="X̄" value={colorConfig.markers.xBar} onChange={(c) => updateMarkers({ xBar: c })} />
       </div>
 
-      <p className="text-[10px] text-muted-foreground">
-        A(s): s = age, t = time, epsilon = decay rate (from params)
+      <div className="border-t pt-2 mt-2">
+        <div className="flex items-center gap-2 mb-2">
+          <input
+            type="checkbox"
+            id="showPastConstraints"
+            checked={showPastConstraints}
+            onChange={(e) => setShowPastConstraints(e.target.checked)}
+          />
+          <label htmlFor="showPastConstraints" className="text-sm font-medium">
+            Show past constraints
+          </label>
+        </div>
+
+        {showPastConstraints && (
+          <div>
+            <label className="text-xs text-muted-foreground">
+              Times (range: start:(step):end or comma-separated)
+            </label>
+            <input
+              ref={timesInputRef}
+              type="text"
+              defaultValue="0:(T/6):T"
+              onBlur={handleTimesChange}
+              onKeyDown={(e) => e.key === 'Enter' && handleTimesChange()}
+              placeholder="0:(T/6):T or 0, 1, 2, 3"
+              className="w-full mt-1 px-2 py-1 border rounded text-xs font-mono"
+            />
+          </div>
+        )}
+      </div>
+
+      <p className="text-[10px] text-muted-foreground mt-2">
+        A(s): s = age, t = time, epsilon = decay rate, T = terminal time
       </p>
     </div>
   );
