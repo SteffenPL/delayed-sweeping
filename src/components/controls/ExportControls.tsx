@@ -1,7 +1,6 @@
 import { useRef, useCallback } from 'react';
 import { useSimulationStore } from '@/store';
 import { exportSVG } from '@/utils/svgExport';
-import { COLORMAP_NAMES } from '@/utils/colormaps';
 
 export function ExportControls() {
   const timesInputRef = useRef<HTMLInputElement>(null);
@@ -11,8 +10,6 @@ export function ExportControls() {
     setShowPastConstraints,
     pastConstraintTimes,
     setPastConstraintTimes,
-    pastConstraintColormap,
-    setPastConstraintColormap,
   } = useSimulationStore();
 
   const handleDownloadSVG = useCallback(() => {
@@ -52,35 +49,18 @@ export function ExportControls() {
       </div>
 
       {showPastConstraints && (
-        <>
-          <div>
-            <label className="text-sm text-muted-foreground">Times (comma-separated)</label>
-            <input
-              ref={timesInputRef}
-              type="text"
-              defaultValue={pastConstraintTimes.join(', ')}
-              onBlur={handleTimesChange}
-              onKeyDown={(e) => e.key === 'Enter' && handleTimesChange()}
-              placeholder="0.5, 1.0, 2.0"
-              className="w-full mt-1 px-2 py-1 border rounded text-sm"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-muted-foreground">Colormap</label>
-            <select
-              value={pastConstraintColormap}
-              onChange={(e) => setPastConstraintColormap(e.target.value as typeof pastConstraintColormap)}
-              className="w-full mt-1 px-2 py-1 border rounded text-sm"
-            >
-              {COLORMAP_NAMES.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </>
+        <div>
+          <label className="text-sm text-muted-foreground">Times (comma-separated)</label>
+          <input
+            ref={timesInputRef}
+            type="text"
+            defaultValue={pastConstraintTimes.join(', ')}
+            onBlur={handleTimesChange}
+            onKeyDown={(e) => e.key === 'Enter' && handleTimesChange()}
+            placeholder="0.5, 1.0, 2.0"
+            className="w-full mt-1 px-2 py-1 border rounded text-sm"
+          />
+        </div>
       )}
     </div>
   );

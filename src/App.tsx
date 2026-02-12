@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { SVGSimulationCanvas } from '@/components/canvas/SVGSimulationCanvas';
 import { PlaybackControls } from '@/components/controls';
+import { AppearanceSection } from '@/components/panels';
 import { StatisticsPanel, ConvergencePanel } from '@/components/statistics';
 import { MainLayout } from '@/components/layout';
 import { ParameterPanel } from '@/components/panels';
@@ -25,6 +26,7 @@ export function App() {
             <SVGSimulationCanvas width={500} height={500} />
           </div>
           <PlaybackControls />
+          <AppearanceSection />
         </div>
 
         {/* Parameter panel - right/bottom */}

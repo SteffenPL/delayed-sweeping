@@ -7,7 +7,6 @@ import type {
   TrajectoryMode,
   ParametricTrajectory,
   ColorSettings,
-  ColormapName,
 } from '@/types';
 import { DEFAULT_COLOR_SETTINGS } from '@/types/colors';
 import { PRESETS } from '@/utils/presets';
@@ -75,16 +74,14 @@ interface SimulationStore {
   viewStep: number;
   setViewStep: (step: number) => void;
 
-  // Color settings
+  // Color settings (includes past constraints color config)
   colorConfig: ColorSettings;
   setColorConfig: (partial: Partial<ColorSettings>) => void;
 
-  // Past constraints (for SVG export overlay)
+  // Past constraints visibility and times
   pastConstraintTimes: number[];
-  pastConstraintColormap: ColormapName;
   showPastConstraints: boolean;
   setPastConstraintTimes: (times: number[]) => void;
-  setPastConstraintColormap: (colormap: ColormapName) => void;
   setShowPastConstraints: (show: boolean) => void;
 
   // UI state
@@ -175,7 +172,6 @@ export const useSimulationStore = create<SimulationStore>()(
 
     // Past constraints
     pastConstraintTimes: [],
-    pastConstraintColormap: 'plasma',
     showPastConstraints: false,
 
     showStatistics: true,
@@ -252,7 +248,6 @@ export const useSimulationStore = create<SimulationStore>()(
       })),
 
     setPastConstraintTimes: (times) => set({ pastConstraintTimes: times }),
-    setPastConstraintColormap: (colormap) => set({ pastConstraintColormap: colormap }),
     setShowPastConstraints: (show) => set({ showPastConstraints: show }),
 
     toggleStatistics: () =>
@@ -306,7 +301,6 @@ export const useSimulationStore = create<SimulationStore>()(
           // Migrate old constraint format if needed
           let constraint = data.constraint;
           if (constraint && !constraint.expression) {
-            // Old format with just radius
             constraint = {
               ...DEFAULT_CONSTRAINT,
               R: constraint.radius ?? DEFAULT_CONSTRAINT.R,
@@ -356,7 +350,6 @@ export const useSimulationStore = create<SimulationStore>()(
     importFromJSON: (json) => {
       try {
         const data = JSON.parse(json);
-        // Migrate old constraint format if needed
         let constraint = data.constraint;
         if (constraint && !constraint.expression) {
           constraint = {
@@ -366,7 +359,6 @@ export const useSimulationStore = create<SimulationStore>()(
         }
         constraint = constraint ?? DEFAULT_CONSTRAINT;
 
-        // Migrate params: ensure solverType is set
         const params = {
           ...DEFAULT_PARAMS,
           ...(data.params ?? {}),

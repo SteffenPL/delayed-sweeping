@@ -4,6 +4,14 @@ export interface TrajectoryColorConfig {
   mode: 'solid' | 'colormap';
   solidColor: string;
   colormap: ColormapName;
+  opacityExpression: string; // A(s) formula, variables: s (age), t (current time), epsilon (from params)
+}
+
+export interface PastConstraintColorConfig {
+  mode: 'solid' | 'colormap';
+  solidColor: string;
+  colormap: ColormapName;
+  opacityExpression: string;
 }
 
 export interface MarkerColors {
@@ -15,6 +23,7 @@ export interface MarkerColors {
 export interface ColorSettings {
   delayedTrajectory: TrajectoryColorConfig;
   classicalTrajectory: TrajectoryColorConfig;
+  pastConstraints: PastConstraintColorConfig;
   markers: MarkerColors;
 }
 
@@ -23,11 +32,19 @@ export const DEFAULT_COLOR_SETTINGS: ColorSettings = {
     mode: 'colormap',
     solidColor: '#3b82f6',
     colormap: 'viridis',
+    opacityExpression: '1',
   },
   classicalTrajectory: {
     mode: 'solid',
     solidColor: '#808080',
     colormap: 'grayscale',
+    opacityExpression: '1',
+  },
+  pastConstraints: {
+    mode: 'colormap',
+    solidColor: '#3b82f6',
+    colormap: 'plasma',
+    opacityExpression: 'exp(-epsilon * s)',
   },
   markers: {
     delayed: '#22c55e',

@@ -4,7 +4,6 @@ import { ConfigButtons } from './ConfigButtons';
 import { SimulationTab } from './SimulationTab';
 import { ConstraintTab } from './ConstraintTab';
 import { TrajectoryTab } from './TrajectoryTab';
-import { AppearanceTab } from './AppearanceTab';
 
 export function ParameterPanel() {
   return (
@@ -17,11 +16,10 @@ export function ParameterPanel() {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="simulation" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="simulation">Simulation</TabsTrigger>
             <TabsTrigger value="constraint">Constraint</TabsTrigger>
             <TabsTrigger value="trajectory">Trajectory</TabsTrigger>
-            <TabsTrigger value="appearance">Appearance</TabsTrigger>
           </TabsList>
           <TabsContent value="simulation" className="mt-4">
             <SimulationTab />
@@ -31,9 +29,6 @@ export function ParameterPanel() {
           </TabsContent>
           <TabsContent value="trajectory" className="mt-4">
             <TrajectoryTab />
-          </TabsContent>
-          <TabsContent value="appearance" className="mt-4">
-            <AppearanceTab />
           </TabsContent>
         </Tabs>
       </CardContent>

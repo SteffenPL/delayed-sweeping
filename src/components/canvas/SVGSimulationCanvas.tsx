@@ -1,7 +1,7 @@
 import { useRef, useCallback, useEffect } from 'react';
 import { useSimulationStore } from '@/store';
 import { DEFAULT_SCALE } from '@/constants/defaults';
-import { getColormapColor } from '@/utils/colormaps';
+import { getColormapColor, evaluateOpacity } from '@/utils/colormaps';
 import { SVGGrid } from './SVGGrid';
 import { SVGConstraint } from './SVGConstraint';
 import { SVGTrajectory } from './SVGTrajectory';
@@ -31,13 +31,16 @@ export function SVGSimulationCanvas({ width = 500, height = 500 }: SVGSimulation
     trajectoryMode,
     dragPosition,
     setDragPosition,
+    isRunning,
     viewStep,
     colorConfig,
     showPastConstraints,
     pastConstraintTimes,
-    pastConstraintColormap,
     params,
   } = useSimulationStore();
+
+  // Whether we're viewing history (slider not at latest)
+  const isViewingHistory = viewStep < trajectory.length;
 
   // Screen to world
   const screenToWorld = useCallback(
@@ -61,11 +64,18 @@ export function SVGSimulationCanvas({ width = 500, height = 500 }: SVGSimulation
     [screenToWorld]
   );
 
+  // Drag is only allowed during real simulation (not replay)
+  const canDrag = useCallback(() => {
+    const state = useSimulationStore.getState();
+    return state.trajectoryMode === 'free-drag'
+      && state.isRunning
+      && state.viewStep >= state.trajectory.length;
+  }, []);
+
   // Pointer event handlers
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
-      const { trajectoryMode: mode } = useSimulationStore.getState();
-      if (mode !== 'free-drag') return;
+      if (!canDrag()) return;
 
       const pos = getLocalCoords(e);
 
@@ -80,19 +90,18 @@ export function SVGSimulationCanvas({ width = 500, height = 500 }: SVGSimulation
         setDragPosition(pos);
       }
     },
-    [getLocalCoords, setDragPosition]
+    [getLocalCoords, setDragPosition, canDrag]
   );
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
-      const { trajectoryMode: mode } = useSimulationStore.getState();
-      if (mode !== 'free-drag') return;
+      if (!canDrag()) return;
       if (!isDragging.current && !isDragLocked.current) return;
 
       const pos = getLocalCoords(e);
       setDragPosition(pos);
     },
-    [getLocalCoords, setDragPosition]
+    [getLocalCoords, setDragPosition, canDrag]
   );
 
   const handlePointerUp = useCallback(() => {
@@ -100,13 +109,16 @@ export function SVGSimulationCanvas({ width = 500, height = 500 }: SVGSimulation
   }, []);
 
   // Mouse wheel rotation handler (needs native event for preventDefault)
+  // Only allow during real simulation, not history replay
   useEffect(() => {
     const svg = svgRef.current;
     if (!svg) return;
 
     const handleWheel = (event: WheelEvent) => {
+      const state = useSimulationStore.getState();
+      if (state.viewStep < state.trajectory.length) return; // viewing history
       event.preventDefault();
-      const { constraintAngle, setConstraintAngle } = useSimulationStore.getState();
+      const { constraintAngle, setConstraintAngle } = state;
       const delta = event.deltaY > 0 ? 0.05 : -0.05;
       setConstraintAngle(constraintAngle + delta);
     };
@@ -121,12 +133,15 @@ export function SVGSimulationCanvas({ width = 500, height = 500 }: SVGSimulation
   const classicalSlice = classicalTrajectory.slice(0, effectiveStep);
   const preProjectionSlice = preProjection.slice(0, effectiveStep);
 
-  // Current constraint center and angle
+  // Current view time
+  const viewTime = effectiveStep * params.h;
+
+  // Current constraint center and angle — always use historical data when available
   let currentCenter: Vec2;
-  if (trajectoryMode === 'free-drag') {
-    currentCenter = dragPosition;
-  } else if (effectiveStep > 0 && constraintCenters.length >= effectiveStep) {
+  if (effectiveStep > 0 && constraintCenters.length >= effectiveStep) {
     currentCenter = constraintCenters[effectiveStep - 1];
+  } else if (trajectoryMode === 'free-drag') {
+    currentCenter = dragPosition;
   } else {
     currentCenter = { x: 2, y: 0 };
   }
@@ -142,20 +157,32 @@ export function SVGSimulationCanvas({ width = 500, height = 500 }: SVGSimulation
   const xBarMarker = preProjectionSlice.length > 0 ? preProjectionSlice[preProjectionSlice.length - 1] : null;
 
   // Past constraints
+  const pcConfig = colorConfig.pastConstraints;
   const pastConstraints = showPastConstraints
     ? pastConstraintTimes
-        .map((t, idx) => {
-          const step = Math.round(t / params.h);
-          if (step < 0 || step >= constraintCenters.length) return null;
+        .map((time, idx) => {
+          const step = Math.round(time / params.h);
+          if (step < 0 || step >= constraintCenters.length || step >= effectiveStep) return null;
           const center = constraintCenters[step];
           const angle = constraintAngles[step] ?? 0;
+
+          // Color
           const colorT = pastConstraintTimes.length > 1 ? idx / (pastConstraintTimes.length - 1) : 0.5;
-          const color = getColormapColor(pastConstraintColormap, colorT);
-          const opacity = 0.3 + 0.5 * (1 - colorT); // older = more transparent
+          const color = pcConfig.mode === 'colormap'
+            ? getColormapColor(pcConfig.colormap, colorT)
+            : pcConfig.solidColor;
+
+          // Opacity from formula: s = age = viewTime - constraintTime
+          const s = viewTime - time;
+          const opacity = evaluateOpacity(pcConfig.opacityExpression, s, viewTime, params.epsilon);
+
           return { center, angle, color, opacity, key: `past-${step}` };
         })
         .filter(Boolean)
     : [];
+
+  // Cursor: show grab only when drag is possible
+  const showGrab = trajectoryMode === 'free-drag' && isRunning && !isViewingHistory;
 
   return (
     <svg
@@ -165,7 +192,7 @@ export function SVGSimulationCanvas({ width = 500, height = 500 }: SVGSimulation
       viewBox={`0 0 ${width} ${height}`}
       style={{
         touchAction: 'none',
-        cursor: trajectoryMode === 'free-drag' ? 'grab' : 'default',
+        cursor: showGrab ? 'grab' : 'default',
         background: '#ffffff',
       }}
       onPointerDown={handlePointerDown}
@@ -205,6 +232,9 @@ export function SVGSimulationCanvas({ width = 500, height = 500 }: SVGSimulation
           colorConfig={colorConfig.classicalTrajectory}
           scale={scale}
           lineWidth={1.5}
+          h={params.h}
+          viewTime={viewTime}
+          epsilon={params.epsilon}
         />
 
         {/* Delayed trajectory */}
@@ -212,6 +242,9 @@ export function SVGSimulationCanvas({ width = 500, height = 500 }: SVGSimulation
           points={delayedSlice}
           colorConfig={colorConfig.delayedTrajectory}
           scale={scale}
+          h={params.h}
+          viewTime={viewTime}
+          epsilon={params.epsilon}
         />
 
         {/* Markers */}

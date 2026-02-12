@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import type { Vec2 } from '@/types';
 import type { TrajectoryColorConfig } from '@/types/colors';
-import { getColormapColor } from '@/utils/colormaps';
+import { getColormapColor, evaluateOpacity } from '@/utils/colormaps';
 
 interface SVGTrajectoryProps {
   points: Vec2[];
@@ -9,6 +9,9 @@ interface SVGTrajectoryProps {
   scale: number;
   lineWidth?: number;
   maxSegments?: number;
+  h: number;          // time step size, to compute age s
+  viewTime: number;   // current view time t
+  epsilon: number;    // decay rate from simulation params
 }
 
 export const SVGTrajectory = React.memo(function SVGTrajectory({
@@ -17,6 +20,9 @@ export const SVGTrajectory = React.memo(function SVGTrajectory({
   scale,
   lineWidth = 2,
   maxSegments = 5000,
+  h,
+  viewTime,
+  epsilon,
 }: SVGTrajectoryProps) {
   const strokeWidth = lineWidth / scale;
 
@@ -27,8 +33,11 @@ export const SVGTrajectory = React.memo(function SVGTrajectory({
     const drawPoints = points.slice(1);
     if (drawPoints.length < 2) return null;
 
-    if (colorConfig.mode === 'solid') {
-      // Single polyline for solid color
+    const n = drawPoints.length;
+    const hasOpacity = colorConfig.opacityExpression !== '1';
+
+    // If solid color with no opacity variation, use single path
+    if (colorConfig.mode === 'solid' && !hasOpacity) {
       const d = drawPoints.map((p, i) =>
         i === 0 ? `M${p.x},${p.y}` : `L${p.x},${p.y}`
       ).join(' ');
@@ -44,15 +53,26 @@ export const SVGTrajectory = React.memo(function SVGTrajectory({
       );
     }
 
-    // Colormap mode: individual segments
-    const n = drawPoints.length;
+    // Per-segment rendering (colormap or opacity formula)
     const step = n > maxSegments ? Math.ceil(n / maxSegments) : 1;
     const segments: React.ReactElement[] = [];
 
     for (let i = 0; i < n - 1; i += step) {
       const j = Math.min(i + step, n - 1);
-      const t = i / (n - 1);
-      const color = getColormapColor(colorConfig.colormap, t);
+      const paramT = i / (n - 1); // normalized position [0,1] for colormap
+
+      // Color
+      const color = colorConfig.mode === 'colormap'
+        ? getColormapColor(colorConfig.colormap, paramT)
+        : colorConfig.solidColor;
+
+      // Opacity: s = age of this segment (time from segment to current view)
+      const segTime = (i + 1) * h;
+      const s = viewTime - segTime;
+      const opacity = hasOpacity
+        ? evaluateOpacity(colorConfig.opacityExpression, s, viewTime, epsilon)
+        : 1;
+
       segments.push(
         <line
           key={i}
@@ -63,12 +83,13 @@ export const SVGTrajectory = React.memo(function SVGTrajectory({
           stroke={color}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
+          opacity={opacity}
         />
       );
     }
 
     return <>{segments}</>;
-  }, [points, colorConfig, strokeWidth, maxSegments]);
+  }, [points, colorConfig, strokeWidth, maxSegments, h, viewTime, epsilon]);
 
   return <g>{content}</g>;
 });

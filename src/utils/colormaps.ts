@@ -63,3 +63,36 @@ export function getColormapColor(name: ColormapName, t: number): string {
 }
 
 export const COLORMAP_NAMES: ColormapName[] = ['viridis', 'plasma', 'inferno', 'magma', 'cividis', 'grayscale'];
+
+import { compile, type EvalFunction } from 'mathjs';
+
+// Cache compiled expressions to avoid recompilation on every call
+const compiledCache = new Map<string, EvalFunction>();
+
+function getCompiled(expression: string): EvalFunction {
+  let node = compiledCache.get(expression);
+  if (!node) {
+    node = compile(expression) as EvalFunction;
+    compiledCache.set(expression, node);
+  }
+  return node;
+}
+
+/**
+ * Evaluate opacity formula A(s) with variables:
+ * - s: age (time since this point was recorded, relative to current view time)
+ * - t: current view time
+ * - epsilon: user-specified decay rate parameter
+ * Returns clamped value in [0, 1].
+ */
+export function evaluateOpacity(expression: string, s: number, t: number, epsilon: number): number {
+  try {
+    const node = getCompiled(expression);
+    const result = node.evaluate({ s, t, epsilon });
+    const val = typeof result === 'number' ? result : Number(result);
+    if (isNaN(val)) return 1;
+    return Math.max(0, Math.min(1, val));
+  } catch {
+    return 1;
+  }
+}
