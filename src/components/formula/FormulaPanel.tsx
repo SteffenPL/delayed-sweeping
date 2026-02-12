@@ -116,13 +116,6 @@ export function FormulaPanel() {
       for (let e = expMin; e <= expMax; e += expStep) {
         values.push(Math.pow(expBase, e));
       }
-    } else if (scalingMode === 'log' && min > 0 && max > 0) {
-      const logMin = Math.log(min);
-      const logMax = Math.log(max);
-      for (let i = 0; i < sampleCount; i++) {
-        const t = sampleCount > 1 ? i / (sampleCount - 1) : 0;
-        values.push(Math.exp(logMin + t * (logMax - logMin)));
-      }
     } else {
       for (let i = 0; i < sampleCount; i++) {
         const t = sampleCount > 1 ? i / (sampleCount - 1) : 0;

@@ -15,7 +15,6 @@ Varies a chosen parameter (e.g., `epsilon`, `h`, `T`, `R`, `r`, `a`, `b`) over a
 | Mode | Description |
 |------|-------------|
 | Linear | Uniformly spaced values between min and max |
-| Log-spaced | Logarithmically spaced values between min and max (both must be positive) |
 | Exponential | Values are `base^k` for `k = expMin, expMin+step, ..., expMax` (e.g., `2^{-10}, 2^{-9}, ...`) |
 
 #### Log Axes

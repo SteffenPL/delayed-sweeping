@@ -6,7 +6,7 @@ export type StudyParameter = 'epsilon' | 'h' | 'T' | 'R' | 'r' | 'a' | 'b';
 
 export type AggregationMode = 'final' | 'l2-integral' | 'h1-seminorm' | 'integral';
 
-export type ScalingMode = 'linear' | 'log' | 'exponential';
+export type ScalingMode = 'linear' | 'exponential';
 
 export interface ParameterStudyConfig {
   parameter: StudyParameter;

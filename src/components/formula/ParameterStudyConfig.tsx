@@ -106,7 +106,6 @@ export function ParameterStudyConfigUI({
               disabled={running}
             >
               <option value="linear">Linear</option>
-              <option value="log">Log-spaced</option>
               <option value="exponential">Exponential (base^k)</option>
             </select>
           </label>

@@ -89,8 +89,10 @@ export const FormulaPlotChart = forwardRef<HTMLDivElement, FormulaPlotChartProps
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
             <XAxis
               dataKey={xKey}
+              type="number"
               tick={{ fontSize: 11 }}
               tickFormatter={xTickFormatter}
+              domain={['auto', 'auto']}
               label={{
                 value: xLabel + (logXAxis ? ' (log)' : ''),
                 position: 'insideBottomRight',
