@@ -113,6 +113,7 @@ interface SimulationStore {
   loadFromLocalStorage: () => void;
   exportToJSON: () => string;
   importFromJSON: (json: string) => boolean;
+  applySharedState: (data: Record<string, unknown>) => void;
 }
 
 const DEFAULT_PARAMS: SimulationParameters = {
@@ -450,6 +451,58 @@ export const useSimulationStore = create<SimulationStore>()(
         console.error('Failed to import JSON:', e);
         return false;
       }
+    },
+
+    applySharedState: (data: Record<string, unknown>) => {
+      // Reuses same migration logic as loadFromLocalStorage
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const d = data as any;
+      let constraint: ConstraintConfig = d.constraint ?? DEFAULT_CONSTRAINT;
+      if (constraint && !constraint.expression) {
+        constraint = {
+          ...DEFAULT_CONSTRAINT,
+          R: (constraint as any).radius ?? DEFAULT_CONSTRAINT.R,
+        };
+      }
+
+      const params: SimulationParameters = {
+        ...DEFAULT_PARAMS,
+        ...(d.params ?? {}),
+        solverType: d.params?.solverType ?? 'norm1-sum1',
+      };
+
+      const boundaryPolygon = computeBoundaryFromConfig(constraint);
+      set({
+        params,
+        constraint,
+        boundaryPolygon,
+        constraintAngle: d.constraintAngle ?? 0,
+        trajectoryMode: d.trajectoryMode ?? 'parametric',
+        parametricTrajectory: d.parametricTrajectory ?? DEFAULT_TRAJECTORY,
+        speed: d.speed ?? 1,
+        colorConfig: d.colorConfig ?? DEFAULT_COLOR_SETTINGS,
+        formula: d.formula ?? 'g[n]',
+        plotMode: d.plotMode ?? 'instantaneous',
+        showPlot: d.showPlot ?? true,
+        parameterStudyConfig: {
+          parameter: 'epsilon' as const,
+          min: 0.5,
+          max: 10,
+          sampleCount: 8,
+          scalingMode: 'linear' as const,
+          expBase: 2,
+          expMin: -8,
+          expMax: -4,
+          expStep: 1,
+          aggregation: 'final' as const,
+          logXAxis: false,
+          logYAxis: false,
+          convergenceRefMode: 'finest' as const,
+          convergenceRefValue: -10,
+          ...(d.parameterStudyConfig ?? {}),
+        },
+        parameterStudyResults: d.parameterStudyResults ?? [],
+      });
     },
   }))
 );

@@ -6,15 +6,28 @@ import { FormulaPanel } from '@/components/formula';
 import { MainLayout } from '@/components/layout';
 import { ParameterPanel } from '@/components/panels';
 import { useSimulationStore } from '@/store';
+import { decodeShareState } from '@/utils/urlShare';
 import './index.css';
 
 export function App() {
-  const { loadFromLocalStorage } = useSimulationStore();
+  const { loadFromLocalStorage, applySharedState } = useSimulationStore();
 
-  // Load saved parameters on mount
+  // Load saved parameters on mount (URL hash takes priority)
   useEffect(() => {
-    loadFromLocalStorage();
-  }, [loadFromLocalStorage]);
+    const hash = window.location.hash;
+    if (hash && hash.length > 1) {
+      decodeShareState(hash).then((data) => {
+        if (data) {
+          applySharedState(data);
+          history.replaceState(null, '', window.location.pathname + window.location.search);
+        } else {
+          loadFromLocalStorage();
+        }
+      });
+    } else {
+      loadFromLocalStorage();
+    }
+  }, [loadFromLocalStorage, applySharedState]);
 
   return (
     <MainLayout>

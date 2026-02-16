@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useSimulationStore } from '@/store';
 import { configToTOML, downloadTOML, loadTOMLFile } from '@/utils/toml';
+import { encodeShareState } from '@/utils/urlShare';
 import type { SimulationConfig } from '@/types/config';
 
 export function ConfigButtons() {
@@ -14,6 +16,8 @@ export function ConfigButtons() {
     setParametricTrajectory,
     setTrajectoryMode,
   } = useSimulationStore();
+
+  const [shareLabel, setShareLabel] = useState('Share');
 
   const handleSave = () => {
     const config: SimulationConfig = {
@@ -62,6 +66,35 @@ export function ConfigButtons() {
     });
   };
 
+  const handleShare = async () => {
+    const state = useSimulationStore.getState();
+    const data = {
+      params: state.params,
+      constraint: state.constraint,
+      constraintAngle: state.constraintAngle,
+      trajectoryMode: state.trajectoryMode,
+      parametricTrajectory: state.parametricTrajectory,
+      speed: state.speed,
+      colorConfig: state.colorConfig,
+      formula: state.formula,
+      plotMode: state.plotMode,
+      showPlot: state.showPlot,
+      parameterStudyConfig: state.parameterStudyConfig,
+      parameterStudyResults: state.parameterStudyResults,
+    };
+
+    try {
+      const encoded = await encodeShareState(data);
+      const url = `${window.location.origin}${window.location.pathname}#${encoded}`;
+      await navigator.clipboard.writeText(url);
+      setShareLabel('Copied!');
+      setTimeout(() => setShareLabel('Share'), 2000);
+    } catch (e) {
+      console.error('Failed to create share URL:', e);
+      alert('Failed to create share URL.');
+    }
+  };
+
   return (
     <div className="flex gap-2 flex-wrap">
       <Button variant="outline" size="sm" onClick={handleLoad}>
@@ -72,6 +105,9 @@ export function ConfigButtons() {
       </Button>
       <Button variant="ghost" size="sm" onClick={handleCopyToml}>
         Copy
+      </Button>
+      <Button variant="ghost" size="sm" onClick={handleShare}>
+        {shareLabel}
       </Button>
     </div>
   );
