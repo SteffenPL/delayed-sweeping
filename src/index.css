@@ -517,11 +517,17 @@
   margin-top: 0.25rem;
 }
 
-/* Convergence mode note */
-.convergence-note {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  font-style: italic;
+/* Aggregation formula display (always visible) */
+.aggregation-formula {
+  padding: 0.25rem 0.5rem;
+  background: var(--color-bg-alt);
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.85rem;
+}
+
+.aggregation-formula .katex-display {
+  margin: 0.25em 0;
 }
 
 /* Convergence orders table */

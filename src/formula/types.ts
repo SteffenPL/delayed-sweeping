@@ -8,6 +8,8 @@ export type AggregationMode = 'final' | 'l2-integral' | 'h1-seminorm' | 'integra
 
 export type ScalingMode = 'linear' | 'exponential';
 
+export type ConvergenceRefMode = 'finest' | 'coarsest' | 'custom';
+
 export interface ParameterStudyConfig {
   parameter: StudyParameter;
   min: number;
@@ -22,6 +24,9 @@ export interface ParameterStudyConfig {
   aggregation: AggregationMode;
   logXAxis: boolean;
   logYAxis: boolean;
+  // Convergence: how to choose the reference value
+  convergenceRefMode: ConvergenceRefMode;
+  convergenceRefValue: number;
 }
 
 export interface ParameterStudyResult {

@@ -1,6 +1,5 @@
-import { useState } from 'react';
 import katex from 'katex';
-import type { ParameterStudyConfig as Config, StudyParameter, AggregationMode, ScalingMode } from '@/formula';
+import type { ParameterStudyConfig as Config, StudyParameter, AggregationMode, ScalingMode, ConvergenceRefMode } from '@/formula';
 
 const PARAMETERS: { value: StudyParameter; label: string }[] = [
   { value: 'epsilon', label: 'epsilon' },
@@ -12,28 +11,70 @@ const PARAMETERS: { value: StudyParameter; label: string }[] = [
   { value: 'b', label: 'b' },
 ];
 
-const AGGREGATIONS: { value: AggregationMode; label: string; latex: string }[] = [
-  {
-    value: 'final',
-    label: 'Final value',
-    latex: 'A = f(N)',
-  },
-  {
-    value: 'integral',
-    label: 'Integral',
-    latex: 'A = h \\sum_{n=0}^{N} f(n)',
-  },
-  {
-    value: 'l2-integral',
-    label: 'L2 integral',
-    latex: 'A = \\sqrt{h \\sum_{n=0}^{N} f(n)^2}',
-  },
-  {
-    value: 'h1-seminorm',
-    label: 'H1 semi-norm',
-    latex: 'A = \\sqrt{h \\sum_{n=1}^{N} \\left(\\frac{f(n) - f(n-1)}{h}\\right)^{\\!2}}',
-  },
+const AGGREGATIONS: { value: AggregationMode; label: string }[] = [
+  { value: 'final', label: 'Final value' },
+  { value: 'integral', label: 'Integral' },
+  { value: 'l2-integral', label: 'L2 integral' },
+  { value: 'h1-seminorm', label: 'H1 semi-norm' },
 ];
+
+function escapeLatex(s: string): string {
+  return s.replace(/_/g, '\\_');
+}
+
+/** Build the LaTeX formula for parameter study aggregation with user formula inserted. */
+function buildStudyLatex(aggregation: AggregationMode, formula: string, isVector: boolean): string {
+  const f = `\\texttt{${escapeLatex(formula)}}`;
+  // For vector formulas, the per-step quantity is ||f_n||; for scalars, just f_n
+  const fn = isVector ? `\\|\\mathbf{f}_n\\|` : `f_n`;
+  const fnm1 = isVector ? `\\|\\mathbf{f}_{n-1}\\|` : `f_{n-1}`;
+  const fN = isVector ? `\\|\\mathbf{f}_N\\|` : `f_N`;
+  const def = isVector ? `\\mathbf{f}_n = ${f}` : `f_n = ${f}`;
+  switch (aggregation) {
+    case 'final':
+      return `A = ${fN}, \\quad ${def}`;
+    case 'integral':
+      return `A = h \\sum_{n=0}^{N} ${fn}, \\quad ${def}`;
+    case 'l2-integral':
+      return `A = \\sqrt{h \\sum_{n=0}^{N} ${fn}^{\\,2}}, \\quad ${def}`;
+    case 'h1-seminorm':
+      return `A = \\sqrt{h \\sum_{n=1}^{N} \\left(\\frac{${fn} - ${fnm1}}{h}\\right)^{\\!2}}, \\quad ${def}`;
+  }
+}
+
+/** Build the LaTeX formula for convergence error with ^{ref} notation. */
+function buildConvergenceLatex(aggregation: AggregationMode, formula: string, isVector: boolean): string {
+  const f = `\\texttt{${escapeLatex(formula)}}`;
+  if (isVector) {
+    // Vector: e_n = ||f_n - f_n^{ref}||
+    const en = `e_n`;
+    const def = `e_n = \\|${f} - ${f}^{\\mathrm{ref}}\\|`;
+    switch (aggregation) {
+      case 'final':
+        return `E = e_N, \\quad ${def}`;
+      case 'integral':
+        return `E = h \\sum_{n=0}^{N} ${en}, \\quad ${def}`;
+      case 'l2-integral':
+        return `E = \\sqrt{h \\sum_{n=0}^{N} ${en}^{\\,2}}, \\quad ${def}`;
+      case 'h1-seminorm':
+        return `E = \\sqrt{h \\sum_{n=1}^{N} \\left(\\frac{e_n - e_{n-1}}{h}\\right)^{\\!2}}, \\quad ${def}`;
+    }
+  } else {
+    // Scalar: e_n = |f_n - f_n^{ref}|
+    const en = `e_n`;
+    const def = `e_n = |${f} - ${f}^{\\mathrm{ref}}|`;
+    switch (aggregation) {
+      case 'final':
+        return `E = e_N, \\quad ${def}`;
+      case 'integral':
+        return `E = h \\sum_{n=0}^{N} ${en}, \\quad ${def}`;
+      case 'l2-integral':
+        return `E = \\sqrt{h \\sum_{n=0}^{N} ${en}^{\\,2}}, \\quad ${def}`;
+      case 'h1-seminorm':
+        return `E = \\sqrt{h \\sum_{n=1}^{N} \\left(\\frac{e_n - e_{n-1}}{h}\\right)^{\\!2}}, \\quad ${def}`;
+    }
+  }
+}
 
 function renderLatex(latex: string): string {
   try {
@@ -50,6 +91,8 @@ interface ParameterStudyConfigProps {
   running: boolean;
   progress: number;
   isConvergenceMode?: boolean;
+  formula: string;
+  isVector?: boolean;
 }
 
 export function ParameterStudyConfigUI({
@@ -59,12 +102,10 @@ export function ParameterStudyConfigUI({
   running,
   progress,
   isConvergenceMode = false,
+  formula,
+  isVector = false,
 }: ParameterStudyConfigProps) {
-  const [showAggHelp, setShowAggHelp] = useState(false);
-
   const update = (partial: Partial<Config>) => onChange({ ...config, ...partial });
-
-  const currentAgg = AGGREGATIONS.find((a) => a.value === config.aggregation);
 
   // Compute preview of generated values
   const previewValues = (() => {
@@ -75,8 +116,13 @@ export function ParameterStudyConfigUI({
       }
       return vals;
     }
-    return null; // linear/log don't need preview, count is explicit
+    return null;
   })();
+
+  // Build the LaTeX string for the current aggregation + formula
+  const latexFormula = isConvergenceMode
+    ? buildConvergenceLatex(config.aggregation, formula, isVector)
+    : buildStudyLatex(config.aggregation, formula, isVector);
 
   return (
     <div className="parameter-study-config">
@@ -239,26 +285,17 @@ export function ParameterStudyConfigUI({
         <div className="param-group">
           <label>
             Aggregation:
-            <span className="agg-select-row">
-              <select
-                value={config.aggregation}
-                onChange={(e) => update({ aggregation: e.target.value as AggregationMode })}
-                disabled={running}
-              >
-                {AGGREGATIONS.map((a) => (
-                  <option key={a.value} value={a.value}>
-                    {a.label}
-                  </option>
-                ))}
-              </select>
-              <button
-                className="btn btn-small formula-help-btn"
-                onClick={() => setShowAggHelp(!showAggHelp)}
-                title="Show aggregation formula"
-              >
-                ?
-              </button>
-            </span>
+            <select
+              value={config.aggregation}
+              onChange={(e) => update({ aggregation: e.target.value as AggregationMode })}
+              disabled={running}
+            >
+              {AGGREGATIONS.map((a) => (
+                <option key={a.value} value={a.value}>
+                  {a.label}
+                </option>
+              ))}
+            </select>
           </label>
         </div>
 
@@ -287,24 +324,44 @@ export function ParameterStudyConfigUI({
         </div>
       </div>
 
-      {/* Aggregation help popover */}
-      {showAggHelp && currentAgg && (
-        <div className="formula-help-popover mt-half">
-          <div className="agg-help-title">
-            {currentAgg.label}
-          </div>
-          <div
-            className="mt-2 p-2 bg-muted rounded-md overflow-x-auto"
-            dangerouslySetInnerHTML={{ __html: renderLatex(currentAgg.latex) }}
-          />
-          <div className="agg-help-note">
-            where f(n) is the formula evaluated at step n, N is the total number of steps.
-          </div>
-        </div>
-      )}
+      {/* Always show aggregation formula with current user formula inserted */}
+      <div
+        className="aggregation-formula mt-half"
+        dangerouslySetInnerHTML={{ __html: renderLatex(latexFormula) }}
+      />
 
+      {/* Convergence reference value */}
       {isConvergenceMode && (
-        <div className="convergence-note mt-half">Finest value used as reference</div>
+        <div className="convergence-params mt-half">
+          <div className="param-group">
+            <label>
+              Reference:
+              <select
+                value={config.convergenceRefMode}
+                onChange={(e) => update({ convergenceRefMode: e.target.value as ConvergenceRefMode })}
+                disabled={running}
+              >
+                <option value="finest">Finest (smallest)</option>
+                <option value="coarsest">Coarsest (largest)</option>
+                <option value="custom">Custom value</option>
+              </select>
+            </label>
+          </div>
+          {config.convergenceRefMode === 'custom' && (
+            <div className="param-group">
+              <label>
+                Ref value:
+                <input
+                  type="number"
+                  value={config.convergenceRefValue}
+                  onChange={(e) => update({ convergenceRefValue: Number(e.target.value) })}
+                  step="any"
+                  disabled={running}
+                />
+              </label>
+            </div>
+          )}
+        </div>
       )}
 
       <div className="convergence-actions mt-half">

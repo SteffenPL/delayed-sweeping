@@ -216,6 +216,8 @@ export const useSimulationStore = create<SimulationStore>()(
       aggregation: 'final' as const,
       logXAxis: false,
       logYAxis: false,
+      convergenceRefMode: 'finest' as const,
+      convergenceRefValue: 0.001,
     },
     parameterStudyResults: [],
     parameterStudyRunning: false,
@@ -378,7 +380,7 @@ export const useSimulationStore = create<SimulationStore>()(
             colorConfig: data.colorConfig ?? DEFAULT_COLOR_SETTINGS,
             formula: data.formula ?? 'g[n]',
             plotMode: data.plotMode ?? 'instantaneous',
-            parameterStudyConfig: data.parameterStudyConfig ?? {
+            parameterStudyConfig: {
               parameter: 'epsilon',
               min: 0.5,
               max: 10,
@@ -391,6 +393,9 @@ export const useSimulationStore = create<SimulationStore>()(
               aggregation: 'final',
               logXAxis: false,
               logYAxis: false,
+              convergenceRefMode: 'finest',
+              convergenceRefValue: 0.001,
+              ...(data.parameterStudyConfig ?? {}),
             },
           });
         }

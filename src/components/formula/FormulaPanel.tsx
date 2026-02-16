@@ -35,6 +35,8 @@ const CONVERGENCE_DEFAULTS = {
   aggregation: 'l2-integral' as const,
   logXAxis: true,
   logYAxis: true,
+  convergenceRefMode: 'finest' as const,
+  convergenceRefValue: 0.001,
 };
 
 export function FormulaPanel() {
@@ -256,21 +258,33 @@ export function FormulaPanel() {
     setConvergenceOrders([]);
 
     const values = generateParamValues();
-    const { aggregation } = parameterStudyConfig;
+    const { aggregation, convergenceRefMode, convergenceRefValue } = parameterStudyConfig;
 
-    // Sort so finest (smallest h) is first
+    // Determine reference parameter value based on mode
     const sorted = [...values].sort((a, b) => a - b);
+    let refParamValue: number;
+    if (convergenceRefMode === 'coarsest') {
+      refParamValue = sorted[sorted.length - 1];
+    } else if (convergenceRefMode === 'custom') {
+      refParamValue = convergenceRefValue;
+    } else {
+      // 'finest' — smallest value
+      refParamValue = sorted[0];
+    }
+
+    // Comparison values: all generated values except the reference
+    const comparisonValues = values.filter((v) => Math.abs(v - refParamValue) > Number.EPSILON * Math.max(1, Math.abs(v)));
 
     const ev = new FormulaEvaluator(formula);
     const isVector = ev.isVectorFormula();
 
-    // Run reference (finest)
+    // Run reference simulation
     let refTimes: number[] = [];
     let refVec: Vec2[] = [];
     let refScalar: number[] = [];
 
     try {
-      const ref = await runSingleSim(sorted[0]);
+      const ref = await runSingleSim(refParamValue);
       const refH = ref.h;
       const alphaFunc = createAlphaFunction(parametricTrajectory);
       const refAngles = ref.result.delayed.trajectory.map((_, idx) => alphaFunc(idx * refH));
@@ -306,14 +320,15 @@ export function FormulaPanel() {
       return;
     }
 
-    setParameterStudyProgress(1 / sorted.length);
+    const totalSteps = comparisonValues.length + 1;
+    setParameterStudyProgress(1 / totalSteps);
     await new Promise((resolve) => setTimeout(resolve, 10));
 
-    // Run coarser values and compute errors
+    // Run comparison values and compute errors against reference
     const results: ParameterStudyResult[] = [];
 
-    for (let i = 1; i < sorted.length; i++) {
-      const paramValue = sorted[i];
+    for (let i = 0; i < comparisonValues.length; i++) {
+      const paramValue = comparisonValues[i];
 
       try {
         const sim = await runSingleSim(paramValue);
@@ -359,7 +374,7 @@ export function FormulaPanel() {
         console.error(`Convergence study failed for ${parameterStudyConfig.parameter}=${paramValue}:`, error);
       }
 
-      setParameterStudyProgress((i + 1) / sorted.length);
+      setParameterStudyProgress((i + 2) / totalSteps);
       await new Promise((resolve) => setTimeout(resolve, 10));
     }
 
@@ -414,6 +429,8 @@ export function FormulaPanel() {
               running={parameterStudyRunning}
               progress={parameterStudyProgress}
               isConvergenceMode={plotMode === 'convergence'}
+              formula={formula}
+              isVector={evaluator.isVectorFormula()}
             />
           )}
 

@@ -8,6 +8,7 @@ export type {
   StudyParameter,
   ScalingMode,
   AggregationMode,
+  ConvergenceRefMode,
   ParameterStudyConfig,
   ParameterStudyResult,
   EvaluationContext,
