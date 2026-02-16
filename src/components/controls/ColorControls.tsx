@@ -12,7 +12,6 @@ export function ColorControls() {
     setColorConfig,
     showPastConstraints,
     setShowPastConstraints,
-    pastConstraintTimes,
     setPastConstraintTimes,
     params,
   } = useSimulationStore();
