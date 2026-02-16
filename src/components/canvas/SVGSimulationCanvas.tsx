@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect, useMemo } from 'react';
 import { useSimulationStore } from '@/store';
 import { DEFAULT_SCALE } from '@/constants/defaults';
 import { getColormapColor, evaluateOpacity } from '@/utils/colormaps';
@@ -129,9 +129,19 @@ export function SVGSimulationCanvas({ width = 500, height = 500 }: SVGSimulation
 
   // Compute the view slice based on viewStep
   const effectiveStep = Math.min(viewStep, trajectory.length);
-  const delayedSlice = trajectory.slice(0, effectiveStep);
-  const classicalSlice = classicalTrajectory.slice(0, effectiveStep);
-  const preProjectionSlice = preProjection.slice(0, effectiveStep);
+
+  const delayedSlice = useMemo(
+    () => trajectory.slice(0, effectiveStep),
+    [trajectory, effectiveStep]
+  );
+  const classicalSlice = useMemo(
+    () => classicalTrajectory.slice(0, effectiveStep),
+    [classicalTrajectory, effectiveStep]
+  );
+  const preProjectionSlice = useMemo(
+    () => preProjection.slice(0, effectiveStep),
+    [preProjection, effectiveStep]
+  );
 
   // Current view time
   const viewTime = effectiveStep * params.h;

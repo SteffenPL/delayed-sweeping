@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import type { Vec2 } from '@/types';
 import type { TrajectoryColorConfig } from '@/types/colors';
-import { getColormapColor, evaluateOpacity } from '@/utils/colormaps';
+import { getColormapColor, buildOpacityLUT, sampleOpacityLUT } from '@/utils/colormaps';
+import { rdpSimplify } from '@/utils/simplify';
 
 interface SVGTrajectoryProps {
   points: Vec2[];
@@ -38,11 +39,16 @@ export const SVGTrajectory = React.memo(function SVGTrajectory({
     const n = drawPoints.length;
     const hasOpacity = colorConfig.opacityExpression !== '1';
 
+    // RDP simplification: tolerance is sub-pixel in world coordinates
+    const tolerance = 0.5 / scale;
+    const keptIndices = rdpSimplify(drawPoints, tolerance);
+
     // If solid color with no opacity variation, use single path
     if (colorConfig.mode === 'solid' && !hasOpacity) {
-      const d = drawPoints.map((p, i) =>
-        i === 0 ? `M${p.x},${p.y}` : `L${p.x},${p.y}`
-      ).join(' ');
+      const d = keptIndices.map((idx, i) => {
+        const p = drawPoints[idx];
+        return i === 0 ? `M${p.x},${p.y}` : `L${p.x},${p.y}`;
+      }).join(' ');
       return (
         <path
           d={d}
@@ -55,12 +61,20 @@ export const SVGTrajectory = React.memo(function SVGTrajectory({
       );
     }
 
+    // Build opacity LUT if needed
+    const sMin = 0;
+    const sMax = viewTime;
+    const opacityLUT = hasOpacity
+      ? buildOpacityLUT(colorConfig.opacityExpression, sMin, sMax, epsilon, T, viewTime)
+      : null;
+
     // Per-segment rendering (colormap or opacity formula)
-    const step = n > maxSegments ? Math.ceil(n / maxSegments) : 1;
+    // Use kept indices from RDP simplification
     const segments: React.ReactElement[] = [];
 
-    for (let i = 0; i < n - 1; i += step) {
-      const j = Math.min(i + step, n - 1);
+    for (let k = 0; k < keptIndices.length - 1; k++) {
+      const i = keptIndices[k];
+      const j = keptIndices[k + 1];
       const paramT = i / (n - 1); // normalized position [0,1] for colormap
 
       // Color
@@ -68,11 +82,11 @@ export const SVGTrajectory = React.memo(function SVGTrajectory({
         ? getColormapColor(colorConfig.colormap, paramT)
         : colorConfig.solidColor;
 
-      // Opacity: s = age of this segment (time from segment to current view)
+      // Opacity: s = age of this segment
       const segTime = (i + 1) * h;
       const s = viewTime - segTime;
-      const opacity = hasOpacity
-        ? evaluateOpacity(colorConfig.opacityExpression, s, viewTime, epsilon, T)
+      const opacity = opacityLUT
+        ? sampleOpacityLUT(opacityLUT, s, sMin, sMax)
         : 1;
 
       segments.push(
@@ -91,7 +105,7 @@ export const SVGTrajectory = React.memo(function SVGTrajectory({
     }
 
     return <>{segments}</>;
-  }, [points, colorConfig, strokeWidth, maxSegments, h, viewTime, epsilon]);
+  }, [points, colorConfig, strokeWidth, maxSegments, h, viewTime, epsilon, T, scale]);
 
   return <g>{content}</g>;
 });

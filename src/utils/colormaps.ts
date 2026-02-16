@@ -97,3 +97,44 @@ export function evaluateOpacity(expression: string, s: number, t: number, epsilo
     return 1;
   }
 }
+
+const LUT_SIZE = 256;
+
+/**
+ * Build a lookup table of opacity values for evenly-spaced s in [sMin, sMax].
+ * Evaluates the formula LUT_SIZE times instead of once per segment.
+ */
+export function buildOpacityLUT(
+  expression: string,
+  sMin: number,
+  sMax: number,
+  epsilon: number,
+  T: number,
+  viewTime: number,
+): Float64Array {
+  const lut = new Float64Array(LUT_SIZE);
+  try {
+    const node = getCompiled(expression);
+    for (let i = 0; i < LUT_SIZE; i++) {
+      const s = sMin + (sMax - sMin) * (i / (LUT_SIZE - 1));
+      const result = node.evaluate({ s, t: viewTime, epsilon, T });
+      const val = typeof result === 'number' ? result : Number(result);
+      lut[i] = isNaN(val) ? 1 : Math.max(0, Math.min(1, val));
+    }
+  } catch {
+    lut.fill(1);
+  }
+  return lut;
+}
+
+/**
+ * Sample the precomputed opacity LUT with linear interpolation.
+ */
+export function sampleOpacityLUT(lut: Float64Array, s: number, sMin: number, sMax: number): number {
+  if (sMax <= sMin) return lut[0];
+  const t = (s - sMin) / (sMax - sMin);
+  const idx = t * (LUT_SIZE - 1);
+  const lo = Math.max(0, Math.min(LUT_SIZE - 2, Math.floor(idx)));
+  const frac = idx - lo;
+  return lut[lo] + frac * (lut[lo + 1] - lut[lo]);
+}

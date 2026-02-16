@@ -250,23 +250,27 @@ export const useSimulationStore = create<SimulationStore>()(
 
     setCurrentStep: (step) => set({ currentStep: step }),
 
-    appendTrajectoryPoint: (point, xBar, center, projDist, gradNorm) =>
-      set((state) => ({
-        trajectory: [...state.trajectory, point],
-        preProjection: [...state.preProjection, xBar],
-        constraintCenters: [...state.constraintCenters, center],
-        constraintAngles: [...state.constraintAngles, state.constraintAngle],
-        projectionDistances: [...state.projectionDistances, projDist],
-        gradientNorms: [...state.gradientNorms, gradNorm],
+    appendTrajectoryPoint: (point, xBar, center, projDist, gradNorm) => {
+      const state = get();
+      state.trajectory.push(point);
+      state.preProjection.push(xBar);
+      state.constraintCenters.push(center);
+      state.constraintAngles.push(state.constraintAngle);
+      state.projectionDistances.push(projDist);
+      state.gradientNorms.push(gradNorm);
+      set({
         currentStep: state.currentStep + 1,
-        viewStep: state.trajectory.length + 1, // auto-track latest
-      })),
+        viewStep: state.trajectory.length, // array already has the new element
+      });
+    },
 
-    appendClassicalPoint: (point, gradNorm) =>
-      set((state) => ({
-        classicalTrajectory: [...state.classicalTrajectory, point],
-        classicalGradientNorms: [...state.classicalGradientNorms, gradNorm],
-      })),
+    appendClassicalPoint: (point, gradNorm) => {
+      // Mutate in-place; re-render is triggered by appendTrajectoryPoint's
+      // viewStep update which is always called in the same simulation step.
+      const state = get();
+      state.classicalTrajectory.push(point);
+      state.classicalGradientNorms.push(gradNorm);
+    },
 
     resetTrajectory: () =>
       set({
