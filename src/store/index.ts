@@ -217,7 +217,7 @@ export const useSimulationStore = create<SimulationStore>()(
       logXAxis: false,
       logYAxis: false,
       convergenceRefMode: 'finest' as const,
-      convergenceRefValue: 0.001,
+      convergenceRefValue: -10,
     },
     parameterStudyResults: [],
     parameterStudyRunning: false,
@@ -394,7 +394,7 @@ export const useSimulationStore = create<SimulationStore>()(
               logXAxis: false,
               logYAxis: false,
               convergenceRefMode: 'finest',
-              convergenceRefValue: 0.001,
+              convergenceRefValue: -10,
               ...(data.parameterStudyConfig ?? {}),
             },
           });

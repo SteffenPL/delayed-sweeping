@@ -36,7 +36,7 @@ const CONVERGENCE_DEFAULTS = {
   logXAxis: true,
   logYAxis: true,
   convergenceRefMode: 'finest' as const,
-  convergenceRefValue: 0.001,
+  convergenceRefValue: -10,
 };
 
 export function FormulaPanel() {
@@ -258,7 +258,7 @@ export function FormulaPanel() {
     setConvergenceOrders([]);
 
     const values = generateParamValues();
-    const { aggregation, convergenceRefMode, convergenceRefValue } = parameterStudyConfig;
+    const { aggregation, convergenceRefMode, convergenceRefValue, scalingMode, expBase } = parameterStudyConfig;
 
     // Determine reference parameter value based on mode
     const sorted = [...values].sort((a, b) => a - b);
@@ -266,7 +266,10 @@ export function FormulaPanel() {
     if (convergenceRefMode === 'coarsest') {
       refParamValue = sorted[sorted.length - 1];
     } else if (convergenceRefMode === 'custom') {
-      refParamValue = convergenceRefValue;
+      // In exponential mode, convergenceRefValue stores the exponent
+      refParamValue = scalingMode === 'exponential'
+        ? Math.pow(expBase, convergenceRefValue)
+        : convergenceRefValue;
     } else {
       // 'finest' — smallest value
       refParamValue = sorted[0];

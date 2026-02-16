@@ -348,18 +348,39 @@ export function ParameterStudyConfigUI({
             </label>
           </div>
           {config.convergenceRefMode === 'custom' && (
-            <div className="param-group">
-              <label>
-                Ref value:
-                <input
-                  type="number"
-                  value={config.convergenceRefValue}
-                  onChange={(e) => update({ convergenceRefValue: Number(e.target.value) })}
-                  step="any"
-                  disabled={running}
-                />
-              </label>
-            </div>
+            config.scalingMode === 'exponential' ? (
+              <div className="param-group">
+                <label>
+                  Ref exp:
+                  <input
+                    type="number"
+                    value={config.convergenceRefValue}
+                    onChange={(e) => update({ convergenceRefValue: Number(e.target.value) })}
+                    step={config.expStep || 1}
+                    disabled={running}
+                    className="input-medium"
+                  />
+                </label>
+                <span className="dt-chip">
+                  {config.expBase}^{Number.isInteger(config.convergenceRefValue)
+                    ? config.convergenceRefValue
+                    : config.convergenceRefValue.toFixed(1)} = {Math.pow(config.expBase, config.convergenceRefValue).toPrecision(4)}
+                </span>
+              </div>
+            ) : (
+              <div className="param-group">
+                <label>
+                  Ref value:
+                  <input
+                    type="number"
+                    value={config.convergenceRefValue}
+                    onChange={(e) => update({ convergenceRefValue: Number(e.target.value) })}
+                    step="any"
+                    disabled={running}
+                  />
+                </label>
+              </div>
+            )
           )}
         </div>
       )}
