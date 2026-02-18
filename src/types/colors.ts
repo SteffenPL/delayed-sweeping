@@ -32,28 +32,28 @@ export interface ColorSettings {
 
 export const DEFAULT_COLOR_SETTINGS: ColorSettings = {
   delayedTrajectory: {
-    mode: 'colormap',
-    solidColor: '#3b82f6',
+    mode: 'solid',
+    solidColor: '#f97316',
     colormap: 'viridis',
     opacityExpression: 'exp(-epsilon * s / T)',
   },
   classicalTrajectory: {
     mode: 'solid',
-    solidColor: '#808080',
+    solidColor: '#60a5fa',
     colormap: 'grayscale',
     opacityExpression: 'exp(-epsilon * s / T)',
   },
   preProjectionTrajectory: {
     mode: 'none',
-    solidColor: '#ef4444',
+    solidColor: '#000000',
     colormap: 'inferno',
     opacityExpression: 'exp(-epsilon * s / T)',
   },
   projectionVectors: {
     mode: 'none',
-    solidColor: '#8b5cf6',
+    solidColor: '#ef4444',
     colormap: 'plasma',
-    opacityExpression: 'exp(-epsilon * s / T)',
+    opacityExpression: '1',
   },
   pastConstraints: {
     mode: 'colormap',
@@ -62,9 +62,9 @@ export const DEFAULT_COLOR_SETTINGS: ColorSettings = {
     opacityExpression: 'exp(-epsilon * s / T)',
   },
   markers: {
-    delayed: '#22c55e',
-    classical: '#000000',
-    xBar: '#ef4444',
+    delayed: '#f97316',
+    classical: '#60a5fa',
+    xBar: '#000000',
   },
   arrowLineWidth: 1.5,
 };

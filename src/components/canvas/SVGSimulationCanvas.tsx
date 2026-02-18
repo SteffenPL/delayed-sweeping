@@ -264,7 +264,20 @@ export function SVGSimulationCanvas({ width = 500, height = 500 }: SVGSimulation
           />
         )}
 
-        {/* Projection vectors z̄[n] → z[n] at snapshot times */}
+        {/* Delayed trajectory */}
+        {colorConfig.delayedTrajectory.mode !== 'none' && (
+          <SVGTrajectory
+            points={delayedSlice}
+            colorConfig={colorConfig.delayedTrajectory}
+            scale={scale}
+            h={params.h}
+            viewTime={viewTime}
+            epsilon={params.epsilon}
+            T={params.T}
+          />
+        )}
+
+        {/* Projection vectors z̄[n] → z[n] at snapshot times (on top of tracks) */}
         {colorConfig.projectionVectors.mode !== 'none' && (
           <SVGProjectionVectors
             trajectory={delayedSlice}
@@ -276,19 +289,6 @@ export function SVGSimulationCanvas({ width = 500, height = 500 }: SVGSimulation
             h={params.h}
             viewTime={viewTime}
             effectiveStep={effectiveStep}
-            epsilon={params.epsilon}
-            T={params.T}
-          />
-        )}
-
-        {/* Delayed trajectory */}
-        {colorConfig.delayedTrajectory.mode !== 'none' && (
-          <SVGTrajectory
-            points={delayedSlice}
-            colorConfig={colorConfig.delayedTrajectory}
-            scale={scale}
-            h={params.h}
-            viewTime={viewTime}
             epsilon={params.epsilon}
             T={params.T}
           />
