@@ -40,7 +40,7 @@ export const SVGTrajectory = React.memo(function SVGTrajectory({
     const hasOpacity = colorConfig.opacityExpression !== '1';
 
     // RDP simplification: tolerance is sub-pixel in world coordinates
-    const tolerance = 0.5 / scale;
+    const tolerance = 0.25 / scale;
     const keptIndices = rdpSimplify(drawPoints, tolerance);
 
     // If solid color with no opacity variation, use single path
