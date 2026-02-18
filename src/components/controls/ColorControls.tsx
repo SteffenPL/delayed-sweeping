@@ -12,10 +12,6 @@ export function ColorControls() {
     setColorConfig,
     showPastConstraints,
     setShowPastConstraints,
-    showPreProjectionTrajectory,
-    setShowPreProjectionTrajectory,
-    showProjectionVectors,
-    setShowProjectionVectors,
     setPastConstraintTimes,
     params,
   } = useSimulationStore();
@@ -74,34 +70,16 @@ export function ColorControls() {
         config={colorConfig.classicalTrajectory}
         onChange={updateClassical}
       />
-      <div className="flex items-center gap-1.5">
-        <input
-          type="checkbox"
-          id="showPreProjection"
-          checked={showPreProjectionTrajectory}
-          onChange={(e) => setShowPreProjectionTrajectory(e.target.checked)}
-          className="shrink-0"
-        />
-        <TrackRow
-          label="X̄ Traj."
-          config={colorConfig.preProjectionTrajectory}
-          onChange={updatePreProjection}
-        />
-      </div>
-      <div className="flex items-center gap-1.5">
-        <input
-          type="checkbox"
-          id="showProjectionVectors"
-          checked={showProjectionVectors}
-          onChange={(e) => setShowProjectionVectors(e.target.checked)}
-          className="shrink-0"
-        />
-        <TrackRow
-          label="Proj. V."
-          config={colorConfig.projectionVectors}
-          onChange={updateProjectionVectors}
-        />
-      </div>
+      <TrackRow
+        label="X̄ Traj."
+        config={colorConfig.preProjectionTrajectory}
+        onChange={updatePreProjection}
+      />
+      <TrackRow
+        label="Proj. V."
+        config={colorConfig.projectionVectors}
+        onChange={updateProjectionVectors}
+      />
       <TrackRow
         label="Past C."
         config={colorConfig.pastConstraints}
@@ -113,6 +91,19 @@ export function ColorControls() {
         <ColorInput label="Del" value={colorConfig.markers.delayed} onChange={(c) => updateMarkers({ delayed: c })} />
         <ColorInput label="Cls" value={colorConfig.markers.classical} onChange={(c) => updateMarkers({ classical: c })} />
         <ColorInput label="X̄" value={colorConfig.markers.xBar} onChange={(c) => updateMarkers({ xBar: c })} />
+      </div>
+
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs font-medium w-14 shrink-0">Arrow w</span>
+        <input
+          type="number"
+          min={0.5}
+          max={10}
+          step={0.5}
+          value={colorConfig.arrowLineWidth}
+          onChange={(e) => setColorConfig({ arrowLineWidth: parseFloat(e.target.value) || 1.5 })}
+          className="w-16 px-1.5 py-0.5 border rounded text-xs"
+        />
       </div>
 
       <div className="border-t pt-2 mt-2">
@@ -159,7 +150,7 @@ function TrackRow({
   onChange,
 }: {
   label: string;
-  config: { mode: 'solid' | 'colormap'; solidColor: string; colormap: string; opacityExpression: string };
+  config: { mode: 'none' | 'solid' | 'colormap'; solidColor: string; colormap: string; opacityExpression: string };
   onChange: (partial: Record<string, unknown>) => void;
 }) {
   const [localExpr, setLocalExpr] = useState(config.opacityExpression);
@@ -170,52 +161,61 @@ function TrackRow({
     }
   };
 
+  const isNone = config.mode === 'none';
+
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      {/* Label — fixed width */}
-      <span className="text-xs font-medium w-14 shrink-0">{label}</span>
+    <div className="space-y-1">
+      <div className="flex items-center gap-1.5">
+        {/* Label — fixed width */}
+        <span className="text-xs font-medium w-14 shrink-0">{label}</span>
 
-      {/* Color mode selector */}
-      <select
-        value={config.mode}
-        onChange={(e) => onChange({ mode: e.target.value })}
-        className="px-1.5 py-0.5 border rounded text-xs"
-      >
-        <option value="solid">Solid</option>
-        <option value="colormap">Map</option>
-      </select>
-
-      {/* Color value */}
-      {config.mode === 'solid' ? (
-        <input
-          type="color"
-          value={config.solidColor}
-          onChange={(e) => onChange({ solidColor: e.target.value })}
-          className="w-7 h-6 p-0 border rounded cursor-pointer"
-        />
-      ) : (
+        {/* Color mode selector */}
         <select
-          value={config.colormap}
-          onChange={(e) => onChange({ colormap: e.target.value })}
+          value={config.mode}
+          onChange={(e) => onChange({ mode: e.target.value })}
           className="px-1.5 py-0.5 border rounded text-xs"
         >
-          {COLORMAP_NAMES.map((name) => (
-            <option key={name} value={name}>{name}</option>
-          ))}
+          <option value="none">None</option>
+          <option value="solid">Solid</option>
+          <option value="colormap">Map</option>
         </select>
-      )}
 
-      {/* Opacity formula */}
-      <span className="text-xs text-muted-foreground whitespace-nowrap">A(s)=</span>
-      <input
-        type="text"
-        value={localExpr}
-        onChange={(e) => setLocalExpr(e.target.value)}
-        onBlur={commitExpr}
-        onKeyDown={(e) => e.key === 'Enter' && commitExpr()}
-        className="w-28 min-w-0 flex-1 px-1.5 py-0.5 border rounded text-xs font-mono"
-        placeholder="1"
-      />
+        {/* Color value */}
+        {!isNone && (config.mode === 'solid' ? (
+          <input
+            type="color"
+            value={config.solidColor}
+            onChange={(e) => onChange({ solidColor: e.target.value })}
+            className="w-7 h-6 p-0 border rounded cursor-pointer"
+          />
+        ) : (
+          <select
+            value={config.colormap}
+            onChange={(e) => onChange({ colormap: e.target.value })}
+            className="px-1.5 py-0.5 border rounded text-xs"
+          >
+            {COLORMAP_NAMES.map((name) => (
+              <option key={name} value={name}>{name}</option>
+            ))}
+          </select>
+        ))}
+      </div>
+
+      {/* Opacity formula — full width row */}
+      {!isNone && (
+        <div className="flex items-center gap-1.5 pl-15.5">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">A(s)=</span>
+          <input
+            type="text"
+            value={localExpr}
+            onChange={(e) => setLocalExpr(e.target.value)}
+            onBlur={commitExpr}
+            onKeyDown={(e) => e.key === 'Enter' && commitExpr()}
+            className="min-w-0 flex-1 px-1.5 py-0.5 border rounded text-xs font-mono"
+            placeholder="1"
+          />
+        </div>
+      )}
     </div>
   );
 }

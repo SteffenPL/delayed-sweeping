@@ -37,8 +37,6 @@ export function SVGSimulationCanvas({ width = 500, height = 500 }: SVGSimulation
     colorConfig,
     showPastConstraints,
     pastConstraintTimes,
-    showPreProjectionTrajectory,
-    showProjectionVectors,
     params,
   } = useSimulationStore();
 
@@ -239,19 +237,21 @@ export function SVGSimulationCanvas({ width = 500, height = 500 }: SVGSimulation
         />
 
         {/* Classical trajectory */}
-        <SVGTrajectory
-          points={classicalSlice}
-          colorConfig={colorConfig.classicalTrajectory}
-          scale={scale}
-          lineWidth={1.5}
-          h={params.h}
-          viewTime={viewTime}
-          epsilon={params.epsilon}
-          T={params.T}
-        />
+        {colorConfig.classicalTrajectory.mode !== 'none' && (
+          <SVGTrajectory
+            points={classicalSlice}
+            colorConfig={colorConfig.classicalTrajectory}
+            scale={scale}
+            lineWidth={1.5}
+            h={params.h}
+            viewTime={viewTime}
+            epsilon={params.epsilon}
+            T={params.T}
+          />
+        )}
 
         {/* Pre-projection (z̄) trajectory */}
-        {showPreProjectionTrajectory && (
+        {colorConfig.preProjectionTrajectory.mode !== 'none' && (
           <SVGTrajectory
             points={preProjectionSlice}
             colorConfig={colorConfig.preProjectionTrajectory}
@@ -265,13 +265,14 @@ export function SVGSimulationCanvas({ width = 500, height = 500 }: SVGSimulation
         )}
 
         {/* Projection vectors z̄[n] → z[n] at snapshot times */}
-        {showProjectionVectors && (
+        {colorConfig.projectionVectors.mode !== 'none' && (
           <SVGProjectionVectors
             trajectory={delayedSlice}
             preProjection={preProjectionSlice}
             snapshotTimes={pastConstraintTimes}
             colorConfig={colorConfig.projectionVectors}
             scale={scale}
+            lineWidth={colorConfig.arrowLineWidth}
             h={params.h}
             viewTime={viewTime}
             effectiveStep={effectiveStep}
@@ -281,15 +282,17 @@ export function SVGSimulationCanvas({ width = 500, height = 500 }: SVGSimulation
         )}
 
         {/* Delayed trajectory */}
-        <SVGTrajectory
-          points={delayedSlice}
-          colorConfig={colorConfig.delayedTrajectory}
-          scale={scale}
-          h={params.h}
-          viewTime={viewTime}
-          epsilon={params.epsilon}
-          T={params.T}
-        />
+        {colorConfig.delayedTrajectory.mode !== 'none' && (
+          <SVGTrajectory
+            points={delayedSlice}
+            colorConfig={colorConfig.delayedTrajectory}
+            scale={scale}
+            h={params.h}
+            viewTime={viewTime}
+            epsilon={params.epsilon}
+            T={params.T}
+          />
+        )}
 
         {/* Markers */}
         <SVGMarkers

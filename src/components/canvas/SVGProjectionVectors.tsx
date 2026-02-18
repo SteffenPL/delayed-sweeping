@@ -31,7 +31,7 @@ export const SVGProjectionVectors = React.memo(function SVGProjectionVectors({
   T,
 }: SVGProjectionVectorsProps) {
   const strokeWidth = lineWidth / scale;
-  const arrowSize = 4 / scale;
+  const arrowSize = (3 * lineWidth) / scale;
 
   const content = useMemo(() => {
     if (trajectory.length < 1 || preProjection.length < 1) return null;
@@ -39,7 +39,7 @@ export const SVGProjectionVectors = React.memo(function SVGProjectionVectors({
     const elements: React.ReactElement[] = [];
     const validTimes = snapshotTimes.filter((time) => {
       const step = Math.round(time / h);
-      return step >= 1 && step < effectiveStep && step < trajectory.length && step < preProjection.length;
+      return step >= 0 && step < effectiveStep && step < trajectory.length && step < preProjection.length;
     });
 
     if (validTimes.length === 0) return null;
@@ -51,11 +51,9 @@ export const SVGProjectionVectors = React.memo(function SVGProjectionVectors({
       const zBar = preProjection[step];
       const z = trajectory[step];
 
-      // Skip if points are essentially the same (no projection needed)
       const dx = z.x - zBar.x;
       const dy = z.y - zBar.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 1e-10) continue;
 
       // Color based on normalized index
       const colorT = validTimes.length > 1 ? idx / (validTimes.length - 1) : 0.5;
@@ -66,6 +64,22 @@ export const SVGProjectionVectors = React.memo(function SVGProjectionVectors({
       // Opacity from formula
       const s = viewTime - time;
       const opacity = evaluateOpacity(colorConfig.opacityExpression, s, viewTime, epsilon, T);
+
+      // Skip truly zero-length vectors (no visible arrow)
+      if (dist < 1e-12) {
+        // Draw a dot at zBar to indicate no projection was needed
+        elements.push(
+          <circle
+            key={`pv-${step}`}
+            cx={zBar.x}
+            cy={zBar.y}
+            r={strokeWidth}
+            fill={color}
+            opacity={opacity}
+          />
+        );
+        continue;
+      }
 
       // Arrow head direction
       const nx = dx / dist;

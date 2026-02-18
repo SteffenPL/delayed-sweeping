@@ -1,14 +1,14 @@
 export type ColormapName = 'viridis' | 'plasma' | 'inferno' | 'magma' | 'cividis' | 'grayscale';
 
 export interface TrajectoryColorConfig {
-  mode: 'solid' | 'colormap';
+  mode: 'none' | 'solid' | 'colormap';
   solidColor: string;
   colormap: ColormapName;
   opacityExpression: string; // A(s) formula, variables: s (age), t (current time), epsilon (from params)
 }
 
 export interface PastConstraintColorConfig {
-  mode: 'solid' | 'colormap';
+  mode: 'none' | 'solid' | 'colormap';
   solidColor: string;
   colormap: ColormapName;
   opacityExpression: string;
@@ -27,6 +27,7 @@ export interface ColorSettings {
   projectionVectors: TrajectoryColorConfig;
   pastConstraints: PastConstraintColorConfig;
   markers: MarkerColors;
+  arrowLineWidth: number;
 }
 
 export const DEFAULT_COLOR_SETTINGS: ColorSettings = {
@@ -43,13 +44,13 @@ export const DEFAULT_COLOR_SETTINGS: ColorSettings = {
     opacityExpression: 'exp(-epsilon * s / T)',
   },
   preProjectionTrajectory: {
-    mode: 'colormap',
+    mode: 'none',
     solidColor: '#ef4444',
     colormap: 'inferno',
     opacityExpression: 'exp(-epsilon * s / T)',
   },
   projectionVectors: {
-    mode: 'colormap',
+    mode: 'none',
     solidColor: '#8b5cf6',
     colormap: 'plasma',
     opacityExpression: 'exp(-epsilon * s / T)',
@@ -65,4 +66,5 @@ export const DEFAULT_COLOR_SETTINGS: ColorSettings = {
     classical: '#000000',
     xBar: '#ef4444',
   },
+  arrowLineWidth: 1.5,
 };

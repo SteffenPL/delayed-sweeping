@@ -79,12 +79,6 @@ interface SimulationStore {
   colorConfig: ColorSettings;
   setColorConfig: (partial: Partial<ColorSettings>) => void;
 
-  // Visibility toggles
-  showPreProjectionTrajectory: boolean;
-  showProjectionVectors: boolean;
-  setShowPreProjectionTrajectory: (show: boolean) => void;
-  setShowProjectionVectors: (show: boolean) => void;
-
   // Past constraints visibility and times
   pastConstraintTimes: number[];
   showPastConstraints: boolean;
@@ -200,10 +194,6 @@ export const useSimulationStore = create<SimulationStore>()(
     // Color settings
     colorConfig: DEFAULT_COLOR_SETTINGS,
 
-    // Visibility toggles
-    showPreProjectionTrajectory: false,
-    showProjectionVectors: false,
-
     // Past constraints
     pastConstraintTimes: generateDefaultPastConstraintTimes(DEFAULT_PARAMS.T),
     showPastConstraints: true,
@@ -306,9 +296,6 @@ export const useSimulationStore = create<SimulationStore>()(
       set((state) => ({
         colorConfig: { ...state.colorConfig, ...partial },
       })),
-
-    setShowPreProjectionTrajectory: (show) => set({ showPreProjectionTrajectory: show }),
-    setShowProjectionVectors: (show) => set({ showProjectionVectors: show }),
 
     setPastConstraintTimes: (times) => set({ pastConstraintTimes: times }),
     setShowPastConstraints: (show) => set({ showPastConstraints: show }),
