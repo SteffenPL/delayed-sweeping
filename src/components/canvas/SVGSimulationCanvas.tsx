@@ -277,7 +277,16 @@ export function SVGSimulationCanvas({ width = 500, height = 500 }: SVGSimulation
           />
         )}
 
-        {/* Projection vectors z̄[n] → z[n] at snapshot times (on top of tracks) */}
+        {/* Markers */}
+        <SVGMarkers
+          delayed={delayedMarker}
+          classical={classicalMarker}
+          xBar={xBarMarker}
+          colors={colorConfig.markers}
+          scale={scale}
+        />
+
+        {/* Projection vectors z̄[n] → z[n] at snapshot times (on top of everything) */}
         {colorConfig.projectionVectors.mode !== 'none' && (
           <SVGProjectionVectors
             trajectory={delayedSlice}
@@ -293,15 +302,6 @@ export function SVGSimulationCanvas({ width = 500, height = 500 }: SVGSimulation
             T={params.T}
           />
         )}
-
-        {/* Markers */}
-        <SVGMarkers
-          delayed={delayedMarker}
-          classical={classicalMarker}
-          xBar={xBarMarker}
-          colors={colorConfig.markers}
-          scale={scale}
-        />
       </g>
     </svg>
   );
