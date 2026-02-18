@@ -23,6 +23,8 @@ export interface MarkerColors {
 export interface ColorSettings {
   delayedTrajectory: TrajectoryColorConfig;
   classicalTrajectory: TrajectoryColorConfig;
+  preProjectionTrajectory: TrajectoryColorConfig;
+  projectionVectors: TrajectoryColorConfig;
   pastConstraints: PastConstraintColorConfig;
   markers: MarkerColors;
 }
@@ -38,6 +40,18 @@ export const DEFAULT_COLOR_SETTINGS: ColorSettings = {
     mode: 'solid',
     solidColor: '#808080',
     colormap: 'grayscale',
+    opacityExpression: 'exp(-epsilon * s / T)',
+  },
+  preProjectionTrajectory: {
+    mode: 'colormap',
+    solidColor: '#ef4444',
+    colormap: 'inferno',
+    opacityExpression: 'exp(-epsilon * s / T)',
+  },
+  projectionVectors: {
+    mode: 'colormap',
+    solidColor: '#8b5cf6',
+    colormap: 'plasma',
     opacityExpression: 'exp(-epsilon * s / T)',
   },
   pastConstraints: {

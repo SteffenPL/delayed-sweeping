@@ -12,6 +12,10 @@ export function ColorControls() {
     setColorConfig,
     showPastConstraints,
     setShowPastConstraints,
+    showPreProjectionTrajectory,
+    setShowPreProjectionTrajectory,
+    showProjectionVectors,
+    setShowProjectionVectors,
     setPastConstraintTimes,
     params,
   } = useSimulationStore();
@@ -25,6 +29,18 @@ export function ColorControls() {
   const updateClassical = (partial: Partial<TrajectoryColorConfig>) => {
     setColorConfig({
       classicalTrajectory: { ...colorConfig.classicalTrajectory, ...partial },
+    });
+  };
+
+  const updatePreProjection = (partial: Partial<TrajectoryColorConfig>) => {
+    setColorConfig({
+      preProjectionTrajectory: { ...colorConfig.preProjectionTrajectory, ...partial },
+    });
+  };
+
+  const updateProjectionVectors = (partial: Partial<TrajectoryColorConfig>) => {
+    setColorConfig({
+      projectionVectors: { ...colorConfig.projectionVectors, ...partial },
     });
   };
 
@@ -58,6 +74,34 @@ export function ColorControls() {
         config={colorConfig.classicalTrajectory}
         onChange={updateClassical}
       />
+      <div className="flex items-center gap-1.5">
+        <input
+          type="checkbox"
+          id="showPreProjection"
+          checked={showPreProjectionTrajectory}
+          onChange={(e) => setShowPreProjectionTrajectory(e.target.checked)}
+          className="shrink-0"
+        />
+        <TrackRow
+          label="X̄ Traj."
+          config={colorConfig.preProjectionTrajectory}
+          onChange={updatePreProjection}
+        />
+      </div>
+      <div className="flex items-center gap-1.5">
+        <input
+          type="checkbox"
+          id="showProjectionVectors"
+          checked={showProjectionVectors}
+          onChange={(e) => setShowProjectionVectors(e.target.checked)}
+          className="shrink-0"
+        />
+        <TrackRow
+          label="Proj. V."
+          config={colorConfig.projectionVectors}
+          onChange={updateProjectionVectors}
+        />
+      </div>
       <TrackRow
         label="Past C."
         config={colorConfig.pastConstraints}

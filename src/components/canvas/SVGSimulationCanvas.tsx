@@ -6,6 +6,7 @@ import { SVGGrid } from './SVGGrid';
 import { SVGConstraint } from './SVGConstraint';
 import { SVGTrajectory } from './SVGTrajectory';
 import { SVGMarkers } from './SVGMarkers';
+import { SVGProjectionVectors } from './SVGProjectionVectors';
 import type { Vec2 } from '@/types';
 
 interface SVGSimulationCanvasProps {
@@ -36,6 +37,8 @@ export function SVGSimulationCanvas({ width = 500, height = 500 }: SVGSimulation
     colorConfig,
     showPastConstraints,
     pastConstraintTimes,
+    showPreProjectionTrajectory,
+    showProjectionVectors,
     params,
   } = useSimulationStore();
 
@@ -246,6 +249,36 @@ export function SVGSimulationCanvas({ width = 500, height = 500 }: SVGSimulation
           epsilon={params.epsilon}
           T={params.T}
         />
+
+        {/* Pre-projection (z̄) trajectory */}
+        {showPreProjectionTrajectory && (
+          <SVGTrajectory
+            points={preProjectionSlice}
+            colorConfig={colorConfig.preProjectionTrajectory}
+            scale={scale}
+            lineWidth={1.5}
+            h={params.h}
+            viewTime={viewTime}
+            epsilon={params.epsilon}
+            T={params.T}
+          />
+        )}
+
+        {/* Projection vectors z̄[n] → z[n] at snapshot times */}
+        {showProjectionVectors && (
+          <SVGProjectionVectors
+            trajectory={delayedSlice}
+            preProjection={preProjectionSlice}
+            snapshotTimes={pastConstraintTimes}
+            colorConfig={colorConfig.projectionVectors}
+            scale={scale}
+            h={params.h}
+            viewTime={viewTime}
+            effectiveStep={effectiveStep}
+            epsilon={params.epsilon}
+            T={params.T}
+          />
+        )}
 
         {/* Delayed trajectory */}
         <SVGTrajectory
