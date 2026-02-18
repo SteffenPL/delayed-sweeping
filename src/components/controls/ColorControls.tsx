@@ -164,46 +164,44 @@ function TrackRow({
   const isNone = config.mode === 'none';
 
   return (
-    <div className="space-y-1">
-      <div className="flex items-center gap-1.5">
-        {/* Label — fixed width */}
-        <span className="text-xs font-medium w-14 shrink-0">{label}</span>
+    <div className="flex flex-wrap items-center gap-1.5">
+      {/* Label — fixed width */}
+      <span className="text-xs font-medium w-14 shrink-0">{label}</span>
 
-        {/* Color mode selector */}
+      {/* Color mode selector */}
+      <select
+        value={config.mode}
+        onChange={(e) => onChange({ mode: e.target.value })}
+        className="px-1.5 py-0.5 border rounded text-xs"
+      >
+        <option value="none">None</option>
+        <option value="solid">Solid</option>
+        <option value="colormap">Map</option>
+      </select>
+
+      {/* Color value */}
+      {!isNone && (config.mode === 'solid' ? (
+        <input
+          type="color"
+          value={config.solidColor}
+          onChange={(e) => onChange({ solidColor: e.target.value })}
+          className="w-7 h-6 p-0 border rounded cursor-pointer"
+        />
+      ) : (
         <select
-          value={config.mode}
-          onChange={(e) => onChange({ mode: e.target.value })}
+          value={config.colormap}
+          onChange={(e) => onChange({ colormap: e.target.value })}
           className="px-1.5 py-0.5 border rounded text-xs"
         >
-          <option value="none">None</option>
-          <option value="solid">Solid</option>
-          <option value="colormap">Map</option>
+          {COLORMAP_NAMES.map((name) => (
+            <option key={name} value={name}>{name}</option>
+          ))}
         </select>
+      ))}
 
-        {/* Color value */}
-        {!isNone && (config.mode === 'solid' ? (
-          <input
-            type="color"
-            value={config.solidColor}
-            onChange={(e) => onChange({ solidColor: e.target.value })}
-            className="w-7 h-6 p-0 border rounded cursor-pointer"
-          />
-        ) : (
-          <select
-            value={config.colormap}
-            onChange={(e) => onChange({ colormap: e.target.value })}
-            className="px-1.5 py-0.5 border rounded text-xs"
-          >
-            {COLORMAP_NAMES.map((name) => (
-              <option key={name} value={name}>{name}</option>
-            ))}
-          </select>
-        ))}
-      </div>
-
-      {/* Opacity formula — full width row */}
+      {/* Opacity formula — fills remaining space */}
       {!isNone && (
-        <div className="flex items-center gap-1.5 pl-15.5">
+        <>
           <span className="text-xs text-muted-foreground whitespace-nowrap">A(s)=</span>
           <input
             type="text"
@@ -214,7 +212,7 @@ function TrackRow({
             className="min-w-0 flex-1 px-1.5 py-0.5 border rounded text-xs font-mono"
             placeholder="1"
           />
-        </div>
+        </>
       )}
     </div>
   );

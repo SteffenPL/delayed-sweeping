@@ -88,19 +88,21 @@ export const SVGProjectionVectors = React.memo(function SVGProjectionVectors({
       const px = -ny;
       const py = nx;
 
-      // Arrow head at z[n]
-      const ax1 = z.x - nx * arrowSize + px * arrowSize * 0.4;
-      const ay1 = z.y - ny * arrowSize + py * arrowSize * 0.4;
-      const ax2 = z.x - nx * arrowSize - px * arrowSize * 0.4;
-      const ay2 = z.y - ny * arrowSize - py * arrowSize * 0.4;
+      // Arrow head base point (where line ends and arrowhead begins)
+      const bx = z.x - nx * arrowSize;
+      const by = z.y - ny * arrowSize;
+      const ax1 = bx + px * arrowSize * 0.4;
+      const ay1 = by + py * arrowSize * 0.4;
+      const ax2 = bx - px * arrowSize * 0.4;
+      const ay2 = by - py * arrowSize * 0.4;
 
       elements.push(
         <g key={`pv-${step}`} opacity={opacity}>
           <line
             x1={zBar.x}
             y1={zBar.y}
-            x2={z.x}
-            y2={z.y}
+            x2={bx}
+            y2={by}
             stroke={color}
             strokeWidth={strokeWidth}
             strokeLinecap="round"
