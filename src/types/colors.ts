@@ -44,13 +44,13 @@ export const DEFAULT_COLOR_SETTINGS: ColorSettings = {
     opacityExpression: 'exp(-epsilon * s / T)',
   },
   preProjectionTrajectory: {
-    mode: 'none',
+    mode: 'solid',
     solidColor: '#000000',
     colormap: 'inferno',
     opacityExpression: 'exp(-epsilon * s / T)',
   },
   projectionVectors: {
-    mode: 'none',
+    mode: 'solid',
     solidColor: '#ef4444',
     colormap: 'plasma',
     opacityExpression: '1',
