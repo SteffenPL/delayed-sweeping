@@ -33,7 +33,7 @@ export interface ColorSettings {
 export const DEFAULT_COLOR_SETTINGS: ColorSettings = {
   delayedTrajectory: {
     mode: 'solid',
-    solidColor: '#f97316',
+    solidColor: '#fb923c',
     colormap: 'viridis',
     opacityExpression: 'exp(-epsilon * s / T)',
   },
@@ -62,7 +62,7 @@ export const DEFAULT_COLOR_SETTINGS: ColorSettings = {
     opacityExpression: 'exp(-epsilon * s / T)',
   },
   markers: {
-    delayed: '#f97316',
+    delayed: '#fb923c',
     classical: '#60a5fa',
     xBar: '#000000',
   },
