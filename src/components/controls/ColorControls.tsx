@@ -101,7 +101,7 @@ export function ColorControls() {
           max={10}
           step={0.5}
           value={colorConfig.arrowLineWidth}
-          onChange={(e) => setColorConfig({ arrowLineWidth: parseFloat(e.target.value) || 1.5 })}
+          onChange={(e) => setColorConfig({ arrowLineWidth: parseFloat(e.target.value) || 3.0 })}
           className="w-16 px-1.5 py-0.5 border rounded text-xs"
         />
       </div>

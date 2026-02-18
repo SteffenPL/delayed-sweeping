@@ -66,5 +66,5 @@ export const DEFAULT_COLOR_SETTINGS: ColorSettings = {
     classical: '#60a5fa',
     xBar: '#000000',
   },
-  arrowLineWidth: 1.5,
+  arrowLineWidth: 3.0,
 };
