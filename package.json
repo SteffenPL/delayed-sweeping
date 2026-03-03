@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "deploy": "npm run build && gh-pages -d dist",
     "simulate": "tsx src/cli/index.ts",
+    "generate-figures": "tsx figure_generation/generate.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

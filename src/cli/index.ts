@@ -104,6 +104,8 @@ function exportTSV(results: any, h: number, outputPath: string) {
     'classical_x',
     'classical_y',
     'classical_gradNorm',
+    'center_x',
+    'center_y',
   ].join('\t'));
 
   // Data rows
@@ -122,6 +124,8 @@ function exportTSV(results: any, h: number, outputPath: string) {
       classical.trajectory[i]?.x.toFixed(precision) || '',
       classical.trajectory[i]?.y.toFixed(precision) || '',
       classical.gradientNorms[i]?.toFixed(precision) || '',
+      delayed.centers[i]?.x.toFixed(precision) || '',
+      delayed.centers[i]?.y.toFixed(precision) || '',
     ].join('\t'));
   }
 

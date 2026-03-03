@@ -124,6 +124,7 @@ const DEFAULT_PARAMS: SimulationParameters = {
   xPastExpression: '0',
   yPastExpression: '0',
   solverType: 'norm1-sum1',
+  projectionTolerance: 1e-8,
 };
 
 const DEFAULT_CONSTRAINT: ConstraintConfig = {

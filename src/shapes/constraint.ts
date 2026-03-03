@@ -27,7 +27,7 @@ export interface Constraint {
    * If point is already feasible (g(x) >= 0), returns the point itself
    * Otherwise projects to the boundary where g(x) = 0
    */
-  project(point: Vec2): Vec2;
+  project(point: Vec2, tolerance?: number): Vec2;
 
   /**
    * Update constraint transform (center and angle)
@@ -81,9 +81,9 @@ export class ExpressionConstraint implements Constraint {
     return vec2.rotate(localGrad, this.angle);
   }
 
-  project(point: Vec2): Vec2 {
+  project(point: Vec2, tolerance?: number): Vec2 {
     const local = this.toLocal(point);
-    const projectedLocal = projectToConstraint(this.evaluator, local);
+    const projectedLocal = projectToConstraint(this.evaluator, local, 50, tolerance);
     return this.toWorld(projectedLocal);
   }
 

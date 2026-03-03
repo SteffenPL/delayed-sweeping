@@ -8,6 +8,7 @@ export const DEFAULT_PARAMS: SimulationParameters = {
   xPastExpression: '2*cos(t)',
   yPastExpression: '2*sin(t)',
   solverType: 'norm1-sum1',
+  projectionTolerance: 1e-8,
 };
 
 export const DEFAULT_CONSTRAINT: ConstraintConfig = {

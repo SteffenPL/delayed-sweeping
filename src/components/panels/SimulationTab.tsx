@@ -68,6 +68,27 @@ export function SimulationTab() {
         </Select>
       </ParameterRow>
 
+      {/* Projection Tolerance */}
+      <ParameterRow label="Proj. Tolerance" help={HELP_CONTENT.projectionTolerance}>
+        <Select
+          value={String(params.projectionTolerance)}
+          onValueChange={(val) => setParams({ projectionTolerance: Number(val) })}
+        >
+          <SelectTrigger className="w-32">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="0.01">1e-2</SelectItem>
+            <SelectItem value="0.001">1e-3</SelectItem>
+            <SelectItem value="0.0001">1e-4</SelectItem>
+            <SelectItem value="1e-6">1e-6</SelectItem>
+            <SelectItem value="1e-8">1e-8</SelectItem>
+            <SelectItem value="1e-10">1e-10</SelectItem>
+            <SelectItem value="1e-12">1e-12</SelectItem>
+          </SelectContent>
+        </Select>
+      </ParameterRow>
+
       {/* Past Conditions */}
       <div className="space-y-3 pt-2 border-t">
         <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">

@@ -28,6 +28,10 @@ export const HELP_CONTENT: Record<string, HelpContent> = {
     title: 'Solver Type',
     description: 'The numerical scheme used for discretization. "norm1-sum1" normalizes weights to sum to 1, "norm0-sum1" uses unnormalized weights, "trapezoidal" uses trapezoidal quadrature.',
   },
+  projectionTolerance: {
+    title: 'Projection Tolerance',
+    description: 'Convergence tolerance for the metric projection onto the constraint boundary. Smaller values give more accurate projections but are slower. The projection iteratively refines until the tangential error is below this threshold.',
+  },
   xPastExpression: {
     title: 'Past Condition x_p(t)',
     description: 'The x-coordinate of the trajectory for t < 0. Use math.js syntax with variable t.',

@@ -8,14 +8,16 @@ import { ExpressionConstraint } from './constraint';
  */
 export function createProjectionFunction(
   getConstraint: () => ConstraintConfig,
-  getAngle: () => number
+  getAngle: () => number,
+  getTolerance?: () => number
 ): (point: Vec2, center: Vec2) => { projected: Vec2; gradientNorm: number } {
   return (point: Vec2, center: Vec2) => {
     const config = getConstraint();
     const angle = getAngle();
+    const tolerance = getTolerance?.();
     const constraint = new ExpressionConstraint(config);
     constraint.update({ center, angle });
-    const projected = constraint.project(point);
+    const projected = constraint.project(point, tolerance);
     const grad = constraint.gradient(projected);
     const gradientNorm = Math.sqrt(grad.x * grad.x + grad.y * grad.y);
     return { projected, gradientNorm };
@@ -28,16 +30,18 @@ export function createProjectionFunction(
  */
 export function createFullProjectionFunction(
   getConstraint: () => ConstraintConfig,
-  getAngle: () => number
+  getAngle: () => number,
+  getTolerance?: () => number
 ): (point: Vec2, center: Vec2) => { projected: Vec2; distance: number; wasOutside: boolean; gradientNorm: number } {
   return (point: Vec2, center: Vec2) => {
     const config = getConstraint();
     const angle = getAngle();
+    const tolerance = getTolerance?.();
     const constraint = new ExpressionConstraint(config);
     constraint.update({ center, angle });
 
     const g = constraint.evaluate(point);
-    const projected = constraint.project(point);
+    const projected = constraint.project(point, tolerance);
     const grad = constraint.gradient(projected);
     const gradientNorm = Math.sqrt(grad.x * grad.x + grad.y * grad.y);
 

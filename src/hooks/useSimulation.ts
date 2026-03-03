@@ -46,8 +46,9 @@ export function useSimulation() {
 
     const getConstraint = () => useSimulationStore.getState().constraint;
     const getAngle = () => useSimulationStore.getState().constraintAngle;
-    const projectFunc = createProjectionFunction(getConstraint, getAngle);
-    const fullProjectFunc = createFullProjectionFunction(getConstraint, getAngle);
+    const getTolerance = () => useSimulationStore.getState().params.projectionTolerance;
+    const projectFunc = createProjectionFunction(getConstraint, getAngle, getTolerance);
+    const fullProjectFunc = createFullProjectionFunction(getConstraint, getAngle, getTolerance);
 
     simulatorRef.current = new DelayedSweepingSimulator({
       params,

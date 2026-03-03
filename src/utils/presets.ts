@@ -13,6 +13,7 @@ export const PRESETS: Preset[] = [
       xPastExpression: '0',
       yPastExpression: '0',
       solverType: 'norm1-sum1',
+      projectionTolerance: 1e-8,
     },
     constraint: {
       expression: 'R - sqrt(x^2 + y^2)',
@@ -39,6 +40,7 @@ export const PRESETS: Preset[] = [
       xPastExpression: '2',
       yPastExpression: '0',
       solverType: 'norm1-sum1',
+      projectionTolerance: 1e-8,
     },
     constraint: {
       expression: 'R - sqrt(x^2 + y^2)',

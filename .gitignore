@@ -147,3 +147,7 @@ vite.config.ts.timestamp-*
 output/
 *.tsv
 *.toml.bak
+
+# Generated figures
+figure_generation/plots/*.svg
+figure_generation/plots/*.tsv

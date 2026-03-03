@@ -53,7 +53,7 @@ export class SimulationFactory {
       const localY = -sinA * dx + cosA * dy;
 
       // Project in local coordinates
-      const localProjected = projectToConstraint(evaluator, { x: localX, y: localY });
+      const localProjected = projectToConstraint(evaluator, { x: localX, y: localY }, 50, simulation.projectionTolerance);
 
       // Transform back to world coordinates
       const worldX = center.x + cosA * localProjected.x - sinA * localProjected.y;
@@ -107,7 +107,7 @@ export class SimulationFactory {
       const localX = cosA * dx + sinA * dy;
       const localY = -sinA * dx + cosA * dy;
 
-      const localProjected = projectToConstraint(evaluator, { x: localX, y: localY });
+      const localProjected = projectToConstraint(evaluator, { x: localX, y: localY }, 50, simulation.projectionTolerance);
 
       const worldX = center.x + cosA * localProjected.x - sinA * localProjected.y;
       const worldY = center.y + sinA * localProjected.x + cosA * localProjected.y;

@@ -1,0 +1,193 @@
+diff --git a/baMiPlu.tex b/baMiPlu.tex
+index 3a3268c..2fbf75d 100644
+--- a/baMiPlu.tex
++++ b/baMiPlu.tex
+@@ -223,6 +223,7 @@ of the discretization step $h$. Section~\ref{sec:application} applies these resu
+ delayed sweeping process, establishing energy estimates and compactness properties needed 
+ for existence results. Then by standard arguments one passes to the limit in the discrete
+ approximations and recovers an existence result for the continuous delayed sweeping process.
++Section~\ref{sec:numerics} describes the numerical algorithm for computing the discrete sweeping sequence, including the projection via Newton's method.
+ Finally, the Appendices \ref{sec:moments},  \ref{sec:discrete_convolution} and \ref{sec:decay_lipschitz} contain auxiliary technical results.
+ 
+ 
+@@ -259,7 +260,7 @@ closed convex sets $(C^n)_{n\in\N}$ in $\mathbb{R}^d$, satisfying:
+ 	\item compactness of the sequence: for all $h<h_0$, 
+ 	setting $N=\lfloor T/h \rfloor$, the sequence of convex sets $(C^n)_{0\leq n \leq N}$ satisfies the $H^1$-like estimate:
+ 	\begin{equation}\label{eq.bv.c.main}
+-\sum_{j=1}^N d_H(C^{n},C^{n-1})^2/h \leq C < \infty,
++\sum_{n=1}^N d_H(C^{n},C^{n-1})^2/h \leq C < \infty,
+ \end{equation}
+ where the constant $C$ is uniform with respect to $h$,
+ %\item Lipschitz continuity: $d_H(C^{n},C^{n-1}) \leq C h$ for all $n\geq 1$.
+@@ -698,23 +699,25 @@ The sequence $(\tr_j)_{j\in\N}$ discretizes the kernel $\tkernel$:
+  $.
+ 
+ \begin{lemma}
+-	Under the assumptions of Theorem \ref{thm.comparison}, the discrete kernel $(\tr_j)_{j\in\N}$ is a non-increasing sequence satisfying 
+-	$ - \frac{\tr_j - \tr_{j-1}}{h \tr_j} \leq \zeta$ for all $j \in \N^*$.
++	Under the assumptions of Theorem \ref{thm.comparison}, the discrete kernel $(\tr_j)_{j\in\N}$ is a non-increasing sequence satisfying
++	$ - \frac{\tr_j - \tr_{j-1}}{h \tr_j} \leq \zeta'$ for all $j \in \N^*$ and all $h \leq h_0$,
++	where $\zeta' := 2\zeta$ and $h_0 := 1/(2\zeta)$.
+ \end{lemma}
+ 
+ \begin{proof}
+ 	Writing the difference : $R_{j+1}-R_j = \frac{1}{h} \int_{jh}^{(j+1)h} (\kernel(a+h) - \kernel(a)) da$, 
+ 	then using the monotonicity of $\kernel$ provides that $R_{j+1} \leq R_j$ for all $j\in\N$. 
+-	Next, using again the monotonicity of $\kernel$ :
++	Next, using the hypothesis $\da \kernel(s) \geq -\zeta \kernel(s)$ and
++	the monotonicity of $\kernel$ (which gives $\kernel(s) \leq \kernel(a)$ for $s\geq a$):
+ 	\begin{align}
+-				R_{j+1}- R_{j} &= \frac{1}{h} \int_{jh}^{(j+1)h} (\kernel(a+h) - \kernel(a)) da 
+-				= \frac{1}{h} \int_{jh}^{(j+1)h} \int_a^{a+h} \da \kernel(s) ds da \\
+-				&\geq - \zeta \frac{1}{h} \int_{jh}^{(j+1)h} \int_a^{a+h} \kernel(s) ds da
+-				\geq - \zeta \frac{1}{h} \int_{jh}^{(j+1)h} h  \kernel(a+h)ds da 
+-				= -\zeta h R_{j+1}
+-	\end{align}		
+-	where we have used the that the kernel is non-increasing in the last inequality.
+-	Rearranging the latter inequality provides the desired result.			
++				R_{j+1}- R_{j} &= \frac{1}{h} \int_{jh}^{(j+1)h} (\kernel(a+h) - \kernel(a)) da
++				= \frac{1}{h} \int_{jh}^{(j+1)h} \int_a^{a+h} \da \kernel(s)\, ds\, da \\
++				&\geq - \zeta \frac{1}{h} \int_{jh}^{(j+1)h} \int_a^{a+h} \kernel(s)\, ds\, da
++				\geq - \zeta \frac{1}{h} \int_{jh}^{(j+1)h} h\, \kernel(a)\, da
++				= -\zeta h R_{j}
++	\end{align}
++	Rearranging: $(R_j - R_{j+1})/(h R_{j+1}) \leq \zeta/(1-\zeta h) \leq 2\zeta$ for $\zeta h \leq 1/2$.
++	Setting $j \to j-1$ provides the desired result (with $\zeta$ replaced by $\zeta' := 2\zeta$).			
+ \end{proof}
+ 
+ 
+@@ -833,7 +836,7 @@ Next we prove that $W^n \geq 0$ for all $n\geq 0$ by induction.
+ First $W^0=\mu_{1,h}/(1-h \tr_0) \geq 0$ for $h$ 
+ small enough (and the bound is uniform by Lebesgue's Theorem for $h<h_0$). 
+ By definition of $W$, 
+-$W^{-n} =  -nh \geq 0$ for $n<0$. 
++$W^{n} =  -nh \geq 0$ for $n<0$. 
+ Assume now that $W^k \geq 0$ for all $k \leq n$, then using \eqref{eq.disc.w}, 
+ $
+ (1-h\tr_0) W^{n+1} = h \sum_{j\geq 1} \tr_j W^{n+1-j} \geq 0
+@@ -949,7 +952,7 @@ This problem can be reformulated as the following minimization problem: for any
+ 		& = \frac{h}{2} \sum_{j\geq 1} \left( W - \overline{X}^n \right)^2 \tr_j 
+ 		+ h \sum_{j\geq 1} (W - \overline{X}^n)(\overline{X}^n - X^{n-j}) \tr_j	 \\
+ 		& \quad + \frac{h}{2} \sum_{j\geq 1} (\overline{X}^n - X^{n-j})^2 \tr_j 
+-		= (1-h \tr_0)| W - \overline{X}^n |^2 +  R((X^{n-j})_{j\geq 1})
++		= \frac{1}{2}(1-h \tr_0)| W - \overline{X}^n |^2 +  R((X^{n-j})_{j\geq 1})
+ 	\end{aligned}
+ 	$$
+ 	where the remainder term $R$ does not depend on $W$. This concludes the proof.
+@@ -1111,9 +1114,9 @@ This problem can be reformulated as the following minimization problem: for any
+  	\[
+  	\begin{aligned}
+  		\cE_{n+1}(X^{n+1})
+- 		& \le \frac{1}{2}  
++ 		& \le \frac{1-h\tr_0}{2}
+  		| X^n - P_{C^{n+1}}(X^n)|^2
+- 		+ \sum_{j\ge1}( X^n - P_{C^{n+1}}(X^n),\,X^{n+1-j}-X^n)\tr_j \\
++ 		+ h\sum_{j\ge1}( X^n - P_{C^{n+1}}(X^n),\,X^{n+1-j}-X^n)\tr_j \\
+  		& + \frac{h}{2} \sum_{j\geq 1} | X^{n+1-j} - X^n|^2 \tr_j \\
+  	\end{aligned}
+  	\]
+@@ -1167,20 +1170,28 @@ This problem can be reformulated as the following minimization problem: for any
+ \end{corollary} 
+  
+ \begin{proof}%[Proof of Corollary \ref{coro.dissip.main}]
+-	Since the sequence $(\tr_{j})_{j\geq 0}$ is non-increasing and of mass 1 (indeed $h \sum_{j\geq 0} \tr_{j}=1$), one has that 
++	Since the sequence $(\tr_{j})_{j\geq 0}$ is non-increasing and of mass 1 (indeed $h \sum_{j\geq 0} \tr_{j}=1$), one has that
++	$$
++	\sum_{j\ge1} \tr_{j-1} - \tr_{j} = \tr_0 \leq (h \Lip_\kernel/2  + \kernel(0))/\mu_{0} < \infty
++	$$
++ where we have used the Lipschitz hypothesis in Assumptions \ref{hypo.data}.
++	Moreover, using the discrete ratio bound $(\tr_{j-1}-\tr_j) \leq \zeta' h \tr_j$ for $j\geq 1$,
++	one has
+ 	$$
+-	\sum_{j\ge1} \tr_{j-1} - \tr_{j} = \tr_0 \leq (h \Lip_\kernel/2  + \kernel(0))/\mu_{0} < \infty 
++	h \sum_{j\geq 1} (\tr_{j-1} -\tr_{j}) |X^p-X^{p-j}|^2
++	\leq \zeta' h^2 \sum_{j\geq 1} \tr_j |X^p-X^{p-j}|^2 = 2\zeta' \cE_p(X^p).
+ 	$$
+- where we have used the Lipschitz hypothesis in Assumptions \ref{hypo.data}. Then using Cauchy-Schwartz, 
++	Then using Cauchy-Schwarz,
+ 	one writes:
+ 	$$
+ 	\begin{aligned}
+ 		\sum_{p= 0}^N & h \left( \sum_{j\geq1} (\tr_{j-1} -\tr_{j}) |X^p-X^{p-j}| \right)^2  \leq \sum_{p=0}^N h \sum_{j\geq 1} (\tr_{j-1} -\tr_{j})
+ 								\sum_{j\geq 1} (\tr_{j-1} -\tr_{j}) |X^p-X^{p-j}|^2\\
+-		& \leq  \tr_0 \sum_{p= 0}^N h \sum_{j\geq 1}  (\tr_{j-1} -\tr_{j}) |X^p-X^{p-j}|^2 
+-		\leq  \tr_0 \sum_{p= 0}^N D^p < \infty
++		& \leq  \tr_0 \sum_{p= 0}^N h \sum_{j\geq 1}  (\tr_{j-1} -\tr_{j}) |X^p-X^{p-j}|^2
++		\leq  2 \zeta' \tr_0 \sum_{p= 0}^N  \cE_p(X^p)  < \infty
+ 	\end{aligned}
+ 	$$
++	where the last bound follows from Proposition \ref{prop.nrj}.
+ \end{proof} 
+ 
+ 
+@@ -1501,6 +1512,70 @@ associated to the minimization problem \eqref{eq.sweeping}, they read:
+ %
+  
+ 
++\section{Numerical algorithm}\label{sec:numerics}
++
++We describe the algorithm used to compute the discrete sweeping sequence $(X^n)_{n\geq 0}$
++defined by \eqref{eq.sweeping.projection}.
++Given the kernel $\kernel$, the time step $h>0$,
++the past condition $X_p \in \Lip(\RR^-)$,
++and a family of constraint sets $(C^n)_{n\geq 0}$,
++the scheme proceeds as follows.
++
++\subsection{Time-stepping scheme}
++
++For $n = 0, 1, \ldots, N$ with $N = \lfloor T/h \rfloor$:
++\begin{compactenum}[1)]
++	\item Compute the discrete kernel weights:
++	$R_j = \frac{1}{h}\int_{jh}^{(j+1)h} \kernel(a)\, da$,
++	truncated at $j = J_{\max}$ where $R_{J_{\max}} < \texttt{tol}$.
++	\item Compute the weighted average of past positions:
++	\begin{equation}\label{eq.num.xbar}
++		\overline{X}^n = \frac{h \sum_{j=1}^{J_{\max}} R_j\, X^{n-j}}{h \sum_{j=1}^{J_{\max}} R_j},
++	\end{equation}
++	where $X^{n-j} = X_p((n-j)h)$ whenever $n-j < 0$.
++	\item Compute the projection onto the constraint set:
++	$X^n = P_{C^n}(\overline{X}^n)$.
++\end{compactenum}
++
++\noindent For the exponential kernel $\kernel(a) = \varepsilon e^{-\varepsilon a}$,
++the weights admit the closed form
++$R_j = \frac{1}{h}(1 - e^{-\varepsilon h}) e^{-\varepsilon j h}$
++and the truncation index satisfies $J_{\max} = \lceil -\ln(\texttt{tol})/(\varepsilon h) \rceil$.
++
++\subsection{Projection via Newton's method}
++
++When the constraint set is defined implicitly as $C^n = \{x \in \RR^d : g_n(x) \geq 0\}$
++for a smooth concave function $g_n$, the projection $P_{C^n}(\overline{X}^n)$
++coincides with the projection onto the boundary $\{g_n = 0\}$ whenever
++$g_n(\overline{X}^n) < 0$ (i.e.\ $\overline{X}^n \notin C^n$).
++
++We compute this projection using Newton's method along the gradient direction.
++Starting from $p_0 = \overline{X}^n$, we iterate for $k = 0, 1, \ldots$:
++\begin{equation}\label{eq.newton}
++	p_{k+1} = p_k - \frac{g_n(p_k)}{|\nabla g_n(p_k)|^2}\, \nabla g_n(p_k),
++\end{equation}
++until $|g_n(p_k)| < \texttt{tol}_{\text{proj}}$,
++and set $X^n = p_k$.
++If $g_n(\overline{X}^n) \geq 0$, no projection is needed and $X^n = \overline{X}^n$.
++
++The gradient $\nabla g_n$ is approximated by central finite differences:
++$$
++\partial_{x_i} g_n(p) \approx \frac{g_n(p + \delta e_i) - g_n(p - \delta e_i)}{2\delta}
++$$
++with $\delta = 10^{-6}$, where $e_i$ denotes the $i$-th canonical basis vector.
++
++\begin{remark}
++	The iteration \eqref{eq.newton} is well defined whenever
++	$\nabla g_n(p_k) \neq 0$, which is guaranteed for qualified constraints
++	near the boundary.
++	For convex sets with smooth boundary, each step decreases the distance
++	to the boundary and convergence is quadratic near $\{g_n = 0\}$.
++	In practice,
++	$\texttt{tol}_{\text{proj}} = 10^{-8}$
++	and at most $50$ iterations suffice.
++\end{remark}
++
++
+ \appendix
+ 
+ 

@@ -16,6 +16,7 @@ export interface SimulationParameters {
   xPastExpression: string;  // Initial past condition x_p(t) for t < 0
   yPastExpression: string;  // Initial past condition y_p(t) for t < 0
   solverType: SolverType;   // Discretization solver type
+  projectionTolerance: number; // Tolerance for metric projection refinement
 }
 
 // Constraint configuration - expression-based with standardized parameters
