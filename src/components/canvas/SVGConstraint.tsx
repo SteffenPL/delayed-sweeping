@@ -10,6 +10,7 @@ interface SVGConstraintProps {
   color?: string;
   opacity?: number;
   fillOpacity?: number;
+  showCenterMarker?: boolean;
 }
 
 export const SVGConstraint = React.memo(function SVGConstraint({
@@ -20,6 +21,7 @@ export const SVGConstraint = React.memo(function SVGConstraint({
   color = '#3b82f6',
   opacity = 1,
   fillOpacity = 0.1,
+  showCenterMarker = true,
 }: SVGConstraintProps) {
   if (polygon.length === 0) return null;
 
@@ -44,20 +46,24 @@ export const SVGConstraint = React.memo(function SVGConstraint({
         stroke={color}
         strokeWidth={strokeWidth}
       />
-      <circle
-        cx={center.x}
-        cy={center.y}
-        r={centerRadius}
-        fill="#ef4444"
-      />
-      <line
-        x1={center.x}
-        y1={center.y}
-        x2={indicatorEnd.x}
-        y2={indicatorEnd.y}
-        stroke="#ef4444"
-        strokeWidth={strokeWidth}
-      />
+      {showCenterMarker && (
+        <>
+          <circle
+            cx={center.x}
+            cy={center.y}
+            r={centerRadius}
+            fill="#ef4444"
+          />
+          <line
+            x1={center.x}
+            y1={center.y}
+            x2={indicatorEnd.x}
+            y2={indicatorEnd.y}
+            stroke="#ef4444"
+            strokeWidth={strokeWidth}
+          />
+        </>
+      )}
     </g>
   );
 });

@@ -383,6 +383,7 @@ export function renderTrajectoryPlot(
           color: sc.color,
           opacity: sc.opacity,
           fillOpacity: 0,
+          showCenterMarker: false,
         })
       ),
 
@@ -394,6 +395,7 @@ export function renderTrajectoryPlot(
             center: lastCenter,
             angle: lastAngle,
             scale,
+            showCenterMarker: false,
           })
         : null,
 
@@ -442,7 +444,17 @@ export function renderTrajectoryPlot(
           })
         : null,
 
-      // Projection arrows at snapshot times
+      // Endpoint markers
+      React.createElement(SVGMarkers, {
+        key: 'markers',
+        delayed: data.delayed[N - 1] ?? null,
+        classical: showClassical ? (data.classical[N - 1] ?? null) : null,
+        xBar: data.preProjection[N - 1] ?? null,
+        colors: markerColors,
+        scale,
+      }),
+
+      // Projection arrows at snapshot times (on top of everything)
       snapshotTimes && colors.projectionVectors.mode !== 'none'
         ? React.createElement(SVGProjectionVectors, {
             key: 'arrows',
@@ -458,17 +470,7 @@ export function renderTrajectoryPlot(
             epsilon,
             T,
           })
-        : null,
-
-      // Endpoint markers
-      React.createElement(SVGMarkers, {
-        key: 'markers',
-        delayed: data.delayed[N - 1] ?? null,
-        classical: showClassical ? (data.classical[N - 1] ?? null) : null,
-        xBar: data.preProjection[N - 1] ?? null,
-        colors: markerColors,
-        scale,
-      })
+        : null
     )
   );
 

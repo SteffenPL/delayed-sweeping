@@ -59,8 +59,8 @@ export const DEFAULT_COLOR_SETTINGS: ColorSettings = {
     opacityExpression: '1',
   },
   pastConstraints: {
-    mode: 'colormap',
-    solidColor: '#3b82f6',
+    mode: 'solid',
+    solidColor: '#6b21a8',
     colormap: 'plasma',
     opacityExpression: 'exp(-epsilon * s / T)',
   },
@@ -72,5 +72,5 @@ export const DEFAULT_COLOR_SETTINGS: ColorSettings = {
     showClassical: true,
     showXBar: true,
   },
-  arrowLineWidth: 3.0,
+  arrowLineWidth: 4.5,
 };
