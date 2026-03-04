@@ -141,6 +141,118 @@ export function renderConvergencePlot(
   return lines.join('\n');
 }
 
+// ─── Quantities (time-series) plot ──────────────────────────────────
+
+export interface QuantitiesSeries {
+  label: string;
+  color: string;
+  data: { t: number; value: number }[];
+}
+
+export interface QuantitiesPlotConfig {
+  width?: number;
+  height?: number;
+  title?: string;
+}
+
+/**
+ * Render a multi-series time-series plot as standalone SVG.
+ */
+export function renderQuantitiesPlot(
+  series: QuantitiesSeries[],
+  config: QuantitiesPlotConfig = {}
+): string {
+  const { width = 600, height = 400, title } = config;
+
+  const ml = 70, mr = 20, mt = title ? 40 : 20, mb = 50;
+  const pw = width - ml - mr;
+  const ph = height - mt - mb;
+
+  // Axis ranges
+  let tMin = Infinity, tMax = -Infinity;
+  let vMin = Infinity, vMax = -Infinity;
+  for (const s of series) {
+    for (const d of s.data) {
+      if (d.t < tMin) tMin = d.t;
+      if (d.t > tMax) tMax = d.t;
+      if (d.value < vMin) vMin = d.value;
+      if (d.value > vMax) vMax = d.value;
+    }
+  }
+
+  // Add padding to value range
+  const vRange = vMax - vMin || 1;
+  vMin -= vRange * 0.05;
+  vMax += vRange * 0.05;
+
+  const toX = (t: number) => ml + ((t - tMin) / (tMax - tMin || 1)) * pw;
+  const toY = (v: number) => mt + ph - ((v - vMin) / (vMax - vMin)) * ph;
+
+  const lines: string[] = [];
+  lines.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`);
+  lines.push(`<rect width="${width}" height="${height}" fill="white"/>`);
+  lines.push(`<style>text { font-family: sans-serif; }</style>`);
+
+  if (title) {
+    lines.push(`<text x="${width / 2}" y="${mt - 12}" text-anchor="middle" font-size="14" font-weight="bold">${title}</text>`);
+  }
+
+  // Grid + axes
+  lines.push('<g>');
+  const nTicksX = 5;
+  for (let i = 0; i <= nTicksX; i++) {
+    const t = tMin + (i / nTicksX) * (tMax - tMin);
+    const x = toX(t);
+    lines.push(`<line x1="${x}" y1="${mt}" x2="${x}" y2="${mt + ph}" stroke="#e5e5e5" stroke-width="0.5"/>`);
+    lines.push(`<text x="${x}" y="${mt + ph + 16}" text-anchor="middle" font-size="10">${t.toFixed(1)}</text>`);
+  }
+  const nTicksY = 5;
+  for (let i = 0; i <= nTicksY; i++) {
+    const v = vMin + (i / nTicksY) * (vMax - vMin);
+    const y = toY(v);
+    lines.push(`<line x1="${ml}" y1="${y}" x2="${ml + pw}" y2="${y}" stroke="#e5e5e5" stroke-width="0.5"/>`);
+    lines.push(`<text x="${ml - 6}" y="${y + 4}" text-anchor="end" font-size="10">${v.toExponential(1)}</text>`);
+  }
+  lines.push(`<rect x="${ml}" y="${mt}" width="${pw}" height="${ph}" fill="none" stroke="#aaaaaa" stroke-width="1"/>`);
+  lines.push(`<text x="${ml + pw / 2}" y="${height - 6}" text-anchor="middle" font-size="12">t</text>`);
+  lines.push('</g>');
+
+  // Zero line if in range
+  if (vMin < 0 && vMax > 0) {
+    const y0 = toY(0);
+    lines.push(`<line x1="${ml}" y1="${y0}" x2="${ml + pw}" y2="${y0}" stroke="#aaaaaa" stroke-width="0.5" stroke-dasharray="4,2"/>`);
+  }
+
+  // Data series
+  for (const s of series) {
+    const sorted = [...s.data].sort((a, b) => a.t - b.t);
+    // Downsample if too many points
+    const maxPts = 2000;
+    const step = Math.max(1, Math.floor(sorted.length / maxPts));
+    const pts: string[] = [];
+    for (let i = 0; i < sorted.length; i += step) {
+      pts.push(`${toX(sorted[i].t).toFixed(1)},${toY(sorted[i].value).toFixed(1)}`);
+    }
+    lines.push(`<polyline points="${pts.join(' ')}" fill="none" stroke="${s.color}" stroke-width="1.5"/>`);
+  }
+
+  // Legend
+  if (series.length > 0) {
+    const lx = ml + 12;
+    let ly = mt + 16;
+    for (const s of series) {
+      lines.push(`<line x1="${lx}" y1="${ly}" x2="${lx + 18}" y2="${ly}" stroke="${s.color}" stroke-width="2"/>`);
+      lines.push(`<text x="${lx + 24}" y="${ly + 4}" font-size="11">${s.label}</text>`);
+      ly += 18;
+    }
+  }
+
+  lines.push('</svg>');
+  return lines.join('\n');
+}
+
+// ─── Trajectory plot ────────────────────────────────────────────────
+
 export interface TrajectoryPlotData {
   delayed: Vec2[];
   preProjection: Vec2[];

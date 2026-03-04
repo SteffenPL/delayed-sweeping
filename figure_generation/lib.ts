@@ -9,7 +9,7 @@ import {
   createExpressionEvaluator,
   computeBoundaryPolygon,
 } from '../src/shapes/expressionConstraint';
-import { renderTrajectoryPlot, renderConvergencePlot } from '../src/cli/svg';
+import { renderTrajectoryPlot, renderConvergencePlot, renderQuantitiesPlot } from '../src/cli/svg';
 import type { SimulationConfig } from '../src/types/config';
 import type { Vec2 } from '../src/types/simulation';
 
@@ -197,6 +197,17 @@ export async function quantities(
   const tsvPath = path.join(PLOTS_DIR, `${name}.tsv`);
   writeTSV(tsvPath, header, rows);
   console.log(`  → ${tsvPath} (${N} rows)`);
+
+  // SVG
+  const svgSeries = [
+    { label: 'KKT term', color: '#fb923c', data: rows.map(([t, kkt]) => ({ t, value: kkt })) },
+    { label: 'Energy', color: '#60a5fa', data: rows.map(([t, , e]) => ({ t, value: e })) },
+    { label: 'Proj. dist.', color: '#a78bfa', data: rows.map(([t, , , pd]) => ({ t, value: pd })) },
+  ];
+  const svg = renderQuantitiesPlot(svgSeries, { title: name });
+  const svgPath = path.join(PLOTS_DIR, `${name}.svg`);
+  fs.writeFileSync(svgPath, svg, 'utf-8');
+  console.log(`  → ${svgPath}`);
 }
 
 // ─── convergence ─────────────────────────────────────────────────────
