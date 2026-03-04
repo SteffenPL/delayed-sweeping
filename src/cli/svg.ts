@@ -31,20 +31,24 @@ export function renderConvergencePlot(
   const pw = width - ml - mr;   // plot width
   const ph = height - mt - mb;  // plot height
 
-  // Gather all data points to determine axis range
+  // Gather all data points to determine axis range (filter out non-positive values for log scale)
   const allH: number[] = [];
   const allE: number[] = [];
   for (const s of series) {
     for (const d of s.data) {
-      allH.push(d.h);
-      allE.push(d.error);
+      if (d.h > 0) allH.push(d.h);
+      if (d.error > 0) allE.push(d.error);
     }
   }
 
+  // Guard against empty or degenerate data
+  if (allH.length === 0) allH.push(1);
+  if (allE.length === 0) allE.push(1);
+
   const logHMin = Math.floor(Math.log10(Math.min(...allH)));
-  const logHMax = Math.ceil(Math.log10(Math.max(...allH)));
+  const logHMax = Math.max(logHMin + 1, Math.ceil(Math.log10(Math.max(...allH))));
   const logEMin = Math.floor(Math.log10(Math.min(...allE)));
-  const logEMax = Math.ceil(Math.log10(Math.max(...allE)));
+  const logEMax = Math.max(logEMin + 1, Math.ceil(Math.log10(Math.max(...allE))));
 
   // Map log10 values to pixel coordinates
   const toX = (logH: number) => ml + ((logH - logHMin) / (logHMax - logHMin)) * pw;

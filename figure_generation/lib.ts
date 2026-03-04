@@ -287,3 +287,121 @@ export async function convergence(
   fs.writeFileSync(svgPath, svg, 'utf-8');
   console.log(`  → ${svgPath}`);
 }
+
+// ─── parameter scan ──────────────────────────────────────────────────
+
+export interface ParameterScanOpts {
+  formula: string;
+  aggregation: 'max' | 'min' | 'final';
+  paramValues: number[];
+  paramOverride: (value: number) => Record<string, any>;
+  paramLabel: string;
+  valueLabel: string;
+  refSlopes?: number[];
+}
+
+/**
+ * Run a formula over a range of parameter values, aggregate per-simulation,
+ * and produce a log-log plot.
+ */
+export async function parameterScan(
+  name: string,
+  basePath: string,
+  overrides: Record<string, any> = {},
+  opts: ParameterScanOpts
+) {
+  ensurePlotsDir();
+  const baseConfig = loadConfig(basePath, overrides);
+  const formulaEval = new FormulaEvaluator(opts.formula);
+
+  console.log(`[parameterScan] ${name}: formula="${opts.formula}", aggregation=${opts.aggregation}, ${opts.paramLabel}=[${opts.paramValues.join(', ')}]`);
+
+  const header = [opts.paramLabel, opts.valueLabel];
+  const rows: number[][] = [];
+
+  for (const paramValue of opts.paramValues) {
+    const config = deepMergeOverrides(baseConfig, opts.paramOverride(paramValue)) as SimulationConfig;
+    const { h, epsilon, T, solverType } = config.simulation;
+
+    console.log(`  Running ${opts.paramLabel}=${paramValue}...`);
+    const results = await SimulationFactory.runSimulation(config);
+
+    const { delayed, classical } = results;
+    const N = delayed.trajectory.length;
+
+    const constraintEval = createExpressionEvaluator(config.constraint.expression, {
+      R: config.constraint.R,
+      r: config.constraint.r,
+      a: config.constraint.a,
+      b: config.constraint.b,
+    });
+    const kernelWeights = computeDiscreteWeights(epsilon, h, solverType);
+    const constraintAngles = new Array(N).fill(0);
+
+    // Evaluate formula at each time step
+    const values: number[] = [];
+    for (let n = 0; n < N; n++) {
+      const ctx: EvaluationContext = {
+        n,
+        t: n * h,
+        trajectory: delayed.trajectory,
+        preProjection: delayed.preProjection,
+        constraintCenters: delayed.centers,
+        constraintAngles,
+        projectionDistances: delayed.projectionDistances,
+        gradientNorms: delayed.gradientNorms,
+        classicalTrajectory: classical.trajectory,
+        classicalGradientNorms: classical.gradientNorms,
+        h,
+        epsilon,
+        constraintEvaluator: constraintEval,
+        kernelWeights,
+      };
+      values.push(formulaEval.evaluate(ctx));
+    }
+
+    // Aggregate
+    let aggregated: number;
+    switch (opts.aggregation) {
+      case 'max':
+        aggregated = Math.max(...values);
+        break;
+      case 'min':
+        aggregated = Math.min(...values);
+        break;
+      case 'final':
+        aggregated = values[values.length - 1];
+        break;
+    }
+
+    rows.push([paramValue, aggregated]);
+    console.log(`    ${opts.paramLabel}=${paramValue} → ${opts.valueLabel} = ${aggregated.toExponential(4)}`);
+  }
+
+  // TSV
+  const tsvPath = path.join(PLOTS_DIR, `${name}.tsv`);
+  writeTSV(tsvPath, header, rows);
+  console.log(`  → ${tsvPath}`);
+
+  // SVG log-log plot (reuse convergence renderer)
+  const svgData = rows.map(([p, v]) => ({ h: p, error: v }));
+  const svg = renderConvergencePlot(
+    [{ label: name, color: '#fb923c', data: svgData }],
+    { title: name, refSlopes: opts.refSlopes ?? [1, 2] }
+  );
+  const svgPath = path.join(PLOTS_DIR, `${name}.svg`);
+  fs.writeFileSync(svgPath, svg, 'utf-8');
+  console.log(`  → ${svgPath}`);
+}
+
+function deepMergeOverrides(base: any, overrides: Record<string, any>): any {
+  const result = { ...base };
+  for (const key of Object.keys(overrides)) {
+    if (typeof overrides[key] === 'object' && !Array.isArray(overrides[key]) && typeof result[key] === 'object') {
+      result[key] = { ...result[key], ...overrides[key] };
+    } else {
+      result[key] = overrides[key];
+    }
+  }
+  return result;
+}
