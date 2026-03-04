@@ -58,6 +58,7 @@ function writeTSV(filePath: string, header: string[], rows: number[][]) {
 
 export interface TrajectoryOpts {
   snapshotTimes?: number[];
+  showClassical?: boolean;
 }
 
 /**
@@ -122,6 +123,7 @@ export async function trajectory(
       h,
       constraintEvaluator: evaluator,
       snapshotTimes: opts.snapshotTimes,
+      showClassical: opts.showClassical,
     }
   );
 

@@ -42,7 +42,7 @@ export function renderConvergencePlot(
   const pw = width - ml - mr;   // plot width
   const ph = height - mt - mb;  // plot height
 
-  // Gather all data points to determine axis range (filter out non-positive values for log scale)
+  // Gather all data points (filter out non-positive values for log scale)
   const allH: number[] = [];
   const allE: number[] = [];
   for (const s of series) {
@@ -51,8 +51,6 @@ export function renderConvergencePlot(
       if (d.error > 0) allE.push(d.error);
     }
   }
-
-  // Guard against empty or degenerate data
   if (allH.length === 0) allH.push(1);
   if (allE.length === 0) allE.push(1);
 
@@ -60,6 +58,14 @@ export function renderConvergencePlot(
   const logHMax = Math.max(logHMin + 1, Math.ceil(Math.log10(Math.max(...allH))));
   const logEMin = Math.floor(Math.log10(Math.min(...allE)));
   const logEMax = Math.max(logEMin + 1, Math.ceil(Math.log10(Math.max(...allE))));
+
+  // Anchor point for reference lines (rightmost data point of first series)
+  const anchorCandidates = (series[0]?.data ?? []).filter(d => d.h > 0 && d.error > 0);
+  const anchorPoint = anchorCandidates.length > 0
+    ? anchorCandidates.reduce((a, b) => (a.h > b.h ? a : b))
+    : null;
+  const anchorLogH = anchorPoint ? Math.log10(anchorPoint.h) : (logHMin + logHMax) / 2;
+  const anchorLogE = anchorPoint ? Math.log10(anchorPoint.error) : (logEMin + logEMax) / 2;
 
   // Map log10 values to pixel coordinates
   const toX = (logH: number) => ml + ((logH - logHMin) / (logHMax - logHMin)) * pw;
@@ -96,18 +102,14 @@ export function renderConvergencePlot(
   lines.push(`<text x="16" y="${mt + ph / 2}" text-anchor="middle" font-size="12" transform="rotate(-90, 16, ${mt + ph / 2})">${yLabel}</text>`);
   lines.push('</g>');
 
-  // Reference slope lines (dashed)
-  // Each slope line passes through the center of the plot vertically,
-  // offset horizontally so labels don't overlap.
+  // Reference slope lines (dashed), anchored to the rightmost data point of the first series
   const slopeColors = ['#bbbbbb', '#bbbbbb', '#bbbbbb'];
-  const midLogH = (logHMin + logHMax) / 2;
-  const midLogE = (logEMin + logEMax) / 2;
 
   for (let si = 0; si < refSlopes.length; si++) {
     const slope = refSlopes[si];
     const col = slopeColors[si % slopeColors.length];
-    // Line: logE = slope * (logH - midLogH) + midLogE
-    const c = midLogE - slope * midLogH;
+    // Line passes through the anchor point
+    const c = anchorLogE - slope * anchorLogH;
 
     // Clip to plot area
     const clipLogE = (logH: number) => Math.max(logEMin, Math.min(logEMax, slope * logH + c));
@@ -406,7 +408,7 @@ export function renderTrajectoryPlot(
             points: data.classical,
             colorConfig: colors.classicalTrajectory,
             scale,
-            lineWidth: 3,
+            lineWidth: 2,
             h,
             viewTime,
             epsilon,
@@ -421,7 +423,7 @@ export function renderTrajectoryPlot(
             points: data.preProjection,
             colorConfig: colors.preProjectionTrajectory,
             scale,
-            lineWidth: 4,
+            lineWidth: 3,
             h,
             viewTime,
             epsilon,
@@ -436,7 +438,7 @@ export function renderTrajectoryPlot(
             points: data.delayed,
             colorConfig: colors.delayedTrajectory,
             scale,
-            lineWidth: 4,
+            lineWidth: 3,
             h,
             viewTime,
             epsilon,

@@ -1,9 +1,9 @@
 trajectoryMode = "parametric"
 
 [simulation]
-T = 15
+T = 9
 h = 0.005
-epsilon = 2.5
+epsilon = 0.75
 infiniteMode = false
 xPastExpression = "0"
 yPastExpression = "0"

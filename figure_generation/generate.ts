@@ -11,7 +11,8 @@ async function main() {
   await trajectory('fig1', 'base/circle_long_memory.toml', {}, { snapshotTimes: [1, 3, 6] });
 
   // Figure 2a: trajectory — lissajous
-  await trajectory('fig2a', 'base/lissajous.toml');
+  // Show constraint outlines and projection arrows at t = 5, 10, 15; include classical trajectory
+  await trajectory('fig2a', 'base/lissajous.toml', {}, { snapshotTimes: [4.5,9], showClassical: true });
 
   // Figure 2b: KKT term max over h (log-log)
   await parameterScan(
@@ -20,7 +21,7 @@ async function main() {
     {},
     {
       formula:
-        '-dot(lambda[n]*G[n] - lambda[n-1]*G[n-1], z[n] - z[n-1])/norm(z[n] - z[n-1])',
+        'dot(lambda[n]*G[n] - lambda[n-1]*G[n-1], z[n] - z[n-1])/norm(z[n] - z[n-1])',
       aggregation: 'max',
       paramValues: hValues,
       paramOverride: (h) => ({ simulation: { h } }),
