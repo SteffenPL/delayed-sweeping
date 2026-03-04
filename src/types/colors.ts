@@ -18,6 +18,9 @@ export interface MarkerColors {
   delayed: string;
   classical: string;
   xBar: string;
+  showDelayed: boolean;
+  showClassical: boolean;
+  showXBar: boolean;
 }
 
 export interface ColorSettings {
@@ -33,7 +36,7 @@ export interface ColorSettings {
 export const DEFAULT_COLOR_SETTINGS: ColorSettings = {
   delayedTrajectory: {
     mode: 'solid',
-    solidColor: '#fb923c',
+    solidColor: '#cc0000',
     colormap: 'viridis',
     opacityExpression: 'exp(-epsilon * s / T)',
   },
@@ -45,13 +48,13 @@ export const DEFAULT_COLOR_SETTINGS: ColorSettings = {
   },
   preProjectionTrajectory: {
     mode: 'solid',
-    solidColor: '#000000',
+    solidColor: '#f97316',
     colormap: 'inferno',
     opacityExpression: 'exp(-epsilon * s / T)',
   },
   projectionVectors: {
     mode: 'solid',
-    solidColor: '#ef4444',
+    solidColor: '#ff3333',
     colormap: 'plasma',
     opacityExpression: '1',
   },
@@ -62,9 +65,12 @@ export const DEFAULT_COLOR_SETTINGS: ColorSettings = {
     opacityExpression: 'exp(-epsilon * s / T)',
   },
   markers: {
-    delayed: '#fb923c',
+    delayed: '#cc0000',
     classical: '#60a5fa',
-    xBar: '#000000',
+    xBar: '#f97316',
+    showDelayed: true,
+    showClassical: true,
+    showXBar: true,
   },
   arrowLineWidth: 3.0,
 };

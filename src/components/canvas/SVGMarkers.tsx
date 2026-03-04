@@ -23,13 +23,13 @@ export const SVGMarkers = React.memo(function SVGMarkers({
 
   return (
     <g>
-      {xBar && (
+      {xBar && colors.showXBar !== false && (
         <circle cx={xBar.x} cy={xBar.y} r={xBarRadius} fill={colors.xBar} />
       )}
-      {classical && (
+      {classical && colors.showClassical !== false && (
         <circle cx={classical.x} cy={classical.y} r={classicalRadius} fill={colors.classical} />
       )}
-      {delayed && (
+      {delayed && colors.showDelayed !== false && (
         <circle cx={delayed.x} cy={delayed.y} r={delayedRadius} fill={colors.delayed} />
       )}
     </g>

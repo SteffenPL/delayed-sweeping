@@ -88,9 +88,33 @@ export function ColorControls() {
 
       <div className="flex flex-wrap items-center gap-2 pt-1">
         <span className="text-xs font-medium w-14">Markers</span>
-        <ColorInput label="Del" value={colorConfig.markers.delayed} onChange={(c) => updateMarkers({ delayed: c })} />
-        <ColorInput label="Cls" value={colorConfig.markers.classical} onChange={(c) => updateMarkers({ classical: c })} />
-        <ColorInput label="X̄" value={colorConfig.markers.xBar} onChange={(c) => updateMarkers({ xBar: c })} />
+        <label className="flex items-center gap-1 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={colorConfig.markers.showDelayed !== false}
+            onChange={(e) => updateMarkers({ showDelayed: e.target.checked })}
+            className="w-3 h-3"
+          />
+          <ColorInput label="Del" value={colorConfig.markers.delayed} onChange={(c) => updateMarkers({ delayed: c })} />
+        </label>
+        <label className="flex items-center gap-1 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={colorConfig.markers.showClassical !== false}
+            onChange={(e) => updateMarkers({ showClassical: e.target.checked })}
+            className="w-3 h-3"
+          />
+          <ColorInput label="Cls" value={colorConfig.markers.classical} onChange={(c) => updateMarkers({ classical: c })} />
+        </label>
+        <label className="flex items-center gap-1 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={colorConfig.markers.showXBar !== false}
+            onChange={(e) => updateMarkers({ showXBar: e.target.checked })}
+            className="w-3 h-3"
+          />
+          <ColorInput label="X̄" value={colorConfig.markers.xBar} onChange={(c) => updateMarkers({ xBar: c })} />
+        </label>
       </div>
 
       <div className="flex items-center gap-1.5">
