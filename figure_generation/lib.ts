@@ -9,8 +9,10 @@ import {
   createExpressionEvaluator,
   computeBoundaryPolygon,
 } from '../src/shapes/expressionConstraint';
+import { FormulaEvaluator } from '../src/formula/evaluator';
 import { renderTrajectoryPlot, renderConvergencePlot, renderQuantitiesPlot } from '../src/cli/svg';
 import type { SimulationConfig } from '../src/types/config';
+import type { EvaluationContext } from '../src/formula/types';
 import type { Vec2 } from '../src/types/simulation';
 
 const __filename = fileURLToPath(import.meta.url);

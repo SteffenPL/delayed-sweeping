@@ -4,7 +4,7 @@ export type PlotMode = 'instantaneous' | 'parameter-study' | 'convergence';
 
 export type StudyParameter = 'epsilon' | 'h' | 'T' | 'R' | 'r' | 'a' | 'b';
 
-export type AggregationMode = 'final' | 'l2-integral' | 'h1-seminorm' | 'integral';
+export type AggregationMode = 'final' | 'l2-integral' | 'h1-seminorm' | 'integral' | 'minimum' | 'maximum';
 
 export type ScalingMode = 'linear' | 'exponential';
 

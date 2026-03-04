@@ -39,6 +39,22 @@ export function aggregate(values: number[], h: number, mode: AggregationMode): n
       return Math.sqrt(h * sum);
     }
 
+    case 'minimum': {
+      let min = values[0];
+      for (let i = 1; i < values.length; i++) {
+        if (values[i] < min) min = values[i];
+      }
+      return min;
+    }
+
+    case 'maximum': {
+      let max = values[0];
+      for (let i = 1; i < values.length; i++) {
+        if (values[i] > max) max = values[i];
+      }
+      return max;
+    }
+
     default:
       return values[values.length - 1];
   }

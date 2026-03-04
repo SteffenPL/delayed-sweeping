@@ -16,6 +16,8 @@ const AGGREGATIONS: { value: AggregationMode; label: string }[] = [
   { value: 'integral', label: 'Integral' },
   { value: 'l2-integral', label: 'L2 integral' },
   { value: 'h1-seminorm', label: 'H1 semi-norm' },
+  { value: 'minimum', label: 'Minimum' },
+  { value: 'maximum', label: 'Maximum' },
 ];
 
 function escapeLatex(s: string): string {
@@ -39,6 +41,10 @@ function buildStudyLatex(aggregation: AggregationMode, formula: string, isVector
       return `A = \\sqrt{h \\sum_{n=0}^{N} ${fn}^{\\,2}}, \\quad ${def}`;
     case 'h1-seminorm':
       return `A = \\sqrt{h \\sum_{n=1}^{N} \\left(\\frac{${fn} - ${fnm1}}{h}\\right)^{\\!2}}, \\quad ${def}`;
+    case 'minimum':
+      return `A = \\min_{0 \\le n \\le N} ${fn}, \\quad ${def}`;
+    case 'maximum':
+      return `A = \\max_{0 \\le n \\le N} ${fn}, \\quad ${def}`;
   }
 }
 
@@ -58,6 +64,10 @@ function buildConvergenceLatex(aggregation: AggregationMode, formula: string, is
         return `E = \\sqrt{h \\sum_{n=0}^{N} ${en}^{\\,2}}, \\quad ${def}`;
       case 'h1-seminorm':
         return `E = \\sqrt{h \\sum_{n=1}^{N} \\left(\\frac{e_n - e_{n-1}}{h}\\right)^{\\!2}}, \\quad ${def}`;
+      case 'minimum':
+        return `E = \\min_{0 \\le n \\le N} ${en}, \\quad ${def}`;
+      case 'maximum':
+        return `E = \\max_{0 \\le n \\le N} ${en}, \\quad ${def}`;
     }
   } else {
     // Scalar: e_n = |f_n - f_n^{ref}|
@@ -72,6 +82,10 @@ function buildConvergenceLatex(aggregation: AggregationMode, formula: string, is
         return `E = \\sqrt{h \\sum_{n=0}^{N} ${en}^{\\,2}}, \\quad ${def}`;
       case 'h1-seminorm':
         return `E = \\sqrt{h \\sum_{n=1}^{N} \\left(\\frac{e_n - e_{n-1}}{h}\\right)^{\\!2}}, \\quad ${def}`;
+      case 'minimum':
+        return `E = \\min_{0 \\le n \\le N} ${en}, \\quad ${def}`;
+      case 'maximum':
+        return `E = \\max_{0 \\le n \\le N} ${en}, \\quad ${def}`;
     }
   }
 }

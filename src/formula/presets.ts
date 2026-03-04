@@ -62,6 +62,12 @@ export const FORMULA_PRESETS: FormulaPreset[] = [
     description: 'Kinetic energy (1/2) * ||v[n]||²',
   },
   {
+    id: 'kkt-term',
+    label: 'KKT term',
+    formula: 'dot(lambda[n]*G[n] - lambda[n-1]*G[n-1], z[n] - z[n-1])',
+    description: 'Inner product ⟨λⁿGⁿ - λⁿ⁻¹Gⁿ⁻¹, zⁿ - zⁿ⁻¹⟩',
+  },
+  {
     id: 'position-vector',
     label: 'Position (vector)',
     formula: 'z[n]',
