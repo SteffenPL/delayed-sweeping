@@ -360,18 +360,23 @@ export async function parameterScan(
       values.push(formulaEval.evaluate(ctx));
     }
 
-    // Aggregate
+    // Aggregate (filter out NaN values from e.g. division by zero at n=0)
+    const finite = values.filter(v => isFinite(v));
     let aggregated: number;
-    switch (opts.aggregation) {
-      case 'max':
-        aggregated = Math.max(...values);
-        break;
-      case 'min':
-        aggregated = Math.min(...values);
-        break;
-      case 'final':
-        aggregated = values[values.length - 1];
-        break;
+    if (finite.length === 0) {
+      aggregated = NaN;
+    } else {
+      switch (opts.aggregation) {
+        case 'max':
+          aggregated = Math.max(...finite);
+          break;
+        case 'min':
+          aggregated = Math.min(...finite);
+          break;
+        case 'final':
+          aggregated = values[values.length - 1];
+          break;
+      }
     }
 
     rows.push([paramValue, aggregated]);
@@ -387,7 +392,7 @@ export async function parameterScan(
   const svgData = rows.map(([p, v]) => ({ h: p, error: v }));
   const svg = renderConvergencePlot(
     [{ label: name, color: '#fb923c', data: svgData }],
-    { title: name, refSlopes: opts.refSlopes ?? [1, 2] }
+    { title: name, refSlopes: opts.refSlopes ?? [1, 2], yLabel: opts.valueLabel }
   );
   const svgPath = path.join(PLOTS_DIR, `${name}.svg`);
   fs.writeFileSync(svgPath, svg, 'utf-8');

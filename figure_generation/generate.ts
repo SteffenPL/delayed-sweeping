@@ -13,28 +13,34 @@ async function main() {
   await quantities('cups_4_kkt', 'base/cups.toml', { simulation: { epsilon: 0.5 } });
 
   // Figure 3: convergence studies
-  const hValues = Array.from({ length: 6 }, (_, i) => 2 ** -(i + 2));
-  const hRef = 2 ** -9;
+  const hValues = Array.from({ length: 7 }, (_, i) => 2 ** -(i + 2));
+  // const hRef = 2 ** -10;
 
-  // Compatible past (zero past, constraint centered at origin at t=0)
-  await convergence('conv_L2', 'base/cups.toml', {}, { hValues, hRef });
+  // // Compatible past (zero past, constraint centered at origin at t=0)
+  // await convergence('conv_L2', 'base/cups.toml', {}, { hValues, hRef });
 
   // Incompatible past (past = (5,5), clearly outside constraint)
-  await convergence('conv_L2_degen', 'base/cups.toml',
-    { simulation: { xPastExpression: '5', yPastExpression: '5' } },
-    { hValues, hRef }
-  );
+  // await convergence('conv_L2_degen', 'base/cups.toml',
+  //   { simulation: { xPastExpression: '5', yPastExpression: '5' } },
+  //   { hValues, hRef }
+  // );
 
   // Figure 4: KKT term max over h (log-log)
-  await parameterScan('kkt_max_h', 'base/cups.toml', {}, {
-    formula: '-dot(lambda[n]*G[n] - lambda[n-1]*G[n-1], z[n] - z[n-1])',
-    aggregation: 'max',
-    paramValues: hValues,
-    paramOverride: (h) => ({ simulation: { h } }),
-    paramLabel: 'h',
-    valueLabel: 'max KKT',
-    refSlopes: [1, 2],
-  });
+  await parameterScan(
+    "kkt_max_h",
+    "base/kkt_example.toml",
+    {},
+    {
+      formula:
+        "-dot(lambda[n]*G[n] - lambda[n-1]*G[n-1], z[n] - z[n-1])/norm(z[n] - z[n-1])",
+      aggregation: "max",
+      paramValues: hValues,
+      paramOverride: (h) => ({ simulation: { h } }),
+      paramLabel: "h",
+      valueLabel: "max KKT",
+      refSlopes: [1, 2],
+    },
+  );
 
   console.log('\n=== Done ===');
 }

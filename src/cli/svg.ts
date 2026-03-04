@@ -15,6 +15,8 @@ export interface ConvergencePlotConfig {
   title?: string;
   /** Reference slope lines to draw, e.g. [1, 2] for O(h) and O(h²) */
   refSlopes?: number[];
+  /** Y-axis label (default: "L2 error") */
+  yLabel?: string;
 }
 
 /**
@@ -24,7 +26,7 @@ export function renderConvergencePlot(
   series: ConvergenceSeries[],
   config: ConvergencePlotConfig = {}
 ): string {
-  const { width = 500, height = 400, title, refSlopes = [1, 2] } = config;
+  const { width = 500, height = 400, title, refSlopes = [1, 2], yLabel = 'L2 error' } = config;
 
   // Margins
   const ml = 70, mr = 30, mt = title ? 40 : 20, mb = 50;
@@ -82,34 +84,43 @@ export function renderConvergencePlot(
   lines.push(`<rect x="${ml}" y="${mt}" width="${pw}" height="${ph}" fill="none" stroke="#aaaaaa" stroke-width="1"/>`);
   // Axis labels
   lines.push(`<text x="${ml + pw / 2}" y="${height - 6}" text-anchor="middle" font-size="12">h</text>`);
-  lines.push(`<text x="16" y="${mt + ph / 2}" text-anchor="middle" font-size="12" transform="rotate(-90, 16, ${mt + ph / 2})">L2 error</text>`);
+  lines.push(`<text x="16" y="${mt + ph / 2}" text-anchor="middle" font-size="12" transform="rotate(-90, 16, ${mt + ph / 2})">${yLabel}</text>`);
   lines.push('</g>');
 
   // Reference slope lines (dashed)
+  // Each slope line passes through the center of the plot vertically,
+  // offset horizontally so labels don't overlap.
   const slopeColors = ['#bbbbbb', '#bbbbbb', '#bbbbbb'];
+  const midLogH = (logHMin + logHMax) / 2;
+  const midLogE = (logEMin + logEMax) / 2;
+
   for (let si = 0; si < refSlopes.length; si++) {
     const slope = refSlopes[si];
     const col = slopeColors[si % slopeColors.length];
-    // Draw through the midpoint of the data range
-    const midLogH = (logHMin + logHMax) / 2;
-    const midLogE = (logEMin + logEMax) / 2;
-    // Line: logE = slope * logH + c, where c = midLogE - slope * midLogH
+    // Line: logE = slope * (logH - midLogH) + midLogE
     const c = midLogE - slope * midLogH;
-    const eAtHMin = slope * logHMin + c;
-    const eAtHMax = slope * logHMax + c;
 
     // Clip to plot area
     const clipLogE = (logH: number) => Math.max(logEMin, Math.min(logEMax, slope * logH + c));
-    const lh0 = logHMin;
-    const lh1 = logHMax;
-    const le0 = clipLogE(lh0);
-    const le1 = clipLogE(lh1);
 
-    lines.push(`<line x1="${toX(lh0)}" y1="${toY(le0)}" x2="${toX(lh1)}" y2="${toY(le1)}" stroke="${col}" stroke-width="1" stroke-dasharray="6,3"/>`);
+    // Find visible h-range where the line is within the plot
+    // logE = slope * logH + c; visible when logEMin <= slope*logH+c <= logEMax
+    let visH0 = logHMin;
+    let visH1 = logHMax;
+    if (slope > 0) {
+      visH0 = Math.max(visH0, (logEMin - c) / slope);
+      visH1 = Math.min(visH1, (logEMax - c) / slope);
+    }
+    if (visH0 >= visH1) continue; // slope line fully outside plot
 
-    // Label the slope
-    const labelLogH = logHMax - 0.3;
-    const labelLogE = clipLogE(labelLogH);
+    const le0 = clipLogE(visH0);
+    const le1 = clipLogE(visH1);
+
+    lines.push(`<line x1="${toX(visH0)}" y1="${toY(le0)}" x2="${toX(visH1)}" y2="${toY(le1)}" stroke="${col}" stroke-width="1" stroke-dasharray="6,3"/>`);
+
+    // Label near the right end of the visible segment
+    const labelLogH = visH1 - 0.15;
+    const labelLogE = slope * labelLogH + c;
     if (labelLogE >= logEMin && labelLogE <= logEMax) {
       lines.push(`<text x="${toX(labelLogH) + 4}" y="${toY(labelLogE) - 6}" font-size="10" fill="${col}">O(h<tspan baseline-shift="super" font-size="7">${slope}</tspan>)</text>`);
     }
