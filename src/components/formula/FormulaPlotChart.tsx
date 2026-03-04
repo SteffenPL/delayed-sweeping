@@ -169,7 +169,7 @@ export const FormulaPlotChart = forwardRef<HTMLDivElement, FormulaPlotChartProps
               dataKey={yKey}
               name={yLabel}
               stroke="#3b82f6"
-              dot={displayData.length <= 30}
+              dot={false}
               strokeWidth={1.5}
             />
           </LineChart>

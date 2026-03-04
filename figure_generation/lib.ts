@@ -56,13 +56,18 @@ function writeTSV(filePath: string, header: string[], rows: number[][]) {
 
 // ─── trajectory ──────────────────────────────────────────────────────
 
+export interface TrajectoryOpts {
+  snapshotTimes?: number[];
+}
+
 /**
  * Run delayed + classical simulation, export TSV and SVG.
  */
 export async function trajectory(
   name: string,
   basePath: string,
-  overrides: Record<string, any> = {}
+  overrides: Record<string, any> = {},
+  opts: TrajectoryOpts = {}
 ) {
   ensurePlotsDir();
   const config = loadConfig(basePath, overrides);
@@ -116,6 +121,7 @@ export async function trajectory(
       T,
       h,
       constraintEvaluator: evaluator,
+      snapshotTimes: opts.snapshotTimes,
     }
   );
 

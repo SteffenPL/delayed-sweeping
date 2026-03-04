@@ -1,5 +1,14 @@
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import type { Vec2 } from '@/types';
 import { computeBoundaryPolygon } from '@/shapes/expressionConstraint';
+import { SVGGrid } from '@/components/canvas/SVGGrid';
+import { SVGTrajectory } from '@/components/canvas/SVGTrajectory';
+import { SVGMarkers } from '@/components/canvas/SVGMarkers';
+import { SVGProjectionVectors } from '@/components/canvas/SVGProjectionVectors';
+import { SVGConstraint } from '@/components/canvas/SVGConstraint';
+import { DEFAULT_COLOR_SETTINGS } from '@/types/colors';
+import { getColormapColor, evaluateOpacity } from '@/utils/colormaps';
 
 // ─── Convergence (log-log) plot ──────────────────────────────────────
 
@@ -273,6 +282,7 @@ export interface TrajectoryPlotData {
   preProjection: Vec2[];
   classical: Vec2[];
   centers: Vec2[];
+  angles?: number[];
 }
 
 export interface TrajectoryPlotConfig {
@@ -283,12 +293,18 @@ export interface TrajectoryPlotConfig {
   height?: number;
   scale?: number;
   constraintEvaluator: (x: number, y: number) => number;
+  /**
+   * If provided, render constraint outlines and projection arrows only at these
+   * specific times instead of the current constraint.
+   */
+  snapshotTimes?: number[];
+  /** Show the classical trajectory (default: false) */
+  showClassical?: boolean;
 }
 
 /**
- * Render a trajectory plot as standalone SVG string (no DOM dependency).
- *
- * Coordinate system: center origin, scale px/unit, Y flipped for math convention.
+ * Render a trajectory plot as standalone SVG string using the same React
+ * components as the web view (SVGGrid, SVGTrajectory, SVGMarkers, etc.).
  */
 export function renderTrajectoryPlot(
   data: TrajectoryPlotData,
@@ -302,148 +318,159 @@ export function renderTrajectoryPlot(
     height = 500,
     scale = 60,
     constraintEvaluator,
+    snapshotTimes,
+    showClassical = false,
   } = config;
 
-  const cx = width / 2;
-  const cy = height / 2;
-
-  // Transform from world to SVG coordinates
-  const toSvg = (p: Vec2) => ({
-    x: cx + p.x * scale,
-    y: cy - p.y * scale, // flip Y
-  });
-
-  const lines: string[] = [];
-  lines.push(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`
-  );
-  lines.push(`<rect width="${width}" height="${height}" fill="white"/>`);
-
-  // 1. Grid lines
-  lines.push(renderGrid(width, height, cx, cy, scale));
-
-  // 2. Past constraint boundaries with fading opacity
   const N = data.delayed.length;
-  const nConstraints = Math.min(N, Math.floor(T / h));
-  const constraintStep = Math.max(1, Math.floor(nConstraints / 60)); // limit to ~60 ghosts
+  const effectiveStep = N;
+  const viewTime = T;
+  const colors = DEFAULT_COLOR_SETTINGS;
 
-  for (let i = 0; i < nConstraints; i += constraintStep) {
-    const s = i * h;
-    const opacity = Math.exp(-epsilon * s / T);
-    if (opacity < 0.02) continue;
+  // Boundary polygon in local (constraint-centred) coordinates
+  const boundary = computeBoundaryPolygon(constraintEvaluator, 128, 5);
 
-    const center = data.centers[i];
-    if (!center) continue;
+  // Past / snapshot constraints — same logic as SVGSimulationCanvas
+  const pcConfig = colors.pastConstraints;
+  const snapshotConstraints = (snapshotTimes ?? []).map((snapT, idx) => {
+    const stepIdx = Math.min(Math.round(snapT / h), N - 1);
+    const center = data.centers[stepIdx];
+    if (!center) return null;
+    const angle = data.angles?.[stepIdx] ?? 0;
+    const colorT = snapshotTimes!.length > 1 ? idx / (snapshotTimes!.length - 1) : 0.5;
+    const color = pcConfig.mode === 'colormap'
+      ? getColormapColor(pcConfig.colormap, colorT)
+      : pcConfig.solidColor;
+    const s = viewTime - snapT;
+    const opacity = evaluateOpacity(pcConfig.opacityExpression, s, viewTime, epsilon, T);
+    return { center, angle, color, opacity };
+  }).filter(Boolean) as { center: Vec2; angle: number; color: string; opacity: number }[];
 
-    const boundary = computeBoundaryPolygon(constraintEvaluator, 64, 5);
-    const translated = boundary.map((p) => ({ x: p.x + center.x, y: p.y + center.y }));
-    lines.push(renderPolygon(translated, toSvg, 'none', '#d4d4d4', 0.8, opacity * 0.5));
-  }
-
-  // 3. Current constraint boundary (last time step)
+  // Final constraint
   const lastCenter = data.centers[N - 1];
-  if (lastCenter) {
-    const boundary = computeBoundaryPolygon(constraintEvaluator, 128, 5);
-    const translated = boundary.map((p) => ({ x: p.x + lastCenter.x, y: p.y + lastCenter.y }));
-    lines.push(renderPolygon(translated, toSvg, 'rgba(200,200,200,0.1)', '#888888', 1.5, 1));
-  }
+  const lastAngle = data.angles?.[N - 1] ?? 0;
 
-  // 4. Classical trajectory (#60a5fa blue)
-  lines.push(renderPolyline(data.classical, toSvg, '#60a5fa', 1.5, epsilon, T, h));
+  // Marker colors: hide classical unless requested
+  const markerColors = {
+    ...colors.markers,
+    showClassical: showClassical && colors.markers.showClassical,
+  };
 
-  // 5. Pre-projection trajectory (#000000 black)
-  lines.push(renderPolyline(data.preProjection, toSvg, '#000000', 1, epsilon, T, h));
+  const jsx = React.createElement(
+    'svg',
+    {
+      xmlns: 'http://www.w3.org/2000/svg',
+      width,
+      height,
+      viewBox: `0 0 ${width} ${height}`,
+    },
+    React.createElement('rect', { width, height, fill: 'white' }),
+    React.createElement(
+      'g',
+      { transform: `translate(${width / 2},${height / 2}) scale(${scale},${-scale})` },
 
-  // 6. Delayed trajectory (#fb923c orange)
-  lines.push(renderPolyline(data.delayed, toSvg, '#fb923c', 2, epsilon, T, h));
+      // Grid
+      React.createElement(SVGGrid, { scale, width, height }),
 
-  lines.push('</svg>');
-  return lines.join('\n');
-}
+      // Snapshot constraints (past positions)
+      ...snapshotConstraints.map((sc, i) =>
+        React.createElement(SVGConstraint, {
+          key: `snap-${i}`,
+          polygon: boundary,
+          center: sc.center,
+          angle: sc.angle,
+          scale,
+          color: sc.color,
+          opacity: sc.opacity,
+          fillOpacity: 0,
+        })
+      ),
 
-function renderGrid(
-  width: number,
-  height: number,
-  cx: number,
-  cy: number,
-  scale: number
-): string {
-  const lines: string[] = [];
-  lines.push('<g>');
+      // Current constraint (only when no snapshot times)
+      !snapshotTimes && lastCenter
+        ? React.createElement(SVGConstraint, {
+            key: 'current',
+            polygon: boundary,
+            center: lastCenter,
+            angle: lastAngle,
+            scale,
+          })
+        : null,
 
-  // Determine grid range
-  const xMin = -cx / scale;
-  const xMax = (width - cx) / scale;
-  const yMin = -(height - cy) / scale;
-  const yMax = cy / scale;
+      // Classical trajectory (optional)
+      showClassical && colors.classicalTrajectory.mode !== 'none'
+        ? React.createElement(SVGTrajectory, {
+            key: 'classical',
+            points: data.classical,
+            colorConfig: colors.classicalTrajectory,
+            scale,
+            lineWidth: 3,
+            h,
+            viewTime,
+            epsilon,
+            T,
+          })
+        : null,
 
-  // Grid lines every 1 unit
-  for (let x = Math.ceil(xMin); x <= Math.floor(xMax); x++) {
-    const sx = cx + x * scale;
-    const color = x === 0 ? '#cccccc' : '#e5e5e5';
-    const sw = x === 0 ? 1 : 0.5;
-    lines.push(`<line x1="${sx}" y1="0" x2="${sx}" y2="${height}" stroke="${color}" stroke-width="${sw}"/>`);
-  }
-  for (let y = Math.ceil(yMin); y <= Math.floor(yMax); y++) {
-    const sy = cy - y * scale;
-    const color = y === 0 ? '#cccccc' : '#e5e5e5';
-    const sw = y === 0 ? 1 : 0.5;
-    lines.push(`<line x1="0" y1="${sy}" x2="${width}" y2="${sy}" stroke="${color}" stroke-width="${sw}"/>`);
-  }
+      // Pre-projection trajectory (avg / X̄)
+      colors.preProjectionTrajectory.mode !== 'none'
+        ? React.createElement(SVGTrajectory, {
+            key: 'avg',
+            points: data.preProjection,
+            colorConfig: colors.preProjectionTrajectory,
+            scale,
+            lineWidth: 4,
+            h,
+            viewTime,
+            epsilon,
+            T,
+          })
+        : null,
 
-  lines.push('</g>');
-  return lines.join('\n');
-}
+      // Delayed trajectory
+      colors.delayedTrajectory.mode !== 'none'
+        ? React.createElement(SVGTrajectory, {
+            key: 'delayed',
+            points: data.delayed,
+            colorConfig: colors.delayedTrajectory,
+            scale,
+            lineWidth: 4,
+            h,
+            viewTime,
+            epsilon,
+            T,
+          })
+        : null,
 
-function renderPolygon(
-  points: Vec2[],
-  toSvg: (p: Vec2) => Vec2,
-  fill: string,
-  stroke: string,
-  strokeWidth: number,
-  opacity: number
-): string {
-  if (points.length === 0) return '';
-  const pts = points.map((p) => {
-    const s = toSvg(p);
-    return `${s.x.toFixed(1)},${s.y.toFixed(1)}`;
-  });
-  return `<polygon points="${pts.join(' ')}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" opacity="${opacity.toFixed(3)}"/>`;
-}
+      // Projection arrows at snapshot times
+      snapshotTimes && colors.projectionVectors.mode !== 'none'
+        ? React.createElement(SVGProjectionVectors, {
+            key: 'arrows',
+            trajectory: data.delayed,
+            preProjection: data.preProjection,
+            snapshotTimes,
+            colorConfig: colors.projectionVectors,
+            scale,
+            lineWidth: colors.arrowLineWidth,
+            h,
+            viewTime,
+            effectiveStep,
+            epsilon,
+            T,
+          })
+        : null,
 
-function renderPolyline(
-  points: Vec2[],
-  toSvg: (p: Vec2) => Vec2,
-  color: string,
-  strokeWidth: number,
-  epsilon: number,
-  T: number,
-  h: number
-): string {
-  if (points.length < 2) return '';
+      // Endpoint markers
+      React.createElement(SVGMarkers, {
+        key: 'markers',
+        delayed: data.delayed[N - 1] ?? null,
+        classical: showClassical ? (data.classical[N - 1] ?? null) : null,
+        xBar: data.preProjection[N - 1] ?? null,
+        colors: markerColors,
+        scale,
+      })
+    )
+  );
 
-  // Render as segmented path with opacity fade
-  const segments: string[] = [];
-  segments.push('<g>');
-
-  // Group segments by similar opacity to reduce SVG size
-  const batchSize = Math.max(1, Math.floor(points.length / 200));
-
-  for (let i = 0; i < points.length - 1; i += batchSize) {
-    const end = Math.min(i + batchSize + 1, points.length);
-    const s = i * h;
-    const opacity = Math.max(0.05, Math.exp(-epsilon * s / T));
-
-    const pts = [];
-    for (let j = i; j < end; j++) {
-      const sv = toSvg(points[j]);
-      pts.push(`${sv.x.toFixed(1)},${sv.y.toFixed(1)}`);
-    }
-    segments.push(
-      `<polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="${strokeWidth}" opacity="${opacity.toFixed(3)}"/>`
-    );
-  }
-
-  segments.push('</g>');
-  return segments.join('\n');
+  return renderToStaticMarkup(jsx);
 }

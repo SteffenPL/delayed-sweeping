@@ -1,46 +1,37 @@
-import { trajectory, quantities, convergence, parameterScan } from './lib';
+import { trajectory, convergence, parameterScan } from './lib';
 
 async function main() {
   console.log('=== Figure Generation ===\n');
 
-  // Figure 2a: long memory (1/ε = 0.4 → ε = 2.5)
-  await trajectory('cups_3', 'base/cups.toml', { simulation: { epsilon: 2.5 } });
-
-  // Figure 1a & 2b: short memory (1/ε = 2 → ε = 0.5)
-  await trajectory('cups_4', 'base/cups.toml', { simulation: { epsilon: 0.5 } });
-
-  // Figure 1b: KKT quantity
-  await quantities('cups_4_kkt', 'base/cups.toml', { simulation: { epsilon: 0.5 } });
-
-  // Figure 3: convergence studies
   const hValues = Array.from({ length: 7 }, (_, i) => 2 ** -(i + 2));
-  // const hRef = 2 ** -10;
+  const hRef = 2 ** -10;
 
-  // // Compatible past (zero past, constraint centered at origin at t=0)
-  // await convergence('conv_L2', 'base/cups.toml', {}, { hValues, hRef });
+  // Figure 1: trajectory — circle, long memory (ε = 2.5)
+  // Show constraint outlines and projection arrows at t = 1, 3, 6
+  await trajectory('fig1', 'base/circle_long_memory.toml', {}, { snapshotTimes: [1, 3, 6] });
 
-  // Incompatible past (past = (5,5), clearly outside constraint)
-  // await convergence('conv_L2_degen', 'base/cups.toml',
-  //   { simulation: { xPastExpression: '5', yPastExpression: '5' } },
-  //   { hValues, hRef }
-  // );
+  // Figure 2a: trajectory — lissajous
+  await trajectory('fig2a', 'base/lissajous.toml');
 
-  // Figure 4: KKT term max over h (log-log)
+  // Figure 2b: KKT term max over h (log-log)
   await parameterScan(
-    "kkt_max_h",
-    "base/kkt_example.toml",
+    'kkt_max_h',
+    'base/lissajous.toml',
     {},
     {
       formula:
-        "-dot(lambda[n]*G[n] - lambda[n-1]*G[n-1], z[n] - z[n-1])/norm(z[n] - z[n-1])",
-      aggregation: "max",
+        '-dot(lambda[n]*G[n] - lambda[n-1]*G[n-1], z[n] - z[n-1])/norm(z[n] - z[n-1])',
+      aggregation: 'max',
       paramValues: hValues,
       paramOverride: (h) => ({ simulation: { h } }),
-      paramLabel: "h",
-      valueLabel: "max KKT",
+      paramLabel: 'h',
+      valueLabel: 'max KKT',
       refSlopes: [1, 2],
     },
   );
+
+  // Figure 3: convergence study — lissajous
+  await convergence('conv_L2', 'base/lissajous.toml', {}, { hValues, hRef });
 
   console.log('\n=== Done ===');
 }
