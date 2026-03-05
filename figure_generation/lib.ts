@@ -116,6 +116,7 @@ export async function trajectory(
       preProjection: delayed.preProjection,
       classical: classical.trajectory,
       centers: delayed.centers,
+      angles: delayed.angles,
     },
     {
       epsilon,
@@ -344,7 +345,7 @@ export async function parameterScan(
       b: config.constraint.b,
     });
     const kernelWeights = computeDiscreteWeights(epsilon, h, solverType);
-    const constraintAngles = new Array(N).fill(0);
+    const constraintAngles = delayed.angles;
 
     // Evaluate formula at each time step
     const values: number[] = [];

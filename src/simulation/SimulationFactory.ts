@@ -141,6 +141,7 @@ export class SimulationFactory {
       trajectory: Vec2[];
       preProjection: Vec2[];
       centers: Vec2[];
+      angles: number[];
       projectionDistances: number[];
       gradientNorms: number[];
     };
@@ -156,11 +157,21 @@ export class SimulationFactory {
     delayedSim.simulate();
     classicalSim.simulate();
 
+    // Compute angles at each time step
+    const alphaFunc = createAlphaFunction(config.trajectory);
+    const { h } = config.simulation;
+    const N = delayedSim.getTrajectory().length;
+    const angles: number[] = [];
+    for (let n = 0; n < N; n++) {
+      angles.push(alphaFunc(n * h));
+    }
+
     return {
       delayed: {
         trajectory: delayedSim.getTrajectory(),
         preProjection: delayedSim.getPreProjection(),
         centers: delayedSim.getConstraintCenters(),
+        angles,
         projectionDistances: delayedSim.getProjectionDistances(),
         gradientNorms: delayedSim.getGradientNorms(),
       },

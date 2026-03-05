@@ -1,0 +1,28 @@
+trajectoryMode = "parametric"
+
+[simulation]
+T = 9
+h = 0.005
+epsilon = 0.75
+infiniteMode = false
+xPastExpression = "0"
+yPastExpression = "0"
+solverType = "norm1-sum1"
+projectionTolerance = 1e-8
+
+[constraint]
+expression = "min(R - abs(x), r - abs(y))"
+R = 0.72
+r = 0.3
+a = 0
+b = 0
+
+[trajectory]
+xExpression = "2 * sin(t)"
+yExpression = "2 * sin(2*t)"
+alphaExpression = "4*t"
+
+[metadata]
+name = "Simulation Configuration"
+description = "Delayed sweeping process simulation"
+created = "2026-03-05T08:59:06.960Z"
