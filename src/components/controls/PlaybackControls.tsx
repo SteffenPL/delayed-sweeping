@@ -1,8 +1,8 @@
-import { useSimulation } from '@/hooks/useSimulation';
+import { useSimulationControls } from '@/hooks/SimulationContext';
 import { TimelineSlider } from './TimelineSlider';
 
 export function PlaybackControls() {
-  const { toggle, stop, restart, isRunning } = useSimulation();
+  const { toggle, stop, restart, isRunning } = useSimulationControls();
 
   return (
     <div className="playback-controls">

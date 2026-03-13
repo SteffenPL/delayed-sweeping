@@ -301,7 +301,7 @@ export async function convergence(
 
 export interface ParameterScanOpts {
   formula: string;
-  aggregation: 'max' | 'min' | 'final';
+  aggregation: 'max' | 'min' | 'final' | 'L2';
   paramValues: number[];
   paramOverride: (value: number) => Record<string, any>;
   paramLabel: string;
@@ -384,6 +384,9 @@ export async function parameterScan(
           break;
         case 'final':
           aggregated = values[values.length - 1];
+          break;
+        case 'L2':
+          aggregated = Math.sqrt(h * finite.reduce((sum, v) => sum + v * v, 0));
           break;
       }
     }

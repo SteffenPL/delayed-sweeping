@@ -11,7 +11,7 @@ solverType = "norm1-sum1"
 projectionTolerance = 1e-8
 
 [constraint]
-expression = "min(R - abs(x), r - abs(y))"
+expression = "r - sqrt(max(abs(x) - R/2, 0)^2 + y^2)"
 R = 0.72
 r = 0.3
 a = 0
@@ -25,4 +25,4 @@ alphaExpression = "4*t"
 [metadata]
 name = "Simulation Configuration"
 description = "Delayed sweeping process simulation"
-created = "2026-03-05T08:55:28.864Z"
+created = "2026-03-05T09:22:15.880Z"

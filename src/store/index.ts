@@ -323,6 +323,18 @@ export const useSimulationStore = create<SimulationStore>()(
           constraintAngle: 0,
           parametricTrajectory: { ...preset.trajectory },
           trajectoryMode: 'parametric',
+          // Reset trajectory state
+          trajectory: [],
+          preProjection: [],
+          constraintCenters: [],
+          constraintAngles: [],
+          projectionDistances: [],
+          gradientNorms: [],
+          classicalTrajectory: [],
+          classicalGradientNorms: [],
+          currentStep: 0,
+          viewStep: 0,
+          isRunning: false,
         });
       }
     },

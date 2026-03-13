@@ -6,6 +6,7 @@ import { FormulaPanel } from '@/components/formula';
 import { MainLayout } from '@/components/layout';
 import { ParameterPanel } from '@/components/panels';
 import { useSimulationStore } from '@/store';
+import { SimulationProvider } from '@/hooks/SimulationContext';
 import { decodeShareState } from '@/utils/urlShare';
 import './index.css';
 
@@ -30,6 +31,7 @@ export function App() {
   }, [loadFromLocalStorage, applySharedState]);
 
   return (
+    <SimulationProvider>
     <MainLayout>
       {/* Main content area */}
       <div className="flex flex-col lg:flex-row gap-6 justify-center">
@@ -51,5 +53,6 @@ export function App() {
         <FormulaPanel />
       </section>
     </MainLayout>
+    </SimulationProvider>
   );
 }

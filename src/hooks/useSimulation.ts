@@ -18,9 +18,6 @@ export function useSimulation() {
   const scrubRafRef = useRef<number | null>(null);
 
   const {
-    params,
-    trajectoryMode,
-    parametricTrajectory,
     isRunning,
     speed,
     setRunning,
@@ -29,24 +26,30 @@ export function useSimulation() {
     resetTrajectory,
   } = useSimulationStore();
 
-  // Create center function based on mode
+  // Read fresh state from the store (avoids stale closures)
+  const getState = useSimulationStore.getState;
+
+  // Create center function based on current store state
   const createCenterFunc = useCallback(() => {
+    const { trajectoryMode, parametricTrajectory } = getState();
     if (trajectoryMode === 'free-drag') {
-      return () => useSimulationStore.getState().dragPosition;
+      return () => getState().dragPosition;
     } else {
       return createTrajectoryFunction(parametricTrajectory);
     }
-  }, [trajectoryMode, parametricTrajectory]);
+  }, [getState]);
 
-  // Initialize simulator
+  // Initialize simulator using fresh store state
   const initializeSimulator = useCallback(() => {
+    const { params, parametricTrajectory, trajectoryMode, speed } = getState();
+
     const centerFunc = createCenterFunc();
     const pastFunc = createPastFunction(params);
     const alphaFunc = createAlphaFunction(parametricTrajectory);
 
-    const getConstraint = () => useSimulationStore.getState().constraint;
-    const getAngle = () => useSimulationStore.getState().constraintAngle;
-    const getTolerance = () => useSimulationStore.getState().params.projectionTolerance;
+    const getConstraint = () => getState().constraint;
+    const getAngle = () => getState().constraintAngle;
+    const getTolerance = () => getState().params.projectionTolerance;
     const projectFunc = createProjectionFunction(getConstraint, getAngle, getTolerance);
     const fullProjectFunc = createFullProjectionFunction(getConstraint, getAngle, getTolerance);
 
@@ -71,7 +74,7 @@ export function useSimulation() {
         if (trajectoryMode === 'parametric') {
           const t = step * params.h;
           const alpha = alphaFunc(t);
-          useSimulationStore.getState().setConstraintAngle(alpha);
+          getState().setConstraintAngle(alpha);
         }
 
         appendTrajectoryPoint(position, xBar, center, projDist, gradNorm);
@@ -89,7 +92,7 @@ export function useSimulation() {
 
     runnerRef.current.setSpeed(speed);
     runnerRef.current.setInfiniteMode(params.infiniteMode);
-  }, [params, parametricTrajectory, trajectoryMode, speed, createCenterFunc, appendTrajectoryPoint, appendClassicalPoint, setRunning]);
+  }, [getState, createCenterFunc, appendTrajectoryPoint, appendClassicalPoint, setRunning]);
 
   // Stop any scrubbing animation
   const stopScrub = useCallback(() => {
@@ -102,7 +105,7 @@ export function useSimulation() {
   // Start scrubbing through history, then transition to simulation
   const startScrub = useCallback(() => {
     const scrubLoop = () => {
-      const state = useSimulationStore.getState();
+      const state = getState();
       const { viewStep, trajectory, speed } = state;
 
       if (viewStep >= trajectory.length) {
@@ -122,11 +125,11 @@ export function useSimulation() {
     };
 
     scrubRafRef.current = requestAnimationFrame(scrubLoop);
-  }, [stopScrub, initializeSimulator]);
+  }, [getState, stopScrub, initializeSimulator]);
 
   // Start simulation
   const start = useCallback(() => {
-    const { viewStep, trajectory } = useSimulationStore.getState();
+    const { viewStep, trajectory } = getState();
 
     if (viewStep < trajectory.length) {
       // Viewing history — start scrubbing first
@@ -139,7 +142,7 @@ export function useSimulation() {
       runnerRef.current?.start();
     }
     setRunning(true);
-  }, [initializeSimulator, setRunning, startScrub]);
+  }, [getState, initializeSimulator, setRunning, startScrub]);
 
   // Pause simulation
   const pause = useCallback(() => {
@@ -159,16 +162,23 @@ export function useSimulation() {
     setRunning(false);
   }, [setRunning, stopScrub]);
 
-  // Restart simulation
+  // Restart simulation (reads fresh state, safe to call right after store updates)
   const restart = useCallback(() => {
     stopScrub();
+
+    // Destroy old runner/simulator
+    runnerRef.current?.pause();
+    runnerRef.current?.destroy();
+    runnerRef.current = null;
+    simulatorRef.current = null;
+    classicalSimulatorRef.current = null;
+
     resetTrajectory();
 
     // Reset constraint angle and drag position to t=0 values
-    const { trajectoryMode, parametricTrajectory, setConstraintAngle, setDragPosition } = useSimulationStore.getState();
+    const { trajectoryMode, parametricTrajectory, setConstraintAngle, setDragPosition } = getState();
 
     if (trajectoryMode === 'parametric') {
-      // Evaluate trajectory and angle at t=0
       const centerFunc = createTrajectoryFunction(parametricTrajectory);
       const alphaFunc = createAlphaFunction(parametricTrajectory);
 
@@ -179,8 +189,9 @@ export function useSimulation() {
       setDragPosition(center0);
     }
 
+    // Create fresh simulator with current store state
     initializeSimulator();
-  }, [resetTrajectory, initializeSimulator, stopScrub]);
+  }, [getState, resetTrajectory, initializeSimulator, stopScrub]);
 
   // Toggle play/pause
   const toggle = useCallback(() => {
@@ -200,10 +211,11 @@ export function useSimulation() {
 
   // Update infinite mode
   useEffect(() => {
+    const { params } = getState();
     if (runnerRef.current) {
       runnerRef.current.setInfiniteMode(params.infiniteMode);
     }
-  }, [params.infiniteMode]);
+  }, [getState]);
 
   // Update center function when mode or trajectory changes
   useEffect(() => {
@@ -214,7 +226,7 @@ export function useSimulation() {
     if (classicalSimulatorRef.current) {
       classicalSimulatorRef.current.setCenterFunc(centerFunc);
     }
-  }, [trajectoryMode, parametricTrajectory, createCenterFunc]);
+  }, [createCenterFunc]);
 
   // Cleanup on unmount
   useEffect(() => {

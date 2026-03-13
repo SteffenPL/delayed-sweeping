@@ -24,16 +24,17 @@ async function main() {
     { snapshotTimes: [4.5, 9], showClassical: true },
   );
 
+  // Figure 2b: trajectory — rect
   await trajectory(
-    "fig2a",
+    "fig2b",
     "base/mean_traj.toml",
     {},
     { snapshotTimes: [4.5, 9], showClassical: true },
   );
 
-  // Figure 2b: KKT term max over h (log-log)
+  // Figure 3a.1: KKT term max over h (log-log)
   await parameterScan(
-    "kkt_max_h",
+    "kkt_max_by_dtdt",
     "base/lissajous.toml",
     {},
     {
@@ -48,30 +49,56 @@ async function main() {
     },
   );
 
-  // Fig 2c:
-  // Figure 2a: trajectory — lissajous
-  // Show constraint outlines and projection arrows at t = 5, 10, 15; include classical trajectory
-  await trajectory(
-    "fig2c",
+  // Figure 3a.2: trajectory — stadium
+  await parameterScan(
+    "kkt_max_by_dtdt_stadium",
     "base/mean_traj.toml",
     {},
-    { snapshotTimes: [4.5, 9], showClassical: true },
+    {
+      formula:
+        "dot(lambda[n]*G[n] - lambda[n-1]*G[n-1], z[n] - z[n-1])/(dt*dt)",
+      aggregation: "max",
+      paramValues: hValues,
+      paramOverride: (h) => ({ simulation: { h } }),
+      paramLabel: "h",
+      valueLabel: "max KKT",
+      refSlopes: [1, 2],
+    },
   );
 
-await parameterScan(
-  "kkt_max_h_rect",
-  "base/mean_traj.toml",
-  {},
-  {
-    formula: "dot(lambda[n]*G[n] - lambda[n-1]*G[n-1], z[n] - z[n-1])/(dt*dt)",
-    aggregation: "max",
-    paramValues: hValues,
-    paramOverride: (h) => ({ simulation: { h } }),
-    paramLabel: "h",
-    valueLabel: "max KKT",
-    refSlopes: [1, 2],
-  },
-);
+  // Figure 3b.1: KKT term max over h (log-log)
+  await parameterScan(
+    "kkt_by_dt_L2",
+    "base/lissajous.toml",
+    {},
+    {
+      formula:
+        "dot(lambda[n]*G[n] - lambda[n-1]*G[n-1], c[n] - c[n-1])/(dt)",
+      aggregation: "L2",
+      paramValues: hValues,
+      paramOverride: (h) => ({ simulation: { h } }),
+      paramLabel: "h",
+      valueLabel: "max KKT",
+      refSlopes: [1, 2],
+    },
+  );
+
+  // Figure 3b.2: trajectory — stadium
+  await parameterScan(
+    "kkt_by_dt_L2_stadium",
+    "base/mean_traj.toml",
+    {},
+    {
+      formula:
+        "dot(lambda[n]*G[n] - lambda[n-1]*G[n-1], z[n] - z[n-1])/dt",
+      aggregation: "L2",
+      paramValues: hValues,
+      paramOverride: (h) => ({ simulation: { h } }),
+      paramLabel: "h",
+      valueLabel: "max KKT",
+      refSlopes: [1, 2],
+    },
+  );
 
   // Figure 3: convergence study — lissajous
   await convergence("conv_L2", "base/lissajous.toml", {}, { hValues, hRef });
