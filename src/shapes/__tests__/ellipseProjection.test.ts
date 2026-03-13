@@ -39,12 +39,6 @@ function dist(a: Vec2, b: Vec2): number {
   return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
 }
 
-/**
- * Check if a point lies on the ellipse boundary (x/a)^2 + (y/b)^2 ≈ 1
- */
-function ellipseValue(p: Vec2, a: number, b: number): number {
-  return (p.x / a) ** 2 + (p.y / b) ** 2;
-}
 
 describe('Ellipse projection', () => {
   // Ellipse: (x/a)^2 + (y/b)^2 <= 1, i.e. g(x,y) = 1 - (x/a)^2 - (y/b)^2 >= 0
