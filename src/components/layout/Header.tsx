@@ -32,10 +32,14 @@ function tex(latex: string, displayMode = false): string {
 
 export function Header() {
   const loadPreset = useSimulationStore((s) => s.loadPreset);
+  const setSpeed = useSimulationStore((s) => s.setSpeed);
   const { restart, start } = useSimulationControls();
 
   const handleLoadPreset = (presetId: string) => {
     loadPreset(presetId);
+    setSpeed(4);
+    const { params, setParams } = useSimulationStore.getState();
+    setParams({ T: params.T * 2, infiniteMode: false });
     restart();
     start();
   };
