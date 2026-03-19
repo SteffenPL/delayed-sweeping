@@ -29,7 +29,7 @@ async function main() {
     "fig2b",
     "base/mean_traj.toml",
     {},
-    { snapshotTimes: [4.5, 9], showClassical: true },
+    { snapshotTimes: [0.75, 2.4, 4.2, 6.1], showClassical: true },
   );
 
   // Figure 3a.1: KKT term max over h (log-log)
@@ -100,8 +100,21 @@ async function main() {
     },
   );
 
-  // Figure 3: convergence study — lissajous
+  // Figure 3a: convergence study — lissajous (circular), compatible past
   await convergence("conv_L2", "base/lissajous.toml", {}, { hValues, hRef });
+
+  // Figure 3a: convergence study — lissajous (circular), incompatible past
+  await convergence("conv_L2_incompat", "base/lissajous.toml",
+    { simulation: { xPastExpression: "2", yPastExpression: "0" } },
+    { hValues, hRef });
+
+  // Figure 3b: convergence study — stadium, compatible past
+  await convergence("conv_L2_stadium", "base/mean_traj.toml", {}, { hValues, hRef });
+
+  // Figure 3b: convergence study — stadium, incompatible past
+  await convergence("conv_L2_stadium_incompat", "base/mean_traj.toml",
+    { simulation: { xPastExpression: "2", yPastExpression: "0" } },
+    { hValues, hRef });
 
   console.log("\n=== Done ===");
 }
